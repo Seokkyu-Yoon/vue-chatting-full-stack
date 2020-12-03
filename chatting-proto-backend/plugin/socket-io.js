@@ -68,7 +68,12 @@ PluginSocketIo.prototype.disconnect = function disconnect(socket) {
   this.onUsersChanged();
 };
 PluginSocketIo.prototype.onUsersChanged = function onUsersChanged() {
-  this.io.sockets.emit('user-changed', userManager.userMap);
+  this.io.sockets.emit('user-changed', Object.keys(userManager.userMap).reduce((bucket, socketId) => {
+    const user = userManager.userMap[socketId];
+    if (user.name === '') return bucket;
+    bucket[socketId] = user;
+    return bucket;
+  }, {}));
 };
 PluginSocketIo.prototype.onRoomsChanged = function onRoomsChanged() {
   this.io.sockets.emit('room-changed', roomManager.roomMap);
