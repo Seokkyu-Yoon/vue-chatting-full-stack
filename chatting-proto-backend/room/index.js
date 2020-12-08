@@ -1,4 +1,4 @@
-const Manager = require('./manager');
+const RoomManager = require('./room-manager');
 
-const manager = new Manager();
+const manager = new RoomManager();
 module.exports = manager;

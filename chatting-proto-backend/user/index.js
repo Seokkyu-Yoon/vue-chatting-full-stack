@@ -1,4 +1,4 @@
-const Manager = require('./manager');
+const UserManager = require('./user-manager');
 
-const manager = new Manager();
-module.exports = manager;
+const userManager = new UserManager();
+module.exports = userManager;

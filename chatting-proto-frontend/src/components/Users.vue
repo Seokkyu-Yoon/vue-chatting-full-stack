@@ -5,40 +5,26 @@
       <div
         class="user"
         v-for="user in users"
-        v-bind:key="`user-${user.key}`">
-        <div class="user-key">{{user.key}}</div>
-        <div class="user-name">{{user.name}}</div>
+        v-bind:key="`user-${user.userToken}`">
+        <div class="user-key">{{user.userToken}}</div>
+        <div class="user-name">{{user.userName}}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import store from '@/store';
-import myFetch from '@/core/fetch';
 
 export default {
   name: 'Users',
-  data() {
-    return {
-      userMap: {},
-    };
-  },
+  props: ['userMap'],
   created() {
-    myFetch.get(`${store.serverIp}/user`).then((result) => {
-      this.userMap = result;
-    }).catch(console.error);
-
-    this.$socket.on('user-changed', (userMap) => {
-      console.log('user-changed');
-      this.userMap = userMap;
-    });
   },
   computed: {
     users() {
-      return Object.keys(this.userMap).map((userKey) => ({
-        key: userKey,
-        ...this.userMap[userKey],
+      return Object.keys(this.userMap).map((userToken) => ({
+        userToken,
+        userName: this.userMap[userToken].userName,
       }));
     },
   },
@@ -47,12 +33,7 @@ export default {
       if (!this.newuserName) {
         // eslint-disable-next-line no-alert
         alert('방 이름을 입력해주세요');
-        return;
       }
-      myFetch.put(`${store.serverIp}/user`, {
-        userName: this.newuserName,
-      }).catch(console.error);
-      this.newuserName = '';
     },
   },
 };

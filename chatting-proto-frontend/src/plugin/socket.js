@@ -5,14 +5,8 @@ const $socket = io(store.serverIp);
 
 const SocketPlugin = {
   install(vue) {
-    function $join($payload) {
-      $socket.emit('join', $payload);
-    }
-    function $leave($payload) {
-      $socket.emit('leave', $payload);
-    }
-    function $write($payload) {
-      $socket.emit('write', $payload);
+    function $request(type, $payload) {
+      $socket.emit(type, $payload);
     }
 
     vue.mixin({});
@@ -21,9 +15,7 @@ const SocketPlugin = {
       vue.prototype,
       {
         $socket,
-        $join,
-        $leave,
-        $write,
+        $request,
       },
     );
   },

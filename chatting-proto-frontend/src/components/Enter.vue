@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import store from '@/store';
 
 export default {
   name: 'Enter',
@@ -32,7 +33,10 @@ export default {
         alert('닉네임을 입력해주세요');
         return;
       }
-      this.$socket.emit('create', { userName: this.userName });
+      this.$request('req:user:create', {
+        token: store.token,
+        userName: this.userName,
+      });
       this.$router.push('Chat');
     },
   },

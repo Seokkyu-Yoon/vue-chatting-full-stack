@@ -1,3 +1,5 @@
+const roomRootPath = `${__dirname}/../storage/rooms`;
+
 function getFormattedTime(date) {
   let hours = date.getHours();
   let noonFlag = 'AM';
@@ -26,46 +28,57 @@ function isAnotherDate(date1, date2) {
   return false;
 }
 
-function Item(key, name) {
-  this.key = key;
-  this.name = name;
-  this.messages = [];
-  this.socketIds = [];
-  this.lastUpdated = new Date();
-  this.lastUpdated.setDate(0);
+function Room({
+  roomKey,
+  roomName,
+  messages = [],
+  tokens = [],
+  lastUpdated = new Date(),
+}) {
+  if (messages.length === 0) {
+    lastUpdated.setDate(0);
+  }
+  this.roomKey = roomKey;
+  this.roomName = roomName;
+  this.messages = messages;
+  this.tokens = new Set(tokens);
+  this.lastUpdated = new Date(lastUpdated);
 }
-Item.prototype.write = function write(message) {
+Room.prototype.getSafetyData = function getSafetyData() {
+  return {
+    ...this,
+    tokens: [...this.tokens],
+  };
+};
+Room.prototype.getRoomPath = function getRoomPath() {
+  return `${roomRootPath}/${this.roomKey}.json`;
+};
+Room.prototype.onMessage = function onMessage(message) {
   this.checkLastUpdated();
   const now = new Date();
   const time = getFormattedTime(now);
   this.messages.push({ type: 'message', ...message, time });
   this.lastUpdated = now;
 };
-Item.prototype.join = function join(socketId, userName) {
+Room.prototype.join = function join(token, userName) {
   this.checkLastUpdated();
   const now = new Date();
   this.messages.push({ type: 'join', userName });
-  this.socketIds.push(socketId);
+  this.tokens.add(token);
   this.lastUpdated = now;
 };
-Item.prototype.leave = function leave(socketId, userName) {
+Room.prototype.leave = function leave(token, userName) {
   this.checkLastUpdated();
   const now = new Date();
   this.messages.push({ type: 'leave', userName });
-  const socketIdIndex = this.socketIds.findIndex((value) => value === socketId);
-  if (socketIdIndex > -1) {
-    this.socketIds = [
-      ...this.socketIds.slice(0, socketIdIndex),
-      ...this.socketIds.slice(socketIdIndex + 1),
-    ];
-  }
+  this.tokens.delete(token);
   this.lastUpdated = now;
 };
-Item.prototype.checkLastUpdated = function checkLastUpdated() {
+Room.prototype.checkLastUpdated = function checkLastUpdated() {
   const now = new Date();
   if (isAnotherDate(now, this.lastUpdated)) {
     this.messages.push({ type: 'time', ...extractDate(now) });
   }
 };
 
-module.exports = Item;
+module.exports = Room;

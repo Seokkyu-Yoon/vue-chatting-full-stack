@@ -3,12 +3,12 @@
     <h1>방 목록</h1>
     <div id="holder-rooms">
       <div
-        class="room"
         v-for="room in rooms"
-        v-bind:key="`room-${room.key}`"
-        @click="(e) => setCurrRoom(room, e)">
-        <div class="room-key">{{room.key}}</div>
-        <div class="room-name">{{room.name}}</div>
+        v-bind:key="`room-${room.roomKey}`"
+        v-bind:class="store.selectedRoomKey === room.roomKey ? 'room selected': 'room'"
+        @click="(e) => setCurrRoom(room)">
+        <div class="room-key">{{room.roomKey}}</div>
+        <div class="room-name">{{room.roomName}}</div>
       </div>
     </div>
     <input type="text"
@@ -21,23 +21,19 @@
 
 <script>
 import store from '@/store';
-import myFetch from '@/core/fetch';
 
 export default {
   name: 'Rooms',
   data() {
     return {
+      store,
       newRoomName: '',
-      roomMap: {},
     };
   },
-  created() {
-    myFetch.get(`${store.serverIp}/room`).then((result) => {
-      this.roomMap = result;
-    }).catch(console.error);
-
-    this.$socket.on('room-changed', (roomMap) => {
-      this.roomMap = roomMap;
+  props: ['roomMap'],
+  beforeCreate() {
+    this.$socket.on('res:room:create', (roomKey) => {
+      store.selectedRoomKey = roomKey;
     });
   },
   computed: {
@@ -49,36 +45,42 @@ export default {
     },
   },
   methods: {
+    leaveRoom() {
+      if (store.selectedRoomKey !== null) {
+        this.$request('req:room:leave', {
+          roomKey: store.selectedRoomKey,
+        });
+      }
+    },
     makeRoom() {
       if (!this.newRoomName) {
         // eslint-disable-next-line no-alert
         alert('방 이름을 입력해주세요');
         return;
       }
-      myFetch.put(`${store.serverIp}/room`, {
-        roomName: this.newRoomName,
-      }).catch(console.error);
+      this.leaveRoom();
+      this.$request('req:room:create', { roomName: this.newRoomName });
       this.newRoomName = '';
     },
-    setCurrRoom({ key }, e) {
-      if (store.getRoomKey() !== null) {
-        document.querySelector('.selected').classList.remove('selected');
-        this.$leave({
-          roomKey: store.getRoomKey(),
-        });
-      }
+    setCurrRoom({ roomKey }) {
+      this.leaveRoom();
 
-      if (key === store.getRoomKey()) {
-        store.setRoomKey(null);
+      if (roomKey === store.selectedRoomKey) {
+        store.selectedRoomKey = null;
         return;
       }
 
-      e.target.closest('.room').classList.add('selected');
-      this.$join({
-        roomKey: key,
-      });
-      store.setRoomKey(key);
+      this.$request('req:room:join', { roomKey });
+      store.selectedRoomKey = roomKey;
     },
+  },
+  beforeDestroy() {
+    if (store.selectedRoomKey !== null) {
+      this.$request('req:room:leave', {
+        roomKey: store.selectedRoomKey,
+      });
+      store.selectedRoomKey = null;
+    }
   },
 };
 </script>

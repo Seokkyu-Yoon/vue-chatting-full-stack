@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "set DEBUG=chatting-proto-backend:server && nodemon ./bin/www"
+    "dev": "set DEBUG=chatting-proto-backend:server && nodemon --ignore storage/ ./bin/www"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",

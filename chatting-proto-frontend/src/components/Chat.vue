@@ -28,36 +28,20 @@
 </template>
 
 <script>
-import store from '@/store';
-import myFetch from '@/core/fetch';
-
 export default {
   name: 'Chat',
+  beforeCreate() {
+    this.$socket.on('res:room:messages', (messages) => {
+      this.messages = messages;
+    });
+  },
+  props: ['roomKey'],
   data() {
     return {
-      store,
-      messages: [],
       newText: '',
       scrollToBottom: true,
+      messages: [],
     };
-  },
-  created() {
-    myFetch.get(`${store.serverIp}/room`, {
-      roomKey: store.getRoomKey(),
-    }).then(({ messages }) => {
-      console.log(messages);
-      this.messages = messages;
-    }).catch(console.error);
-
-    this.$socket.on('message', (roomKey) => {
-      console.log(roomKey);
-      if (roomKey !== store.getRoomKey()) return;
-      myFetch.get(`${store.serverIp}/room`, {
-        roomKey,
-      }).then(({ messages }) => {
-        this.messages = messages;
-      }).catch(console.error);
-    });
   },
   beforeUpdate() {
     const chatBoard = document.querySelector('#chat-board');
@@ -72,8 +56,7 @@ export default {
   },
   methods: {
     send() {
-      this.$write({ roomKey: store.getRoomKey(), text: this.newText.trim() });
-      console.log(this.newText);
+      this.$request('req:room:message', { roomKey: this.roomKey, text: this.newText.trim() });
       this.newText = '';
     },
   },

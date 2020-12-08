@@ -1,8 +1,8 @@
 <template>
   <div id="cover">
-    <ComponentRooms />
-    <ComponentChat v-if="store.getRoomKey()"/>
-    <ComponentUsers />
+    <ComponentRooms v-bind:roomMap="roomMap"/>
+    <ComponentChat v-if="store.selectedRoomKey !== null" v-bind:roomKey="store.selectedRoomKey"/>
+    <ComponentUsers v-bind:userMap="userMap"/>
   </div>
 </template>
 
@@ -10,7 +10,6 @@
 // import myFetch from '@/core/fetch';
 // @ is an alias to /src
 import store from '@/store';
-import myFetch from '@/core/fetch';
 import ComponentRooms from '@/components/Rooms.vue';
 import ComponentChat from '@/components/Chat.vue';
 import ComponentUsers from '@/components/Users.vue';
@@ -22,26 +21,33 @@ export default {
     ComponentChat,
     ComponentUsers,
   },
+  beforeCreate() {
+    this.$request('req:room:list');
+    this.$request('req:user:list');
+    this.$socket.on('event:user:list', (userMap) => {
+      this.userMap = userMap;
+    });
+    this.$socket.on('res:user:list', (userMap) => {
+      this.userMap = userMap;
+    });
+    this.$socket.on('event:room:list', (roomMap) => {
+      this.roomMap = roomMap;
+    });
+    this.$socket.on('res:room:list', (roomMap) => {
+      this.roomMap = roomMap;
+    });
+  },
   data() {
     return {
       store,
-      currRoomKey: '',
-      userName: '',
+      userMap: {},
+      roomMap: {},
     };
   },
-  mounted() {
-    myFetch.get(`${store.serverIp}/user/exists`, { socketId: this.$socket.id }).then((isExists) => {
-      if (!isExists) {
-        this.$router.replace('/');
-        store.setRoomKey(null);
-      }
-    }).catch(console.error);
-    this.$socket.on('disconnect', () => {
+  updated() {
+    if (typeof this.userMap[store.token] === 'undefined') {
       this.$router.replace('/');
-      store.setRoomKey(null);
-    });
-  },
-  methods: {
+    }
   },
 };
 </script>

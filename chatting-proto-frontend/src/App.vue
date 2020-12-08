@@ -4,6 +4,19 @@
   </div>
 </template>
 
+<script>
+import store from '@/store';
+
+export default {
+  beforeCreate() {
+    this.$socket.on('connect', () => {
+      if (store.token !== null) {
+        this.$request('req:user:join', { token: store.token });
+      }
+    });
+  },
+};
+</script>
 <style scoped>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
