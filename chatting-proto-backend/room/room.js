@@ -44,7 +44,7 @@ function Room({
   this.tokens = new Set(tokens);
   this.lastUpdated = new Date(lastUpdated);
 }
-Room.prototype.getSafetyData = function getSafetyData() {
+Room.prototype.serialize = function serialize() {
   return {
     ...this,
     tokens: [...this.tokens],
@@ -63,14 +63,14 @@ Room.prototype.onMessage = function onMessage(message) {
 Room.prototype.join = function join(token, userName) {
   this.checkLastUpdated();
   const now = new Date();
-  this.messages.push({ type: 'join', userName });
+  this.messages.push({ type: 'join', userName, token });
   this.tokens.add(token);
   this.lastUpdated = now;
 };
 Room.prototype.leave = function leave(token, userName) {
   this.checkLastUpdated();
   const now = new Date();
-  this.messages.push({ type: 'leave', userName });
+  this.messages.push({ type: 'leave', userName, token });
   this.tokens.delete(token);
   this.lastUpdated = now;
 };

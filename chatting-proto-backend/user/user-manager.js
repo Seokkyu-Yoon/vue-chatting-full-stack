@@ -4,38 +4,44 @@ const User = require('./user');
 const userPath = `${__dirname}/../storage/users.json`;
 
 function UserManager() {
-  this.userMap = fs.existsSync(userPath) ? this.load() : {};
+  this.userMap = {};
+  this.init();
 }
-UserManager.prototype.load = function load() {
+UserManager.prototype.init = function init() {
+  if (!fs.existsSync(userPath)) return;
+
   const savedUsers = JSON.parse(fs.readFileSync(userPath));
-  return Object.keys(savedUsers).reduce((bucket, userToken) => {
+  this.userMap = Object.keys(savedUsers).reduce((bucket, userToken) => {
     const savedUser = savedUsers[userToken];
     const temp = {};
     temp[userToken] = new User(savedUser);
-    Object.assign(bucket, temp);
-    return bucket;
+    return {
+      ...bucket,
+      ...temp,
+    };
   }, {});
 };
+
 UserManager.prototype.updateReport = function updateReport() {
-  fs.writeFileSync(userPath, JSON.stringify(this.getSafetyData(), null, 4));
+  fs.writeFileSync(userPath, JSON.stringify(this.serialize(), null, 4));
 };
-UserManager.prototype.getSafetyData = function getSafetyData() {
+UserManager.prototype.serialize = function serialize() {
   const userTokens = Object.keys(this.userMap);
   return userTokens.reduce((bucket, userToken) => {
     const temp = {};
-    temp[userToken] = this.get(userToken).getSafetyData();
-    Object.assign(bucket, temp);
-    return bucket;
+    temp[userToken] = this.get(userToken).serialize();
+    return {
+      ...bucket,
+      ...temp,
+    };
   }, {});
 };
 UserManager.prototype.create = function create(token, userName) {
   this.userMap[token] = new User({ userName });
   this.updateReport();
 };
-UserManager.prototype.destroy = function destroy(tokens) {
-  tokens.forEach((token) => {
-    delete this.userMap[token];
-  });
+UserManager.prototype.destroy = function destroy(token) {
+  delete this.userMap[token];
   this.updateReport();
 };
 UserManager.prototype.joinRoom = function joinRoom(token, roomKey) {

@@ -8,7 +8,7 @@ User.prototype.joinRoom = function joinRoom(roomKey) {
 User.prototype.leaveRoom = function leaveRoom(roomKey) {
   this.roomKeys.delete(roomKey);
 };
-User.prototype.getSafetyData = function getSafetyData() {
+User.prototype.serialize = function serialize() {
   return {
     userName: this.userName,
     roomKeys: [...this.roomKeys],

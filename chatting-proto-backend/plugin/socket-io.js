@@ -34,15 +34,37 @@ PluginSocketIo.prototype.activate = function activate(server) {
     socket.on('req:room:leave', this.roomLeave.bind(this, socket));
     socket.on('req:room:message', this.roomMessage.bind(this, socket));
   });
+
   setTimeout(() => {
-    const socketTokens = [...this.io.sockets.sockets.values()].map(({ token }) => token);
+    const sockets = [...this.io.sockets.sockets.values()];
+    const socketTokens = sockets.map(({ token }) => token);
     const savedTokens = Object.keys(userManager.userMap);
 
     const disconnectTokens = savedTokens.filter((savedToken) => !socketTokens.includes(savedToken));
-    if (disconnectTokens.length > 0) {
-      userManager.destroy(disconnectTokens);
-    }
-  }, 3000);
+    disconnectTokens.forEach((disconnectToken) => {
+      userManager.destroy(disconnectToken);
+    });
+    this.eventUserList();
+
+    const roomKeys = Object.keys(roomManager.roomMap);
+    roomKeys.forEach((roomKey) => {
+      const room = roomManager.roomMap[roomKey];
+      const roomTokens = [...room.tokens];
+      roomTokens.forEach((tokenOfRoom) => {
+        if (!socketTokens.includes(tokenOfRoom)) {
+          const roomMessages = room.messages;
+          for (let messageIndex = roomMessages.length - 1; messageIndex > -1; messageIndex -= 1) {
+            const { token, userName } = roomMessages[messageIndex];
+            if (token === tokenOfRoom) {
+              roomManager.leave(tokenOfRoom, userName, roomKey);
+              break;
+            }
+          }
+        }
+      });
+    });
+    this.eventRoomList();
+  }, 5000);
 };
 PluginSocketIo.prototype.userCreate = function userCreate(socket, { token, userName }) {
   debug(`${token} create user '${userName}'`);
@@ -60,8 +82,8 @@ PluginSocketIo.prototype.userJoin = function userJoin(socket, { token }) {
   });
 };
 PluginSocketIo.prototype.roomCreate = function roomCreate(socket, { roomName }) {
-  debug(`${socket.token} create room`);
   const { userName } = userManager.get(socket.token);
+  debug(`${userName} create room`);
   const roomKey = roomManager.create(roomName);
   this.eventRoomList();
   this.resRoomCreate(socket, roomKey);
@@ -90,7 +112,7 @@ PluginSocketIo.prototype.roomLeave = function roomLeave(socket, { roomKey }) {
 };
 PluginSocketIo.prototype.roomMessage = function roomMessage(socket, { roomKey, text }) {
   const { userName } = userManager.get(socket.token);
-  debug(`- user: ${userName}\n- room: ${roomKey}\n- text\n${text}\n`);
+  // debug(`- user: ${userName}\n- room: ${roomKey}\n- text\n${text}\n`);
   roomManager.onMessage(userName, roomKey, text);
   this.resRoomMessages(roomKey);
 };
@@ -105,20 +127,20 @@ PluginSocketIo.prototype.disconnect = function disconnect(socket) {
   user.roomKeys.forEach((roomKey) => {
     this.roomLeave(socket, { userName: user.userName, roomKey });
   });
-  userManager.destroy([token]);
+  userManager.destroy(token);
   this.eventUserList();
 };
 PluginSocketIo.prototype.eventUserList = function eventUserList() {
-  this.io.sockets.emit('event:user:list', userManager.userMap);
+  this.io.sockets.emit('event:user:list', userManager.serialize());
 };
 PluginSocketIo.prototype.eventRoomList = function eventRoomList() {
-  this.io.sockets.emit('event:room:list', roomManager.roomMap);
+  this.io.sockets.emit('event:room:list', roomManager.serialize());
 };
 PluginSocketIo.prototype.resUserList = function resUserList(socket) {
-  this.io.to(socket.id).emit('res:user:list', userManager.userMap);
+  this.io.to(socket.id).emit('res:user:list', userManager.serialize());
 };
 PluginSocketIo.prototype.resRoomList = function resRoomList(socket) {
-  this.io.to(socket.id).emit('res:room:list', roomManager.roomMap);
+  this.io.to(socket.id).emit('res:room:list', roomManager.serialize());
 };
 PluginSocketIo.prototype.resRoomCreate = function resRoomCreate(socket, roomKey) {
   this.io.to(socket.id).emit('res:room:create', roomKey);
