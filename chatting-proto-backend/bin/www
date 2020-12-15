@@ -6,6 +6,7 @@
 const debug = require('debug')('chatting-proto-backend:server');
 const http = require('http');
 const plugins = require('../plugin');
+const redis = require('../redis');
 const app = require('../app');
 /**
  * Normalize a port into a number, string, or false.
@@ -37,7 +38,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 const server = http.createServer(app);
-plugins.socket.activate(server);
+plugins.socket(server, redis);
 
 /**
  * Event listener for HTTP server "error" event.
@@ -80,6 +81,14 @@ function onListening() {
 /**
  * Listen on provided port, on all network interfaces.
  */
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+function listen() {
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+}
+
+if (require.main === module) {
+  listen();
+}
+
+module.exports = server;

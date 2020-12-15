@@ -5,10 +5,11 @@
       <div
         v-for="room in rooms"
         v-bind:key="`room-${room.roomKey}`"
-        v-bind:class="store.selectedRoomKey === room.roomKey ? 'room selected': 'room'"
+        v-bind:class="store.joiningRoomKey === room.roomKey ? 'room selected': 'room'"
         @click="(e) => setCurrRoom(room)">
         <div class="room-key">{{room.roomKey}}</div>
         <div class="room-name">{{room.roomName}}</div>
+        <div>{{room.sockets.length}}</div>
       </div>
     </div>
     <input type="text"
@@ -30,26 +31,17 @@ export default {
       newRoomName: '',
     };
   },
-  props: ['roomMap'],
-  beforeCreate() {
-    this.$socket.on('res:room:create', (roomKey) => {
-      store.selectedRoomKey = roomKey;
-    });
-  },
-  computed: {
-    rooms() {
-      return Object.keys(this.roomMap).map((roomKey) => ({
-        key: roomKey,
-        ...this.roomMap[roomKey],
-      }));
-    },
-  },
+  props: ['rooms'],
   methods: {
     leaveRoom() {
-      if (store.selectedRoomKey !== null) {
-        this.$request('req:room:leave', {
-          roomKey: store.selectedRoomKey,
-        });
+      if (store.joiningRoomKey !== null) {
+        this.$request(
+          'req:room:leave',
+          {
+            userName: store.userName,
+            roomKey: store.joiningRoomKey,
+          },
+        );
       }
     },
     makeRoom() {
@@ -58,28 +50,49 @@ export default {
         alert('방 이름을 입력해주세요');
         return;
       }
-      this.leaveRoom();
-      this.$request('req:room:create', { roomName: this.newRoomName });
+      this.$request(
+        'req:room:create',
+        {
+          userName: store.userName,
+          roomName: this.newRoomName,
+        },
+      );
       this.newRoomName = '';
     },
     setCurrRoom({ roomKey }) {
-      this.leaveRoom();
-
-      if (roomKey === store.selectedRoomKey) {
-        store.selectedRoomKey = null;
+      const { joiningRoomKey } = store;
+      if (joiningRoomKey !== null) {
+        this.$request('req:room:leave', {
+          userName: store.userName,
+          roomKey: joiningRoomKey,
+        });
+      }
+      if (roomKey === joiningRoomKey) {
+        store.joiningRoomKey = null;
         return;
       }
 
-      this.$request('req:room:join', { roomKey });
-      store.selectedRoomKey = roomKey;
+      this.$request(
+        'req:room:join',
+        {
+          userName: store.userName,
+          roomKey,
+        },
+      );
+      store.joiningRoomKey = roomKey;
+      this.$request('req:room:messages', { roomKey });
     },
   },
   beforeDestroy() {
-    if (store.selectedRoomKey !== null) {
-      this.$request('req:room:leave', {
-        roomKey: store.selectedRoomKey,
-      });
-      store.selectedRoomKey = null;
+    if (store.joiningRoomKey !== null) {
+      this.$request(
+        'req:room:leave',
+        {
+          userName: store.userName,
+          roomKey: store.joiningRoomKey,
+        },
+      );
+      store.joiningRoomKey = null;
     }
   },
 };
@@ -96,7 +109,6 @@ h1 {
   flex-direction: column;
   padding: 10px;
 }
-
 #holder-rooms {
   overflow-y: scroll;
   flex: 1;
@@ -105,7 +117,6 @@ h1 {
   border-radius: 10px;
   background-color: khaki;
 }
-
 .room {
   margin-bottom: 10px;
   border-radius: 5px;
@@ -113,20 +124,16 @@ h1 {
   background-color: salmon;
   cursor: pointer;
 }
-
 .selected {
   background-color: aquamarine;
 }
-
 .room-name {
   font-size: 16px;
   font-weight: bold;
 }
-
 .room-key {
   font-size: 12px;
   text-align: right;
   font-style: italic;
 }
-
 </style>

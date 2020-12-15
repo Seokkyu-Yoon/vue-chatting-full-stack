@@ -4,11 +4,11 @@
     <div id="form-holder">
       <input
         type="text"
-        v-model="userName"
-        v-on:keyup="setUserName"
-        v-on:keyup.enter="enter"
+        v-model="store.userName"
+        v-on:keydown="setUserName"
+        v-on:keydown.enter="login"
         placeholder="닉네임을 입력해주세요"/>
-      <button v-on:click="enter">접속</button>
+      <button v-on:click="login">접속</button>
     </div>
   </div>
 </template>
@@ -17,27 +17,32 @@
 import store from '@/store';
 
 export default {
-  name: 'Enter',
+  name: 'Login',
+  beforeCreate() {
+    if (this.$cookies.get('token') !== null) {
+      this.$router.replace('/Chat');
+    }
+    this.$cookies.remove('token');
+  },
   data() {
     return {
-      userName: '',
+      store,
     };
   },
   methods: {
     setUserName(e) {
-      this.userName = String(e.target.value).replace(' ', '');
+      store.userName = String(e.target.value).replace(' ', '');
     },
-    enter() {
-      if (!this.userName) {
+    login() {
+      if (store.userName === '') {
         // eslint-disable-next-line no-alert
         alert('닉네임을 입력해주세요');
         return;
       }
-      this.$request('req:user:create', {
-        token: store.token,
-        userName: this.userName,
+      this.$request('req:user:login', {
+        userName: store.userName,
       });
-      this.$router.push('Chat');
+      this.$router.replace('/Chat');
     },
   },
 };

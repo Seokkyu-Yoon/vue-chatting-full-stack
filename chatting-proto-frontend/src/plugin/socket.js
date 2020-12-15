@@ -1,7 +1,9 @@
 import store from '@/store';
 import io from 'socket.io-client';
 
-const $socket = io(store.serverIp);
+const $socket = io(store.serverIp, {
+  transports: ['websocket'],
+});
 
 const SocketPlugin = {
   install(vue) {

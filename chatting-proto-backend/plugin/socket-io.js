@@ -1,152 +1,191 @@
-const SocketIo = require('socket.io');
-const debug = require('debug')('chatting-proto-backend:server');
-const roomManager = require('../room');
-const userManager = require('../user');
+const debug = require('debug')('chatting-proto-backend:server:socket');
 
-function PluginSocketIo() {
-  this.socketMap = {};
-  this.config = {
+const socketIo = require('socket.io');
+const socketIoRedis = require('socket.io-redis');
+const socketIoEmitter = require('socket.io-emitter');
+
+const {
+  CONNECTION,
+  DISCONNECT,
+  Event,
+  Response,
+  Request,
+} = require('./interface');
+
+const Config = {
+  SocketIo: {
     cors: {
       origin: '*',
-      methods: ['GET', 'POST'],
+      method: ['GET', 'POST'],
     },
-  };
+  },
+  Redis: {
+    host: 'localhost',
+    port: 6379,
+  },
+};
+
+const emitter = socketIoEmitter(Config.Redis);
+
+function activate(server, redis) {
+  const sockets = {};
+
+  function getBase36RandomStr() {
+    return Math.random().toString(36).substring(2, 15);
+  }
+  async function getRandomHash() {
+    return `${getBase36RandomStr()}${getBase36RandomStr()}`;
+  }
+  async function makeRoomKey() {
+    let roomKey = await getRandomHash();
+    // eslint-disable-next-line no-await-in-loop
+    while (await redis.existsRoom({ roomKey })) {
+    // eslint-disable-next-line no-await-in-loop
+      roomKey = await getRandomHash();
+    }
+    return roomKey;
+  }
+
+  debug('activate socket.io');
+  const io = socketIo(server, Config.SocketIo);
+  io.adapter(socketIoRedis(Config.Redis));
+
+  async function sendUsers(socket = null) {
+    const users = {};
+    await io.of('/').adapter.nsp.sockets.forEach(({ id, userName }) => {
+      if (typeof userName !== 'string') return;
+      users[id] = { userName };
+    });
+    if (socket === null) {
+      emitter.broadcast.emit(Event.User.LIST, users);
+    } else {
+      socket.emit(Response.User.LIST, users);
+    }
+  }
+
+  async function sendRooms(socket = null) {
+    const rooms = await redis.getRoom();
+    const roomsWithSockets = Object.keys(rooms).reduce((bucket, roomKey) => {
+      const roomSockets = io.of('/').adapter.rooms.get(roomKey) || new Set();
+      if (roomSockets.size === 0) {
+        return bucket;
+      }
+
+      const room = {};
+      room[roomKey] = rooms[roomKey];
+      room[roomKey].sockets = [...roomSockets];
+      return {
+        ...bucket,
+        ...room,
+      };
+    }, {});
+
+    if (socket === null) {
+      emitter.broadcast.emit(Event.Room.LIST, roomsWithSockets);
+    } else {
+      socket.emit(Response.Room.LIST, roomsWithSockets);
+    }
+  }
+
+  async function sendMessage(socket = null, { roomKey = '' } = {}) {
+    const messages = await redis.getMessages(roomKey);
+    if (socket === null) {
+      emitter.to(roomKey).emit(Event.Room.MESSAGES, messages);
+      return;
+    }
+    socket.emit(Response.Room.MESSAGES, messages);
+  }
+
+  async function loginUser(socket, { userName, roomKey = null }) {
+    debug(`${socket.id} join`);
+    const roomKeys = new Set();
+    if (roomKey !== null) {
+      io.of('/').adapter.remoteJoin(socket.id, roomKey);
+      roomKeys.add(roomKey);
+      await sendRooms();
+    }
+    Object.assign(socket, { userName });
+    sockets[socket.id] = { userName, roomKeys };
+    await sendUsers();
+  }
+
+  async function writeMessage(socket, { roomKey, text }) {
+    await redis.writeMessage({
+      type: 'message',
+      userName: socket.userName,
+      roomKey,
+      text,
+    });
+    await sendMessage(null, { roomKey });
+  }
+
+  async function joinRoom(socket, { roomKey }) {
+    debug(`${socket.userName} join ${roomKey}`);
+    await redis.joinRoom({ userName: socket.userName, roomKey });
+    io.of('/').adapter.remoteJoin(socket.id, roomKey);
+    sockets[socket.id].roomKeys.add(roomKey);
+    await sendUsers();
+    await sendRooms();
+    await sendMessage(null, { roomKey });
+  }
+
+  async function createRoom(socket, { roomName }) {
+    debug(`${socket.userName} create room`);
+    const roomKey = await makeRoomKey();
+    await redis.createRoom({ roomKey, roomName });
+    await joinRoom(socket, { roomKey });
+    await sendRooms();
+    socket.emit(Response.Room.CREATE, roomKey);
+  }
+
+  async function leaveRoom(socket, { roomKey }) {
+    debug(`${socket.userName} leave ${roomKey}`);
+    await redis.leaveRoom({ userName: socket.userName, roomKey });
+    sockets[socket.id].roomKeys.delete(roomKey);
+    if (socket.rooms.has(roomKey)) {
+      io.of('/').adapter.remoteLeave(socket.id, roomKey);
+    }
+    await sendUsers();
+    await sendRooms();
+    await sendMessage(null, { roomKey });
+  }
+
+  async function disconnect(socket) {
+    debug(`${socket.id} has disconnect`);
+    console.log(sockets);
+    if (typeof sockets[socket.id] === 'undefined') return;
+
+    const { roomKeys } = sockets[socket.id];
+    await Promise.all(
+      [...roomKeys].map(async (roomKey) => {
+        await leaveRoom(socket, { roomKey });
+      }),
+    );
+
+    delete sockets[socket.id];
+    await sendUsers();
+  }
+
+  async function connection(socket) {
+    debug(`${socket.id} has connect`);
+    socket.on(Event.User.LIST, sendUsers.bind(null));
+    socket.on(Event.Room.LIST, sendRooms.bind(null));
+    socket.on(Event.Room.MESSAGES, sendMessage.bind(null, null));
+
+    socket.on(Request.User.LIST, sendUsers.bind(null, socket));
+    socket.on(Request.User.LOGIN, loginUser.bind(null, socket));
+
+    socket.on(Request.Room.LIST, sendRooms.bind(null, socket));
+    socket.on(Request.Room.JOIN, joinRoom.bind(null, socket));
+    socket.on(Request.Room.CREATE, createRoom.bind(null, socket));
+    socket.on(Request.Room.LEAVE, leaveRoom.bind(null, socket));
+    socket.on(Request.Room.WRITE, writeMessage.bind(null, socket));
+    socket.on(Request.Room.MESSAGES, sendMessage.bind(null, socket));
+
+    socket.on(DISCONNECT, disconnect.bind(null, socket));
+  }
+
+  io.on(CONNECTION, connection);
 }
 
-PluginSocketIo.prototype.activate = function activate(server) {
-  debug('activate socket.io');
-  this.io = SocketIo(server, this.config);
-  this.io.on('connection', (socket) => {
-    debug(`${socket.id} has connected`);
-    this.resRoomList(socket);
-    this.resUserList(socket);
-    socket.on('disconnect', this.disconnect.bind(this, socket));
-
-    socket.on('event:user:list', this.eventUserList.bind(this));
-    socket.on('req:user:list', this.resUserList.bind(this, socket));
-    socket.on('req:user:create', this.userCreate.bind(this, socket));
-    socket.on('req:user:join', this.userJoin.bind(this, socket));
-
-    socket.on('event:room:list', this.eventRoomList.bind(this));
-    socket.on('req:room:list', this.resRoomList.bind(this, socket));
-    socket.on('req:room:create', this.roomCreate.bind(this, socket));
-    socket.on('req:room:join', this.roomJoin.bind(this, socket));
-    socket.on('req:room:leave', this.roomLeave.bind(this, socket));
-    socket.on('req:room:message', this.roomMessage.bind(this, socket));
-  });
-
-  setTimeout(() => {
-    const sockets = [...this.io.sockets.sockets.values()];
-    const socketTokens = sockets.map(({ token }) => token);
-    const savedTokens = Object.keys(userManager.userMap);
-
-    const disconnectTokens = savedTokens.filter((savedToken) => !socketTokens.includes(savedToken));
-    disconnectTokens.forEach((disconnectToken) => {
-      userManager.destroy(disconnectToken);
-    });
-    this.eventUserList();
-
-    const roomKeys = Object.keys(roomManager.roomMap);
-    roomKeys.forEach((roomKey) => {
-      const room = roomManager.roomMap[roomKey];
-      const roomTokens = [...room.tokens];
-      roomTokens.forEach((tokenOfRoom) => {
-        if (!socketTokens.includes(tokenOfRoom)) {
-          const roomMessages = room.messages;
-          for (let messageIndex = roomMessages.length - 1; messageIndex > -1; messageIndex -= 1) {
-            const { token, userName } = roomMessages[messageIndex];
-            if (token === tokenOfRoom) {
-              roomManager.leave(tokenOfRoom, userName, roomKey);
-              break;
-            }
-          }
-        }
-      });
-    });
-    this.eventRoomList();
-  }, 5000);
-};
-PluginSocketIo.prototype.userCreate = function userCreate(socket, { token, userName }) {
-  debug(`${token} create user '${userName}'`);
-  userManager.create(token, userName);
-  this.userJoin(socket, { token });
-  this.eventUserList();
-};
-PluginSocketIo.prototype.userJoin = function userJoin(socket, { token }) {
-  debug(`${socket.id} join with '${token}'`);
-  Object.assign(socket, { token });
-  if (typeof userManager.userMap[token] === 'undefined') return;
-  const userRoomKeySets = userManager.get(token).roomKeys;
-  [...userRoomKeySets].forEach((roomKey) => {
-    socket.join(roomKey);
-  });
-};
-PluginSocketIo.prototype.roomCreate = function roomCreate(socket, { roomName }) {
-  const { userName } = userManager.get(socket.token);
-  debug(`${userName} create room`);
-  const roomKey = roomManager.create(roomName);
-  this.eventRoomList();
-  this.resRoomCreate(socket, roomKey);
-  this.roomJoin(socket, { token: socket.token, userName, roomKey });
-};
-PluginSocketIo.prototype.roomJoin = function roomJoin(socket, { roomKey }) {
-  const { userName } = userManager.get(socket.token);
-  debug(`${userName} join room of '${roomKey}'`);
-  userManager.joinRoom(socket.token, roomKey);
-  roomManager.join(socket.token, userName, roomKey);
-  socket.join(roomKey);
-  this.resRoomMessages(roomKey);
-};
-PluginSocketIo.prototype.roomLeave = function roomLeave(socket, { roomKey }) {
-  const { userName } = userManager.get(socket.token);
-  debug(`${userName} leave room of '${roomKey}'`);
-  userManager.leaveRoom(socket.token, roomKey);
-  roomManager.leave(socket.token, userName, roomKey);
-  socket.leave(roomKey);
-  if (roomManager.isDestroy(roomKey)) {
-    debug(`${roomKey} has destroied`);
-    this.eventRoomList();
-  } else {
-    this.resRoomMessages(roomKey);
-  }
-};
-PluginSocketIo.prototype.roomMessage = function roomMessage(socket, { roomKey, text }) {
-  const { userName } = userManager.get(socket.token);
-  // debug(`- user: ${userName}\n- room: ${roomKey}\n- text\n${text}\n`);
-  roomManager.onMessage(userName, roomKey, text);
-  this.resRoomMessages(roomKey);
-};
-PluginSocketIo.prototype.disconnect = function disconnect(socket) {
-  const { token } = socket;
-  if (typeof token === 'undefined') return;
-
-  const user = userManager.get(token);
-  if (typeof user === 'undefined') return;
-
-  debug(`${token} exit`);
-  user.roomKeys.forEach((roomKey) => {
-    this.roomLeave(socket, { userName: user.userName, roomKey });
-  });
-  userManager.destroy(token);
-  this.eventUserList();
-};
-PluginSocketIo.prototype.eventUserList = function eventUserList() {
-  this.io.sockets.emit('event:user:list', userManager.serialize());
-};
-PluginSocketIo.prototype.eventRoomList = function eventRoomList() {
-  this.io.sockets.emit('event:room:list', roomManager.serialize());
-};
-PluginSocketIo.prototype.resUserList = function resUserList(socket) {
-  this.io.to(socket.id).emit('res:user:list', userManager.serialize());
-};
-PluginSocketIo.prototype.resRoomList = function resRoomList(socket) {
-  this.io.to(socket.id).emit('res:room:list', roomManager.serialize());
-};
-PluginSocketIo.prototype.resRoomCreate = function resRoomCreate(socket, roomKey) {
-  this.io.to(socket.id).emit('res:room:create', roomKey);
-};
-PluginSocketIo.prototype.resRoomMessages = function resRoomMessages(roomKey) {
-  this.io.to(roomKey).emit('res:room:messages', roomManager.roomMap[roomKey].messages);
-};
-
-module.exports = PluginSocketIo;
+module.exports = activate;

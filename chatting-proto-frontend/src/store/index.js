@@ -1,7 +1,10 @@
 function Store() {
   this.serverIp = 'http://192.168.1.77:3000';
-  this.token = Math.random().toString(16).slice(2);
-  this.selectedRoomKey = null;
+  this.joiningRoomKey = null;
+  this.userName = '';
+  this.userMap = {};
+  this.roomMap = {};
+  this.messages = [];
 }
 
 const store = new Store();

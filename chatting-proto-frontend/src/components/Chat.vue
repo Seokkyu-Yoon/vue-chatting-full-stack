@@ -12,7 +12,7 @@
         </div>
         <div v-else-if="message.type === 'time'">
           <div>
-            {{message.year}}년 {{message.month}}월 {{message.date}}일
+            {{message.text}}
           </div>
         </div>
         <div class="access-record" v-else>
@@ -21,7 +21,11 @@
       </div>
     </div>
     <div id="chat-form">
-      <textarea type="text" v-model="newText"/>
+      <textarea type="text" v-model="newText"
+        v-on:keydown.enter.exact="(e) => {
+          e.preventDefault();
+          send();
+        }"/>
       <button v-on:click="send">전송</button>
     </div>
   </div>
@@ -30,18 +34,16 @@
 <script>
 export default {
   name: 'Chat',
-  beforeCreate() {
-    this.$socket.on('res:room:messages', (messages) => {
-      this.messages = messages;
-    });
-  },
-  props: ['roomKey'],
+  props: ['roomKey', 'messages'],
   data() {
     return {
       newText: '',
       scrollToBottom: true,
-      messages: [],
     };
+  },
+  mounted() {
+    const chatBoard = document.querySelector('#chat-board');
+    chatBoard.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
   },
   beforeUpdate() {
     const chatBoard = document.querySelector('#chat-board');
@@ -56,7 +58,15 @@ export default {
   },
   methods: {
     send() {
-      this.$request('req:room:message', { roomKey: this.roomKey, text: this.newText.trim() });
+      if (this.newText.trim() === '') return;
+      this.$request(
+        'req:room:write',
+        {
+          token: this.$cookies.get('token'),
+          roomKey: this.roomKey,
+          text: this.newText.trim(),
+        },
+      );
       this.newText = '';
     },
   },

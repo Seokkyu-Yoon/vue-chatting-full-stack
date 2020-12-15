@@ -1,8 +1,11 @@
 <template>
   <div id="cover">
-    <ComponentRooms v-bind:roomMap="roomMap"/>
-    <ComponentChat v-if="store.selectedRoomKey !== null" v-bind:roomKey="store.selectedRoomKey"/>
-    <ComponentUsers v-bind:userMap="userMap"/>
+    <ComponentRooms v-bind:rooms="rooms"/>
+    <ComponentChat
+      v-if="store.joiningRoomKey !== null"
+      v-bind:roomKey="store.joiningRoomKey"
+      v-bind:messages="store.messages"/>
+    <ComponentUsers v-bind:users="users"/>
   </div>
 </template>
 
@@ -21,33 +24,46 @@ export default {
     ComponentChat,
     ComponentUsers,
   },
-  beforeCreate() {
-    this.$request('req:room:list');
-    this.$request('req:user:list');
-    this.$socket.on('event:user:list', (userMap) => {
-      this.userMap = userMap;
-    });
-    this.$socket.on('res:user:list', (userMap) => {
-      this.userMap = userMap;
-    });
-    this.$socket.on('event:room:list', (roomMap) => {
-      this.roomMap = roomMap;
-    });
-    this.$socket.on('res:room:list', (roomMap) => {
-      this.roomMap = roomMap;
-    });
-  },
   data() {
     return {
       store,
       userMap: {},
-      roomMap: {},
     };
   },
-  updated() {
-    if (typeof this.userMap[store.token] === 'undefined') {
+  beforeCreate() {
+    if (store.userName === '') {
       this.$router.replace('/');
+      return;
     }
+    this.$request('req:room:list');
+  },
+  computed: {
+    users() {
+      const socketIds = Object.keys(store.userMap);
+      if (store.joiningRoomKey === null) {
+        return socketIds.map((socketId) => ({
+          socketId,
+          userName: store.userMap[socketId].userName,
+        }));
+      }
+      return socketIds.reduce((bucket, socketId) => {
+        const user = store.userMap[socketId];
+        if (!store.roomMap[store.joiningRoomKey].sockets.includes(socketId)) {
+          return bucket;
+        }
+        bucket.push({
+          socketId,
+          userName: user.userName,
+        });
+        return bucket;
+      }, []);
+    },
+    rooms() {
+      return Object.keys(store.roomMap).map((roomKey) => ({
+        roomKey,
+        ...store.roomMap[roomKey],
+      }));
+    },
   },
 };
 </script>

@@ -8,11 +8,39 @@
 import store from '@/store';
 
 export default {
-  beforeCreate() {
+  mounted() {
     this.$socket.on('connect', () => {
-      if (store.token !== null) {
-        this.$request('req:user:join', { token: store.token });
-      }
+      if (store.userName === '') return;
+      this.$request('req:user:login', {
+        userName: store.userName,
+        roomKey: store.joiningRoomKey,
+      });
+      this.$request('req:room:list');
+    });
+    this.$socket.on('res:room:create', (roomKey) => {
+      store.joiningRoomKey = roomKey;
+    });
+    this.$socket.on('event:user:list', (userMap) => {
+      store.userMap = userMap;
+      console.log('event:user:list');
+      console.log(userMap);
+    });
+    this.$socket.on('res:user:list', (userMap) => {
+      store.userMap = userMap;
+      console.log('res:user:list');
+      console.log(userMap);
+    });
+    this.$socket.on('event:room:list', (roomMap) => {
+      store.roomMap = roomMap;
+    });
+    this.$socket.on('res:room:list', (roomMap) => {
+      store.roomMap = roomMap;
+    });
+    this.$socket.on('event:room:messages', (messages) => {
+      store.messages = messages;
+    });
+    this.$socket.on('res:room:messages', (messages) => {
+      store.messages = messages;
     });
   },
 };

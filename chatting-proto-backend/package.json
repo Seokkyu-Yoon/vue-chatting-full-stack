@@ -1,25 +1,35 @@
 {
   "name": "chatting-proto-backend",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "node ./bin/www",
-    "dev": "set DEBUG=chatting-proto-backend:server && nodemon --ignore storage/ ./bin/www"
+    "start": "node server.js",
+    "dev": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* bin/www",
+    "dev:cluster": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* cluster.js",
+    "dev:socket": "set DEBUG=chatting-proto-backend:server:socket && nodemon  --ignore messages/* cluster.js"
   },
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "cookie-parser": "~1.4.4",
+    "cluster": "^0.7.7",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
-    "debug": "~2.6.9",
-    "ejs": "~2.6.1",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1",
-    "socket.io": "^3.0.3"
+    "debug": "^4.3.1",
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "http-errors": "^1.8.0",
+    "ioredis": "^4.19.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.6",
+    "pm2": "^4.5.0",
+    "socket.io": "^3.0.4",
+    "socket.io-emitter": "^3.1.1",
+    "socket.io-redis": "^6.0.1"
   },
   "devDependencies": {
-    "eslint": "^7.14.0",
+    "eslint": "^7.15.0",
     "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "nodemon": "^2.0.6"
+    "eslint-plugin-import": "^2.22.1"
   }
 }

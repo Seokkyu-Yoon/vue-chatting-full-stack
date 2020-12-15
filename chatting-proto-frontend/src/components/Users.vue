@@ -5,8 +5,8 @@
       <div
         class="user"
         v-for="user in users"
-        v-bind:key="`user-${user.userToken}`">
-        <div class="user-key">{{user.userToken}}</div>
+        v-bind:key="`user-${user.socketId}`">
+        <div class="user-key">{{user.socketId}}</div>
         <div class="user-name">{{user.userName}}</div>
       </div>
     </div>
@@ -17,17 +17,7 @@
 
 export default {
   name: 'Users',
-  props: ['userMap'],
-  created() {
-  },
-  computed: {
-    users() {
-      return Object.keys(this.userMap).map((userToken) => ({
-        userToken,
-        userName: this.userMap[userToken].userName,
-      }));
-    },
-  },
+  props: ['users'],
   methods: {
     makeuser() {
       if (!this.newuserName) {
