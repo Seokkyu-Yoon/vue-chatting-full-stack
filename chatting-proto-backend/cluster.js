@@ -3,20 +3,19 @@ const os = require('os');
 
 const server = require('./bin/www');
 
-const numCPUs = os.cpus().length;
+cluster.schedulingPolicy = cluster.SCHED_RR;
 if (cluster.isMaster) {
-  // Master:
-  // Let's fork as many workers as you have CPU cores console.log(numCPUs);
-  console.log(numCPUs);
-  for (let i = 0; i < numCPUs; i += 1) {
+  os.cpus().forEach((cpu) => {
     cluster.fork();
-    console.log('fork');
-  }
+    cluster.on('exit', (worker, code, signal) => {
+      console.log('worker has stopped :', worker.id);
+      if (code === 200) {
+        cluster.fork();
+        console.log('worker has restarted');
+      }
+    });
+  });
 } else {
-  // Worker:
-  // Let's spawn a HTTP server
-  // (Workers can share any TCP connection.
-  // In this case its a HTTP server)
-  console.log('else');
+  console.log('worker has created :', cluster.worker.id);
   server.listen(3000);
 }

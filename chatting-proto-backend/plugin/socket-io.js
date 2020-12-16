@@ -27,6 +27,13 @@ const Config = {
 
 const emitter = socketIoEmitter(Config.Redis);
 
+async function getTrashUsers(currSocketIds = [], redisSocketIds = []) {
+  const trashUsersSet = new Set(redisSocketIds);
+  await Promise.all(currSocketIds.map(async (socketId) => {
+    trashUsersSet.delete(socketId);
+  }));
+  return [...trashUsersSet];
+}
 function activate(server, redis) {
   const sockets = {};
 
@@ -50,35 +57,50 @@ function activate(server, redis) {
   const io = socketIo(server, Config.SocketIo);
   io.adapter(socketIoRedis(Config.Redis));
 
-  async function sendUsers(socket = null) {
+  async function sendUsers(socket = null, { roomKey = null } = {}) {
     const users = {};
-    await io.of('/').adapter.nsp.sockets.forEach(({ id, userName }) => {
-      if (typeof userName !== 'string') return;
-      users[id] = { userName };
-    });
-    if (socket === null) {
-      emitter.broadcast.emit(Event.User.LIST, users);
-    } else {
+    const socketIds = await io.of('/').adapter.sockets(roomKey === null ? [] : [roomKey]);
+    await Promise.all([...socketIds].map(async (socketId) => {
+      const userName = await redis.getUserName(socketId);
+      if (userName === null) return;
+      users[socketId] = { userName };
+    }));
+    if (socket !== null) {
       socket.emit(Response.User.LIST, users);
+      return;
     }
+    if (roomKey !== null) {
+      emitter.in(roomKey).emit(Response.User.LIST, users);
+      return;
+    }
+    const currSocketIds = Object.keys(users);
+    const redisSocketIds = await redis.getSocketIds();
+    const trashUsers = await getTrashUsers(currSocketIds, redisSocketIds);
+    emitter.broadcast.emit(Event.User.LIST, users);
+
+    await Promise.all(
+      trashUsers.map(async (socketId) => {
+        await redis.deleteUser(socketId);
+        if (sockets[socketId]) {
+          delete sockets[socketId];
+        }
+      }),
+    );
   }
 
   async function sendRooms(socket = null) {
     const rooms = await redis.getRoom();
-    const roomsWithSockets = Object.keys(rooms).reduce((bucket, roomKey) => {
-      const roomSockets = io.of('/').adapter.rooms.get(roomKey) || new Set();
-      if (roomSockets.size === 0) {
-        return bucket;
-      }
-
-      const room = {};
-      room[roomKey] = rooms[roomKey];
-      room[roomKey].sockets = [...roomSockets];
-      return {
-        ...bucket,
-        ...room,
+    const roomsWithSockets = {};
+    await Promise.all(Object.keys(rooms).map(async (roomKey) => {
+      const roomSockets = (await io.of('/').adapter.sockets([roomKey])) || new Set();
+      // if (roomSockets.size === 0) {
+      //   return;
+      // }
+      roomsWithSockets[roomKey] = {
+        ...rooms[roomKey],
+        sockets: [...roomSockets],
       };
-    }, {});
+    }));
 
     if (socket === null) {
       emitter.broadcast.emit(Event.Room.LIST, roomsWithSockets);
@@ -97,22 +119,23 @@ function activate(server, redis) {
   }
 
   async function loginUser(socket, { userName, roomKey = null }) {
-    debug(`${socket.id} join`);
+    debug(`${socket.id} login`);
     const roomKeys = new Set();
     if (roomKey !== null) {
-      io.of('/').adapter.remoteJoin(socket.id, roomKey);
+      await io.of('/').adapter.remoteJoin(socket.id, roomKey);
       roomKeys.add(roomKey);
       await sendRooms();
     }
-    Object.assign(socket, { userName });
-    sockets[socket.id] = { userName, roomKeys };
-    await sendUsers();
+    await redis.addUser(socket.id, userName);
+    sockets[socket.id] = roomKeys;
+    await sendUsers(null, { roomKey });
   }
 
   async function writeMessage(socket, { roomKey, text }) {
+    const userName = await redis.getUserName(socket.id);
     await redis.writeMessage({
       type: 'message',
-      userName: socket.userName,
+      userName,
       roomKey,
       text,
     });
@@ -120,17 +143,19 @@ function activate(server, redis) {
   }
 
   async function joinRoom(socket, { roomKey }) {
-    debug(`${socket.userName} join ${roomKey}`);
-    await redis.joinRoom({ userName: socket.userName, roomKey });
+    const userName = await redis.getUserName(socket.id);
+    debug(`${userName} join ${roomKey}`);
+    await redis.joinRoom({ userName, roomKey });
     io.of('/').adapter.remoteJoin(socket.id, roomKey);
-    sockets[socket.id].roomKeys.add(roomKey);
-    await sendUsers();
+    sockets[socket.id].add(roomKey);
+    await sendUsers(null, { roomKey });
     await sendRooms();
     await sendMessage(null, { roomKey });
   }
 
   async function createRoom(socket, { roomName }) {
-    debug(`${socket.userName} create room`);
+    const userName = await redis.getUserName(socket.id);
+    debug(`${userName} create room`);
     const roomKey = await makeRoomKey();
     await redis.createRoom({ roomKey, roomName });
     await joinRoom(socket, { roomKey });
@@ -139,36 +164,36 @@ function activate(server, redis) {
   }
 
   async function leaveRoom(socket, { roomKey }) {
-    debug(`${socket.userName} leave ${roomKey}`);
-    await redis.leaveRoom({ userName: socket.userName, roomKey });
-    sockets[socket.id].roomKeys.delete(roomKey);
+    const userName = await redis.getUserName(socket.id);
+    debug(`${userName} leave ${roomKey}`);
+    await redis.leaveRoom({ userName, roomKey });
+    sockets[socket.id].delete(roomKey);
     if (socket.rooms.has(roomKey)) {
       io.of('/').adapter.remoteLeave(socket.id, roomKey);
     }
-    await sendUsers();
+    await sendUsers(null, { roomKey });
     await sendRooms();
     await sendMessage(null, { roomKey });
   }
 
   async function disconnect(socket) {
     debug(`${socket.id} has disconnect`);
-    console.log(sockets);
     if (typeof sockets[socket.id] === 'undefined') return;
 
-    const { roomKeys } = sockets[socket.id];
+    const roomKeys = sockets[socket.id];
     await Promise.all(
       [...roomKeys].map(async (roomKey) => {
         await leaveRoom(socket, { roomKey });
       }),
     );
-
+    await redis.deleteUser(socket.id);
     delete sockets[socket.id];
-    await sendUsers();
+    await sendUsers(null);
   }
 
   async function connection(socket) {
     debug(`${socket.id} has connect`);
-    socket.on(Event.User.LIST, sendUsers.bind(null));
+    socket.on(Event.User.LIST, sendUsers.bind(null, null));
     socket.on(Event.Room.LIST, sendRooms.bind(null));
     socket.on(Event.Room.MESSAGES, sendMessage.bind(null, null));
 

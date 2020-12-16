@@ -5,6 +5,7 @@ function Store() {
   this.userMap = {};
   this.roomMap = {};
   this.messages = [];
+  console.log(this.serverIp);
 }
 
 const store = new Store();

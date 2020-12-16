@@ -16,19 +16,19 @@ export default {
         roomKey: store.joiningRoomKey,
       });
       this.$request('req:room:list');
+      if (store.joiningRoomKey !== null) {
+        this.$request('req:user:list', { roomKey: store.joiningRoomKey });
+      }
     });
     this.$socket.on('res:room:create', (roomKey) => {
       store.joiningRoomKey = roomKey;
     });
     this.$socket.on('event:user:list', (userMap) => {
+      if (store.joiningRoomKey !== null) return;
       store.userMap = userMap;
-      console.log('event:user:list');
-      console.log(userMap);
     });
     this.$socket.on('res:user:list', (userMap) => {
       store.userMap = userMap;
-      console.log('res:user:list');
-      console.log(userMap);
     });
     this.$socket.on('event:room:list', (roomMap) => {
       store.roomMap = roomMap;

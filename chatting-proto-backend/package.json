@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "pm2 start cluster.js -i 0",
+    "restart": "pm2 restart cluster",
+    "stop": "pm2 stop cluster",
+    "del": "pm2 del cluster",
+    "monit": "pm2 monit",
     "dev": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* bin/www",
     "dev:cluster": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* cluster.js",
     "dev:socket": "set DEBUG=chatting-proto-backend:server:socket && nodemon  --ignore messages/* cluster.js"

@@ -47,6 +47,36 @@ async function messageToJson(roomKey, message) {
   // fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2));
 }
 
+async function addUser(socketId, userName) {
+  await redis.multi()
+    .sadd('users', socketId)
+    .set(`user:${socketId}`, userName)
+    .exec((e) => {
+      if (e === null) return;
+      throw new Error(e);
+    });
+}
+
+async function deleteUser(socketId) {
+  await redis.multi()
+    .srem('users', socketId)
+    .del(`user:${socketId}`)
+    .exec((e) => {
+      if (e === null) return;
+      throw new Error(e);
+    });
+}
+
+async function getSocketIds() {
+  const socketIds = await redis.smembers('users');
+  return socketIds;
+}
+
+async function getUserName(socketId) {
+  const userName = await redis.get(`user:${socketId}`);
+  return userName;
+}
+
 async function checkLastUpdated(roomKey) {
   const now = new Date();
   const lastUpdated = await redis.get(`room:${roomKey}:lastUpdated`);
@@ -148,6 +178,11 @@ async function getRoom({ roomKey = '' } = {}) {
 }
 
 module.exports = {
+  addUser,
+  deleteUser,
+  getUserName,
+  getSocketIds,
+
   writeMessage,
   createRoom,
   joinRoom,

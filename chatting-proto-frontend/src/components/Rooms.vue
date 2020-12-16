@@ -69,6 +69,7 @@ export default {
       }
       if (roomKey === joiningRoomKey) {
         store.joiningRoomKey = null;
+        this.$request('req:user:list', { roomKey: null });
         return;
       }
 
@@ -80,6 +81,7 @@ export default {
         },
       );
       store.joiningRoomKey = roomKey;
+      this.$request('req:user:list', { roomKey });
       this.$request('req:room:messages', { roomKey });
     },
   },
