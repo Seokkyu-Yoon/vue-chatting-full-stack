@@ -65,6 +65,15 @@ function activate(server, redis) {
       if (userName === null) return;
       users[socketId] = { userName };
     }));
+
+    Object.keys(users).sort().reduce((bucket, socketId) => {
+      const temp = {};
+      temp[socketId] = users[socketId];
+      return {
+        ...bucket,
+        ...temp,
+      };
+    }, {});
     if (socket !== null) {
       socket.emit(Response.User.LIST, users);
       return;

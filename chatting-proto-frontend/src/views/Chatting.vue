@@ -18,7 +18,7 @@ import ComponentChat from '@/components/Chat.vue';
 import ComponentUsers from '@/components/Users.vue';
 
 export default {
-  name: 'Chat',
+  name: 'Chatting',
   components: {
     ComponentRooms,
     ComponentChat,

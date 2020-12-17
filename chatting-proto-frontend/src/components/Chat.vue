@@ -21,7 +21,8 @@
       </div>
     </div>
     <div id="chat-form">
-      <textarea type="text" v-model="newText"
+      <textarea type="text"
+        v-model="newText"
         v-on:keydown.enter.exact="(e) => {
           e.preventDefault();
           send();
@@ -32,6 +33,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'Chat',
   props: ['roomKey', 'messages'],
@@ -39,22 +41,32 @@ export default {
     return {
       newText: '',
       scrollToBottom: true,
+      joiningRoomKey: null,
     };
   },
   mounted() {
     const chatBoard = document.querySelector('#chat-board');
-    chatBoard.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
+    this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
+    chatBoard.scrollTop = this.scrollTop;
+    this.joiningRoomKey = this.roomKey;
   },
   beforeUpdate() {
     const chatBoard = document.querySelector('#chat-board');
-    this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight;
+    if (this.joiningRoomKey !== this.roomKey) {
+      this.scrollToBottom = true;
+    } else {
+      this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight;
+    }
+    this.scrollTop = chatBoard.scrollTop;
+    this.joiningRoomKey = this.roomKey;
+    // this.
   },
   updated() {
-    if (!this.scrollToBottom) {
-      return;
-    }
     const chatBoard = document.querySelector('#chat-board');
-    chatBoard.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
+    if (this.scrollToBottom) {
+      this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
+    }
+    chatBoard.scrollTop = this.scrollTop;
   },
   methods: {
     send() {
@@ -62,7 +74,6 @@ export default {
       this.$request(
         'req:room:write',
         {
-          token: this.$cookies.get('token'),
           roomKey: this.roomKey,
           text: this.newText.trim(),
         },
@@ -91,6 +102,7 @@ h1 {
   padding: 10px;
   margin-bottom: 30px;
   border-radius: 10px;
+  max-height: 90%;
 }
 #chat-form {
   display: flex;

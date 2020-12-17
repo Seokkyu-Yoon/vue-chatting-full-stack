@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start cluster.js -i 0",
+    "start": "pm2 start bin/cluster.js -i max",
     "restart": "pm2 restart cluster",
     "stop": "pm2 stop cluster",
     "del": "pm2 del cluster",
@@ -20,6 +20,7 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "debug": "^4.3.1",
+    "dotenv": "^8.2.0",
     "ejs": "^3.1.5",
     "express": "^4.17.1",
     "http-errors": "^1.8.0",

@@ -1,13 +1,18 @@
 <template>
-  <div id="app">
+  <div id="app" class="d-flex flex-column w-100 h-100">
+    <Nav />
     <router-view/>
   </div>
 </template>
 
 <script>
+import Nav from '@/components/Navigation.vue';
 import store from '@/store';
 
 export default {
+  components: {
+    Nav,
+  },
   mounted() {
     this.$socket.on('connect', () => {
       if (store.userName === '') return;
@@ -45,17 +50,18 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style>
+html {
+  height: 100%;
+}
+body {
+  height:100%;
+  display: flex;
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  display: flex;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
   color: #2c3e50;
 }
 </style>

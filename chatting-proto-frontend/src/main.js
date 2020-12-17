@@ -1,16 +1,16 @@
 import Vue from 'vue';
-import VueCookies from 'vue-cookies';
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue';
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 import App from './App.vue';
 import router from './router';
 import PluginSocket from './plugin/socket';
 
 Vue.config.productionTip = false;
-
-Vue.use(VueCookies);
+Vue.use(BootstrapVue);
+Vue.use(BootstrapVueIcons);
 Vue.use(PluginSocket);
-
-Vue.$cookies.config('7d');
 
 new Vue({
   router,
