@@ -71,6 +71,7 @@ export default {
 <style scoped>
 #cover {
   display: flex;
-  flex: 1;
+  max-height: 85%;
+  overflow: hidden;
 }
 </style>
