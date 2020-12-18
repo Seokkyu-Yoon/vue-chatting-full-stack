@@ -6,16 +6,16 @@
         type="text"
         class="form-control mr-1"
         v-model="userName"
-        v-on:keydown="setUserName"
+        @input="setUserName"
         v-on:keydown.enter="login"
         placeholder="별명을 입력해주세요"/>
       <button type="button" class="btn btn-primary" v-on:click="login">접속</button>
     </form>
-    <div v-if="userName === ''" class="alert alert-danger w-100" role="alert" id="alert">
-      사용불가한 별명입니다
-    </div>
-    <div v-else class="alert alert-success w-100" role="alert">
+    <div v-if="isValid" class="alert alert-success w-100" role="alert">
       사용가능한 별명입니다
+    </div>
+    <div v-else class="alert alert-danger w-100" role="alert" id="alert">
+      사용불가한 별명입니다
     </div>
   </div>
 </template>

@@ -140,6 +140,24 @@ function activate(server, redis) {
     await sendUsers(null, { roomKey });
   }
 
+  async function isValidUser(socket, { userName = '' } = {}) {
+    if (userName === '') {
+      socket.emit(Response.User.VALID, false);
+      return;
+    }
+    const socketIds = await io.of('/').adapter.sockets([]);
+    // eslint-disable-next-line no-restricted-syntax
+    for (const socketId of [...socketIds]) {
+      // eslint-disable-next-line no-await-in-loop
+      const redisUserName = await redis.getUserName(socketId);
+      if (redisUserName === userName) {
+        socket.emit(Response.User.VALID, false);
+        return;
+      }
+    }
+    socket.emit(Response.User.VALID, true);
+  }
+
   async function writeMessage(socket, { roomKey, text }) {
     const userName = await redis.getUserName(socket.id);
     await redis.writeMessage({
@@ -208,6 +226,7 @@ function activate(server, redis) {
 
     socket.on(Request.User.LIST, sendUsers.bind(null, socket));
     socket.on(Request.User.LOGIN, loginUser.bind(null, socket));
+    socket.on(Request.User.VALID, isValidUser.bind(null, socket));
 
     socket.on(Request.Room.LIST, sendRooms.bind(null, socket));
     socket.on(Request.Room.JOIN, joinRoom.bind(null, socket));

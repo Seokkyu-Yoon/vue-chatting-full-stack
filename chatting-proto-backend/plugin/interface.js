@@ -15,6 +15,7 @@ const Interface = {
     User: {
       LIST: 'res:user:list',
       LOGIN: 'res:user:login',
+      VALID: 'res:user:valid',
     },
     Room: {
       LIST: 'res:room:list',
@@ -26,6 +27,7 @@ const Interface = {
     User: {
       LIST: 'req:user:list',
       LOGIN: 'req:user:login',
+      VALID: 'req:user:valid',
     },
     Room: {
       LIST: 'req:room:list',

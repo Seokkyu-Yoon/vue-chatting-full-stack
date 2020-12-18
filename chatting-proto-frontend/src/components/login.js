@@ -4,15 +4,18 @@ export default {
   name: 'Login',
   data() {
     return {
+      isValid: false,
       userName: '',
     };
   },
   methods: {
     setUserName(e) {
-      this.userName = String(e.target.value).replace(' ', '');
+      this.userName = e.target.value.replace(' ', '');
+      this.$request('req:user:valid', { userName: this.userName });
     },
-    login() {
-      if (this.userName === '') {
+    login(e) {
+      e.preventDefault();
+      if (!this.isValid) {
         document.querySelector('#alert').style.animation = 'shake 0.5s 1';
         return;
       }
@@ -23,6 +26,11 @@ export default {
       });
       this.$router.push({ name: 'Chatting' });
     },
+  },
+  beforeCreate() {
+    this.$socket.on('res:user:valid', (isValid) => {
+      this.isValid = isValid;
+    });
   },
   mounted() {
     const alert = document.querySelector('#alert');
