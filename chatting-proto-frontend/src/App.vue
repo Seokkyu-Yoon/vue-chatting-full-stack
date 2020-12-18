@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="d-flex flex-column w-100 h-100">
+  <div id="app">
     <Nav />
     <router-view/>
   </div>
@@ -51,14 +51,13 @@ export default {
 };
 </script>
 <style>
-html {
+html, body{
   height: 100%;
 }
-body {
-  height:100%;
-  display: flex;
-}
 #app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

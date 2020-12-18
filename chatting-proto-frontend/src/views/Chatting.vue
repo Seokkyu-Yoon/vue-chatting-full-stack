@@ -1,5 +1,5 @@
 <template>
-  <div id="cover">
+  <div class="d-flex h-100 overflow-hidden">
     <ComponentRooms v-bind:rooms="rooms"/>
     <ComponentChat
       v-if="store.joiningRoomKey !== null"
@@ -68,10 +68,4 @@ export default {
 };
 </script>
 
-<style scoped>
-#cover {
-  display: flex;
-  max-height: 85%;
-  overflow: hidden;
-}
-</style>
+<style scoped></style>

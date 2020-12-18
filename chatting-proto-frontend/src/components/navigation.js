@@ -9,4 +9,10 @@ export default {
       return this.store.userName !== '';
     },
   },
+  methods: {
+    showMyInfo() {
+      // eslint-disable-next-line no-alert
+      alert('구현 중');
+    },
+  },
 };

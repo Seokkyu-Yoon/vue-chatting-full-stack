@@ -1,5 +1,5 @@
 <template>
-  <div fluid class="d-flex m-md-auto justify-content-center align-items-center">
+  <div class="d-flex flex-fill justify-content-center align-items-center">
     <Login />
   </div>
 </template>

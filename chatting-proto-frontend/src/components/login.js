@@ -24,7 +24,7 @@ export default {
       this.$request('req:user:login', {
         userName: this.userName,
       });
-      this.$router.push({ name: 'Chatting' });
+      this.$router.push({ name: 'Rooms' });
     },
   },
   beforeCreate() {
