@@ -188,12 +188,14 @@ async function getRoom({ roomKey = '' } = {}) {
   if (typeof roomKey !== 'string') return null;
   if (roomKey !== '') {
     const roomIdentify = `room:${roomKey}`;
-    const roomName = await redis.get(`room:${roomKey}:name`);
+    const createBy = await redis.get(`${roomIdentify}:createBy`);
+    const roomName = await redis.get(`${roomIdentify}:name`);
     const roomPassword = await redis.get(`${roomIdentify}:password`);
     const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`));
     const roomDesc = await redis.get(`${roomIdentify}:description`);
     const roomLastUpdated = await redis.get(`${roomIdentify}:lastUpdated`);
     const room = {
+      createBy,
       roomName,
       roomPassword,
       roomMaxJoin,
@@ -207,13 +209,15 @@ async function getRoom({ roomKey = '' } = {}) {
   const roomMap = {};
   await Promise.all(
     radisRoomKeys.map(async (radisRoomKey) => {
-      const roomName = await redis.get(`room:${radisRoomKey}:name`);
       const roomIdentify = `room:${radisRoomKey}`;
+      const createBy = await redis.get(`${roomIdentify}:createBy`);
+      const roomName = await redis.get(`${roomIdentify}}:name`);
       const roomPassword = await redis.get(`${roomIdentify}:password`);
       const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`));
       const roomDesc = await redis.get(`${roomIdentify}:description`);
       const roomLastUpdated = await redis.get(`${roomIdentify}:lastUpdated`);
       const room = {
+        createBy,
         roomName,
         roomPassword,
         roomMaxJoin,
