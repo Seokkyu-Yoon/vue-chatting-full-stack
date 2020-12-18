@@ -211,7 +211,7 @@ async function getRoom({ roomKey = '' } = {}) {
     radisRoomKeys.map(async (radisRoomKey) => {
       const roomIdentify = `room:${radisRoomKey}`;
       const createBy = await redis.get(`${roomIdentify}:createBy`);
-      const roomName = await redis.get(`${roomIdentify}}:name`);
+      const roomName = await redis.get(`${roomIdentify}:name`);
       const roomPassword = await redis.get(`${roomIdentify}:password`);
       const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`));
       const roomDesc = await redis.get(`${roomIdentify}:description`);
