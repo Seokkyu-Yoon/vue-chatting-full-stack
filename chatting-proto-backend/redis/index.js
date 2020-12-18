@@ -44,7 +44,6 @@ function getMessages(roomKey) {
 async function messageToJson(roomKey, message) {
   const messagesPath = getMessagesPath(roomKey);
   messageFileManager.push(messagesPath, message);
-  // fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2));
 }
 
 async function addUser(socketId, userName) {
@@ -88,6 +87,7 @@ async function checkLastUpdated(roomKey) {
   const message = {
     type: 'time',
     text,
+    recipients: [],
   };
   await messageToJson(roomKey, message);
 }
@@ -97,6 +97,7 @@ async function writeMessage({
   userName,
   roomKey,
   text = '',
+  recipients = [],
 } = {}) {
   await checkLastUpdated(roomKey);
 
@@ -108,6 +109,7 @@ async function writeMessage({
     userName,
     text,
     time,
+    recipients,
   };
   await redis.set(`room:${roomKey}:lastUpdated`, now);
   await messageToJson(roomKey, message);
@@ -121,14 +123,27 @@ async function joinRoom({ userName, roomKey } = {}) {
   });
 }
 
-async function createRoom({ roomKey, roomName } = {}) {
+async function createRoom({
+  userName,
+  roomKey,
+  roomName,
+  roomPassword = '',
+  roomMaxJoin = 0,
+  roonDesc = '',
+} = {}) {
   const lastUpdated = new Date();
   lastUpdated.setDate(0);
 
+  const roomIdentify = `room:${roomKey}`;
+
   await redis.multi()
     .sadd('rooms', roomKey)
-    .set(`room:${roomKey}:name`, roomName)
-    .set(`room:${roomKey}:lastUpdated`, lastUpdated)
+    .set(`${roomIdentify}:createBy`, userName)
+    .set(`${roomIdentify}:name`, roomName)
+    .set(`${roomIdentify}:password`, roomPassword)
+    .set(`${roomIdentify}:maxJoin`, roomMaxJoin)
+    .set(`${roomIdentify}:description`, roonDesc)
+    .set(`${roomIdentify}:lastUpdated`, lastUpdated)
     .exec((e) => {
       if (e === null) return;
       throw new Error(e);
@@ -152,10 +167,17 @@ async function existsRoom({ roomKey } = {}) {
 async function getRoom({ roomKey = '' } = {}) {
   if (typeof roomKey !== 'string') return null;
   if (roomKey !== '') {
+    const roomIdentify = `room:${roomKey}`;
     const roomName = await redis.get(`room:${roomKey}:name`);
-    const roomLastUpdated = await redis.get(`room:${roomKey}:lastUpdated`);
+    const roomPassword = await redis.get(`${roomIdentify}:password`);
+    const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`));
+    const roomDesc = await redis.get(`${roomIdentify}:description`);
+    const roomLastUpdated = await redis.get(`${roomIdentify}:lastUpdated`);
     const room = {
       roomName,
+      roomPassword,
+      roomMaxJoin,
+      roomDesc,
       roomLastUpdated,
     };
     return room;
@@ -166,9 +188,16 @@ async function getRoom({ roomKey = '' } = {}) {
   await Promise.all(
     radisRoomKeys.map(async (radisRoomKey) => {
       const roomName = await redis.get(`room:${radisRoomKey}:name`);
-      const roomLastUpdated = await redis.get(`room:${radisRoomKey}:lastUpdated`);
+      const roomIdentify = `room:${radisRoomKey}`;
+      const roomPassword = await redis.get(`${roomIdentify}:password`);
+      const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`));
+      const roomDesc = await redis.get(`${roomIdentify}:description`);
+      const roomLastUpdated = await redis.get(`${roomIdentify}:lastUpdated`);
       const room = {
         roomName,
+        roomPassword,
+        roomMaxJoin,
+        roomDesc,
         roomLastUpdated,
       };
       roomMap[radisRoomKey] = room;

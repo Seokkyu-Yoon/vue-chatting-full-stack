@@ -180,11 +180,28 @@ function activate(server, redis) {
     await sendMessage(null, { roomKey });
   }
 
-  async function createRoom(socket, { roomName }) {
+  async function createRoom(
+    socket,
+    {
+      roomName,
+      roomPassword,
+      roomMaxJoin,
+      roomDesc,
+    },
+  ) {
     const userName = await redis.getUserName(socket.id);
     debug(`${userName} create room`);
     const roomKey = await makeRoomKey();
-    await redis.createRoom({ roomKey, roomName });
+    await redis.createRoom(
+      {
+        userName,
+        roomKey,
+        roomName,
+        roomPassword,
+        roomMaxJoin,
+        roomDesc,
+      },
+    );
     await joinRoom(socket, { roomKey });
     await sendRooms();
     socket.emit(Response.Room.CREATE, roomKey);
@@ -201,6 +218,11 @@ function activate(server, redis) {
     await sendUsers(null, { roomKey });
     await sendRooms();
     await sendMessage(null, { roomKey });
+  }
+
+  async function deleteRoom(socket, { roomKey }) {
+    const userName = await redis.getUserName(socket.id);
+    debug(`${userName} delete ${roomKey}`);
   }
 
   async function disconnect(socket) {
