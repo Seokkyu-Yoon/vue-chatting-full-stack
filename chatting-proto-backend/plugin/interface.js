@@ -20,6 +20,7 @@ const Interface = {
     Room: {
       LIST: 'res:room:list',
       CREATE: 'res:room:create',
+      DELETE: 'res:room:delete',
       MESSAGES: 'res:room:messages',
     },
   },
@@ -35,6 +36,7 @@ const Interface = {
       CREATE: 'req:room:create',
       LEAVE: 'req:room:leave',
       WRITE: 'req:room:write',
+      DELETE: 'req:room:delete',
       MESSAGES: 'req:room:messages',
     },
   },

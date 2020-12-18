@@ -223,6 +223,14 @@ function activate(server, redis) {
   async function deleteRoom(socket, { roomKey }) {
     const userName = await redis.getUserName(socket.id);
     debug(`${userName} delete ${roomKey}`);
+    const joiningSocketIds = await io.of('/').adapter.sockets([roomKey]);
+    await redis.deleteRoom({ roomKey });
+    emitter.to(roomKey).emit(Response.Room.DELETE, { roomKey });
+    [...joiningSocketIds].forEach((socketId) => {
+      io.of('/').adapter.remoteLeave(socketId, roomKey);
+      emitter.to(socketId).emit('res:room:delete', { roomKey });
+    });
+    await sendRooms();
   }
 
   async function disconnect(socket) {
@@ -254,6 +262,7 @@ function activate(server, redis) {
     socket.on(Request.Room.JOIN, joinRoom.bind(null, socket));
     socket.on(Request.Room.CREATE, createRoom.bind(null, socket));
     socket.on(Request.Room.LEAVE, leaveRoom.bind(null, socket));
+    socket.on(Request.Room.DELETE, deleteRoom.bind(null, socket));
     socket.on(Request.Room.WRITE, writeMessage.bind(null, socket));
     socket.on(Request.Room.MESSAGES, sendMessage.bind(null, socket));
 

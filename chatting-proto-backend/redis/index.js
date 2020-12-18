@@ -160,8 +160,28 @@ async function leaveRoom({ userName, roomKey } = {}) {
 }
 
 async function existsRoom({ roomKey } = {}) {
-  const rooms = messageFileManager.allRooms(messagesDir);
+  const rooms = await redis.smembers('rooms');
   return rooms.includes(roomKey);
+}
+
+async function deleteRoom({ roomKey } = {}) {
+  const roomIdentify = `room:${roomKey}`;
+
+  await redis.multi()
+    .srem('rooms', roomKey)
+    .del(`${roomIdentify}:createBy`)
+    .del(`${roomIdentify}:name`)
+    .del(`${roomIdentify}:password`)
+    .del(`${roomIdentify}:maxJoin`)
+    .del(`${roomIdentify}:description`)
+    .del(`${roomIdentify}:lastUpdated`)
+    .exec((e) => {
+      if (e === null) return;
+      throw new Error(e);
+    });
+
+  const messagesPath = getMessagesPath(roomKey);
+  await messageFileManager.remove(messagesPath);
 }
 
 async function getRoom({ roomKey = '' } = {}) {
@@ -217,6 +237,7 @@ module.exports = {
   joinRoom,
   leaveRoom,
   existsRoom,
+  deleteRoom,
 
   getRoom,
   getMessages,

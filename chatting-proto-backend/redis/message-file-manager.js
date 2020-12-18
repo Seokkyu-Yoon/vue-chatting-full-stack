@@ -30,8 +30,13 @@ function push(path, message) {
   event.emit('write');
 }
 
+function remove(path) {
+  fs.unlinkSync(path);
+}
+
 module.exports = {
   allRooms,
   get,
   push,
+  remove,
 };
