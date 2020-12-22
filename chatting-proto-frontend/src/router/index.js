@@ -2,7 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Home from '@/views/Home.vue';
 import Rooms from '@/views/Rooms.vue';
-import Chatting from '@/views/Chatting.vue';
+import Chat from '@/views/Chat.vue';
 
 Vue.use(VueRouter);
 
@@ -18,10 +18,9 @@ const routes = [
     component: Rooms,
   },
   {
-    path: '/chatting',
-    name: 'Chatting',
-    component: Chatting,
-    props: true,
+    path: '/chat',
+    name: 'Chat',
+    component: Chat,
   },
 ];
 

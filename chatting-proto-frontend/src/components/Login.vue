@@ -1,8 +1,9 @@
 <template>
   <div class="d-flex flex-column align-items-center justify-content-between jumbotron">
     <p class="h1 mb-4">별명</p>
-    <form class="form-inline mb-2">
+    <div class="form-inline mb-2">
       <input
+        ref="nicknameField"
         type="text"
         class="form-control mr-1"
         v-model="userName"
@@ -10,11 +11,18 @@
         v-on:keydown.enter="login"
         placeholder="별명을 입력해주세요"/>
       <button type="button" class="btn btn-primary" v-on:click="login">접속</button>
-    </form>
-    <div v-if="isValid" class="alert alert-success w-100" role="alert">
+    </div>
+    <div
+      v-show="store.isValidUsername"
+      class="alert alert-success w-100"
+      role="alert">
       사용가능한 별명입니다
     </div>
-    <div v-else class="alert alert-danger w-100" role="alert" id="alert">
+    <div
+      v-show="!store.isValidUsername"
+      ref="alert"
+      class="alert alert-danger w-100"
+      role="alert">
       사용불가한 별명입니다
     </div>
   </div>

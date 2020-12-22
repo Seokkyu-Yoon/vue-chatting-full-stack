@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex h-100 overflow-hidden">
+  <div class="d-flex flex-column flex-fill p-3 overflow-hidden">
     <ComponentRooms v-bind:rooms="rooms"/>
     <ComponentChat
       v-if="store.joiningRoomKey !== null"
@@ -33,9 +33,8 @@ export default {
   beforeCreate() {
     if (store.userName === '') {
       this.$router.replace('/');
-      return;
     }
-    this.$request('req:room:list');
+    // this.$request('req:room:list');
   },
   computed: {
     users() {

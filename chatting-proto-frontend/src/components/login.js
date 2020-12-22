@@ -4,7 +4,7 @@ export default {
   name: 'Login',
   data() {
     return {
-      isValid: false,
+      store,
       userName: '',
     };
   },
@@ -13,29 +13,30 @@ export default {
       this.userName = e.target.value.replace(' ', '');
       this.$request('req:user:valid', { userName: this.userName });
     },
-    login(e) {
-      e.preventDefault();
-      if (!this.isValid) {
-        document.querySelector('#alert').style.animation = 'shake 0.5s 1';
+    login() {
+      if (!store.isValidUsername) {
+        this.$refs.alert.style.animation = 'shake 0.5s 1';
+        this.$refs.nicknameField.focus();
         return;
       }
-      store.userName = this.userName;
 
+      store.userName = this.userName;
       this.$request('req:user:login', {
         userName: this.userName,
       });
-      this.$router.push({ name: 'Rooms' });
+      this.$router.push('Rooms');
     },
   },
   beforeCreate() {
-    this.$socket.on('res:user:valid', (isValid) => {
-      this.isValid = isValid;
-    });
+    if (store.userName) {
+      this.$router.push('Rooms');
+    }
   },
   mounted() {
-    const alert = document.querySelector('#alert');
+    const { alert, nicknameField } = this.$refs;
     alert.addEventListener('animationend', () => {
       alert.style.removeProperty('animation');
     });
+    nicknameField.focus();
   },
 };

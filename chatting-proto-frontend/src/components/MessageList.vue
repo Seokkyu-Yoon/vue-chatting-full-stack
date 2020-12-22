@@ -1,7 +1,6 @@
 <template>
-  <div id="cover-chat">
-    <h1>채팅</h1>
-    <div id="chat-board">
+  <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
+    <div id="chat-board" class="flex-fill p-2">
       <div v-for="(message, index) in messages" v-bind:key="`message-${index}`">
         <div class="message" v-if="message.type === 'message'">
           <div class="message-header">
@@ -20,46 +19,57 @@
         </div>
       </div>
     </div>
-    <div id="chat-form">
-      <textarea type="text"
-        v-model="newText"
+    <div class="form-group mt-1">
+      <textarea
+        class="form-control"
+        v-model="newMessage"
         v-on:keydown.enter.exact="(e) => {
           e.preventDefault();
           send();
         }"/>
-      <button v-on:click="send">전송</button>
+      <div class="d-flex mt-1">
+        <p>~~~~~에게 전송합니다</p>
+        <button class="btn btn-info ml-auto" v-on:click="send">전송</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import store from '@/store';
 
 export default {
-  name: 'Chat',
-  props: ['roomKey', 'messages'],
+  name: 'MessageList',
+  props: ['messages'],
   data() {
     return {
-      newText: '',
       scrollToBottom: true,
-      joiningRoomKey: null,
+      newMessage: '',
     };
+  },
+  methods: {
+    send() {
+      if (this.newMessage.trim() === '') return;
+      this.$request(
+        'req:room:write',
+        {
+          roomKey: store.joiningRoomKey,
+          text: this.newMessage.trim(),
+        },
+      );
+      console.log(this.roomKey, this.newMessage);
+      this.newMessage = '';
+    },
   },
   mounted() {
     const chatBoard = document.querySelector('#chat-board');
     this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
     chatBoard.scrollTop = this.scrollTop;
-    this.joiningRoomKey = this.roomKey;
   },
   beforeUpdate() {
     const chatBoard = document.querySelector('#chat-board');
-    if (this.joiningRoomKey !== this.roomKey) {
-      this.scrollToBottom = true;
-    } else {
-      this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight;
-    }
+    this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight;
     this.scrollTop = chatBoard.scrollTop;
-    this.joiningRoomKey = this.roomKey;
-    // this.
   },
   updated() {
     const chatBoard = document.querySelector('#chat-board');
@@ -68,41 +78,17 @@ export default {
     }
     chatBoard.scrollTop = this.scrollTop;
   },
-  methods: {
-    send() {
-      if (this.newText.trim() === '') return;
-      this.$request(
-        'req:room:write',
-        {
-          roomKey: this.roomKey,
-          text: this.newText.trim(),
-        },
-      );
-      this.newText = '';
-    },
-  },
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1 {
-  text-align: center;
-}
-#cover-chat {
-  display: flex;
-  flex: 2;
-  flex-direction: column;
-  padding: 10px;
-}
 #chat-board {
-  flex: 1;
   overflow-y: scroll;
   background-color: lightblue;
-  padding: 10px;
-  margin-bottom: 30px;
   border-radius: 10px;
-  max-height: 90%;
+}
+.form-control {
+  resize: none;
 }
 #chat-form {
   display: flex;

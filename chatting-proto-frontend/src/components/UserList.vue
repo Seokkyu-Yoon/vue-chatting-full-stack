@@ -1,14 +1,11 @@
 <template>
   <div id="cover-users">
-    <h1>사용자 목록</h1>
-    <div id="holder-users">
-      <div
-        class="user"
-        v-for="user in users"
-        v-bind:key="`user-${user.socketId}`">
-        <div class="user-key">{{user.socketId}}</div>
-        <div class="user-name">{{user.userName}}</div>
-      </div>
+    <div
+      class="user mb-1"
+      v-for="user in users"
+      v-bind:key="`user-${user.socketId}`">
+      <div class="user-key">{{user.socketId}}</div>
+      <div class="user-name">{{user.userName}}</div>
     </div>
   </div>
 </template>
@@ -38,19 +35,13 @@ h1 {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 10px;
-}
-
-#holder-users {
-  overflow-y: scroll;
-  flex: 1;
-  padding: 10px;
   border-radius: 10px;
   background-color: lightgreen;
+  overflow-y: scroll;
+  padding: 10px;
+  margin-bottom: 1rem;
 }
-
 .user {
-  margin-bottom: 10px;
   border-radius: 5px;
   padding: 5px;
   background-color: coral;
