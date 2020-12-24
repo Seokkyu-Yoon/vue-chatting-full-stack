@@ -1,6 +1,6 @@
 import io from 'socket.io-client'
 import store from '@/store'
-import Request from '@/core/request'
+import Req from '@/core/request'
 
 const socket = io(store.serverIp, {
   transports: ['websocket']
@@ -24,7 +24,7 @@ const SocketPlugin = {
     }
     socket.on('connect', async () => {
       if (store.userName === '') return
-      const reqLogin = new Request('req:user:login', { userName: store.userName, roomKey: store.joiningRoomKey })
+      const reqLogin = new Req('req:user:login', { userName: store.userName, roomKey: store.joiningRoomKey })
       const resLogin = await $request(reqLogin)
       const {
         isValid,
@@ -39,8 +39,8 @@ const SocketPlugin = {
         return
       }
       if (roomKey !== null) {
-        const reqUser = new Request('req:user:list', { roomKey: store.joiningRoomKey })
-        const reqMessages = new Request('req:room:messages', { roomKey })
+        const reqUser = new Req('req:user:list', { roomKey: store.joiningRoomKey })
+        const reqMessages = new Req('req:room:messages', { roomKey })
         const [
           resUser,
           resMessages
@@ -51,7 +51,7 @@ const SocketPlugin = {
         store.messages = messages
         return
       }
-      const reqRoomMap = new Request('req:room:list', {})
+      const reqRoomMap = new Req('req:room:list', {})
       const resRoomMap = await $request(reqRoomMap)
       const { roomMap } = resRoomMap.body
       store.roomMap = roomMap

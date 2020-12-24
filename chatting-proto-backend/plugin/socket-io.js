@@ -4,7 +4,7 @@ import SocketIo from 'socket.io'
 import socketIoRedis from 'socket.io-redis'
 import socketIoEmitter from 'socket.io-emitter'
 
-import Response from '../core/response'
+import Res from '../core/response'
 
 import Interface from './interface'
 
@@ -306,7 +306,7 @@ function activate (server, redis) {
         await socketHandler.leaveRoom(socketId, socketRooms, roomKey)
         const { code, body } = await socketHandler.getUserMap(roomKey)
         const callback = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-        const res = new Response(callback)
+        const res = new Res(callback)
         res.status(code).send(body)
       })
     )
@@ -324,7 +324,7 @@ function activate (server, redis) {
       const { code, body } = await socketHandler.getUserMap(roomKey)
 
       const callback = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -333,7 +333,7 @@ function activate (server, redis) {
       const { code, body } = await socketHandler.getRoomMap()
 
       const callback = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -343,7 +343,7 @@ function activate (server, redis) {
       const { code, body } = await socketHandler.getMessages(roomKey)
 
       const callback = makeCallback(Interface.Broadcast.Room.MESSAGES, emitter.in(roomKey))
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -353,7 +353,7 @@ function activate (server, redis) {
       const { roomKey } = req.body
       const { code, body } = await socketHandler.getUserMap(roomKey)
 
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -363,13 +363,13 @@ function activate (server, redis) {
       const { id: socketId } = socket
 
       const { code, body } = await socketHandler.loginUser(socketId, userName, roomKey)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
 
       if (body.roomKey === null) return
       const { code: codeUserMap, body: bodyUserMap } = await socketHandler.getUserMap(body.roomKey)
       const callbackUserMap = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const resUserMap = new Response(callbackUserMap)
+      const resUserMap = new Res(callbackUserMap)
       resUserMap.status(codeUserMap).send(bodyUserMap)
     })
 
@@ -377,14 +377,14 @@ function activate (server, redis) {
     socket.on(Interface.Request.User.IS_VALID, async (req, callback) => {
       const { userName } = req.body
       const { code, body } = await socketHandler.isValidUser(userName)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
     // *** Room List
     socket.on(Interface.Request.Room.LIST, async (req, callback) => {
       const { code, body } = await socketHandler.getRoomMap()
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -393,7 +393,7 @@ function activate (server, redis) {
       const { id: socketId } = socket
       const { roomKey } = req.body
       const { code, body } = await socketHandler.joinRoom(socketId, roomKey)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
 
       const [
@@ -407,15 +407,15 @@ function activate (server, redis) {
       ])
 
       const callbackUserMap = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const resUserMap = new Response(callbackUserMap)
+      const resUserMap = new Res(callbackUserMap)
       resUserMap.status(codeUserMap).send(bodyUserMap)
 
       const callbackMessages = makeCallback(Interface.Broadcast.Room.MESSAGES, emitter.to(roomKey))
-      const resMessages = new Response(callbackMessages)
+      const resMessages = new Res(callbackMessages)
       resMessages.status(codeMessages).send(bodyMessages)
 
       const callbackRoomMap = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const resRoomMap = new Response(callbackRoomMap)
+      const resRoomMap = new Res(callbackRoomMap)
       resRoomMap.status(codeRoomMap).send(bodyRoomMap)
     })
 
@@ -429,12 +429,12 @@ function activate (server, redis) {
         roomDesc
       } = req.body
       const { code, body } = await socketHandler.createRoom(socketId, roomName, roomPassword, roomMaxJoin, roomDesc)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
 
       const { code: codeRoomMap, body: bodyRoomMap } = await socketHandler.getRoomMap()
       const callbackRoomMap = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const resRoomMap = new Response(callbackRoomMap)
+      const resRoomMap = new Res(callbackRoomMap)
       resRoomMap.status(codeRoomMap).send(bodyRoomMap)
     })
 
@@ -446,7 +446,7 @@ function activate (server, redis) {
         rooms: socketRooms
       } = socket
       const { code, body } = await socketHandler.leaveRoom(socketId, socketRooms, roomKey)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
 
       const [
@@ -460,15 +460,15 @@ function activate (server, redis) {
       ])
 
       const callbackUserMap = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const resUserMap = new Response(callbackUserMap)
+      const resUserMap = new Res(callbackUserMap)
       resUserMap.status(codeUserMap).send(bodyUserMap)
 
       const callbackMessages = makeCallback(Interface.Broadcast.Room.MESSAGES, emitter.to(roomKey))
-      const resMessages = new Response(callbackMessages)
+      const resMessages = new Res(callbackMessages)
       resMessages.status(codeMessages).send(bodyMessages)
 
       const callbackRoomMap = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const resRoomMap = new Response(callbackRoomMap)
+      const resRoomMap = new Res(callbackRoomMap)
       resRoomMap.status(codeRoomMap).send(bodyRoomMap)
     })
 
@@ -480,12 +480,12 @@ function activate (server, redis) {
 
       const { code: codeRoomMap, body: bodyRoomMap } = await socketHandler.getRoomMap()
       const callbackRoomMap = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const resRoomMap = new Response(callbackRoomMap)
+      const resRoomMap = new Res(callbackRoomMap)
       resRoomMap.status(codeRoomMap).send(bodyRoomMap)
 
       body.socketIds.forEach((socketId) => {
         const callback = makeCallback(Interface.Broadcast.Room.DELETE, emitter.to(socketId))
-        const resRoomDelete = new Response(callback)
+        const resRoomDelete = new Res(callback)
         resRoomDelete.status(code).send({ roomKey: body.roomKey })
       })
     })
@@ -494,7 +494,7 @@ function activate (server, redis) {
     socket.on(Interface.Request.Room.MESSAGES, async (req, callback) => {
       const { roomKey } = req.body
       const { code, body } = await socketHandler.getMessages(roomKey)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
     })
 
@@ -503,12 +503,12 @@ function activate (server, redis) {
       const { id: socketId } = socket
       const { roomKey, text } = req.body
       const { code, body } = await socketHandler.writeMessage(socketId, roomKey, text)
-      const res = new Response(callback)
+      const res = new Res(callback)
       res.status(code).send(body)
 
       const { code: codeMessages, body: bodyMessages } = await socketHandler.getMessages(roomKey)
       const callbackMessages = makeCallback(Interface.Broadcast.Room.MESSAGES, emitter.broadcast)
-      const resMessages = new Response(callbackMessages)
+      const resMessages = new Res(callbackMessages)
       resMessages.status(codeMessages).send(bodyMessages)
     })
 

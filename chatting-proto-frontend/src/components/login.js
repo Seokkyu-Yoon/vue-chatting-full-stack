@@ -1,5 +1,5 @@
 import store from '@/store'
-import Request from '@/core/request'
+import Req from '@/core/request'
 
 export default {
   name: 'Login',
@@ -14,14 +14,14 @@ export default {
     setUserName (e) {
       this.userName = e.target.value.replace(' ', '')
       const body = { userName: this.userName }
-      const req = new Request('req:user:isValid', body)
+      const req = new Req('req:user:isValid', body)
       this.$request(req).then((res) => {
         this.isValid = res.body.isValid
       }).catch(console.error)
     },
     login () {
       const body = { userName: this.userName }
-      const req = new Request('req:user:login', body)
+      const req = new Req('req:user:login', body)
       this.$request(req).then((res) => {
         const { isValid, userName } = res.body
         this.isValid = isValid

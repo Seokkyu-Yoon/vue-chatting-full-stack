@@ -1,6 +1,6 @@
-function Request (type, body = {}) {
+function Req (type, body = {}) {
   this.type = type
   this.body = body
 }
 
-export default Request
+export default Req

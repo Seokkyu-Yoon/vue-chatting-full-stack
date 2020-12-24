@@ -1,5 +1,5 @@
 import Login from '@/components/Login.vue'
-import Request from '@/core/request'
+import Req from '@/core/request'
 
 export default {
   name: 'Home',
@@ -7,7 +7,7 @@ export default {
     Login
   },
   mounted () {
-    const req = new Request('broadcast:user:list')
+    const req = new Req('broadcast:user:list')
     this.$order(req)
   }
 }
