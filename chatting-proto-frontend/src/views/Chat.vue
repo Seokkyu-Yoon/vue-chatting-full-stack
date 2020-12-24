@@ -5,7 +5,7 @@
       <div class="d-flex align-items-center mt-2 mb-4">
         <p class="h3">{{(store.roomMap[store.joiningRoomKey] || {}).roomName || ''}}</p>
         <div class="ml-auto">
-          <button type="button" class="btn btn-sm btn-secondary mr-1" v-on:click="updateRoom">
+          <button v-show="store.userName === (store.roomMap[store.joiningRoomKey] || {}).createBy || ''" type="button" class="btn btn-sm btn-secondary mr-1" v-on:click="updateRoom">
             설정
           </button>
           <button type="button" class="btn btn-sm btn-danger" v-on:click="leaveRoom">나가기</button>

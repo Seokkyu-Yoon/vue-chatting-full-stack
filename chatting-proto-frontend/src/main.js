@@ -12,6 +12,9 @@ Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(PluginSocket)
 
+Vue.directive('visible', function (el, binding) {
+  el.style.visibility = binding.value ? 'visible' : 'hidden'
+})
 new Vue({
   router,
   render: (h) => h(App)
