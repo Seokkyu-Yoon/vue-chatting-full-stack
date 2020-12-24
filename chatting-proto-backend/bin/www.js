@@ -1,5 +1,9 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
 import path from 'path'
-import cluster from 'cluster'
 import fs from 'fs'
 import logger from 'debug'
 import http from 'http'
@@ -10,19 +14,26 @@ import redis from '../redis'
 import app from '../app'
 
 const debug = logger('chatting-proto-backend:server')
+
 /**
  * Get port from environment and store in Express.
  */
 const dotenvPath = path.join(__dirname, '..', '..', '.env')
 const env = dotenv.parse(fs.readFileSync(dotenvPath))
 Object.assign(process.env, env)
-const serverPort = process.env.SERVER_PORT
-app.set('port', serverPort)
+const port = process.env.SERVER_PORT
+app.set('port', port)
+
+/**
+ * Create HTTP server.
+ */
+const server = http.createServer(app)
+plugins.socket(server, redis)
 
 /**
  * Event listener for HTTP server "error" event.
  */
-function onError (port, error) {
+function onError (error) {
   if (error.syscall !== 'listen') {
     throw error
   }
@@ -36,11 +47,11 @@ function onError (port, error) {
     case 'EACCES':
       console.error(`${bind} requires elevated privileges`)
       process.exit(1)
-      // eslint-disable-next-line no-fallthrough
+    // eslint-disable-next-line no-fallthrough
     case 'EADDRINUSE':
       console.error(`${bind} is already in use`)
       process.exit(1)
-      // eslint-disable-next-line no-fallthrough
+    // eslint-disable-next-line no-fallthrough
     default:
       throw error
   }
@@ -49,42 +60,23 @@ function onError (port, error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-function onListening (server) {
+function onListening () {
   const addr = server.address()
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
     : `port ${addr.port}`
   debug(`Listening on ${bind}`)
+  debug(`http://192.168.1.77:${port}`)
 }
 
-cluster.schedulingPolicy = cluster.SCHED_RR
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.on('error', onError)
+server.on('listening', onListening)
 
-if (cluster.isMaster) {
-  console.log(cluster.worker.id)
-  os.cpus().forEach((cpu) => {
-    cluster.fork()
-    cluster.on('exit', (worker, code, signal) => {
-      console.log('worker has stopped :', worker.id)
-      if (code === 200) {
-        cluster.fork()
-        console.log('worker has restarted')
-      }
-    })
-  })
-} else {
-  console.log('worker has created :', cluster.worker.id)
-
-  /**
-   * Create HTTP server.
-   */
-  const server = http.createServer(app)
-  plugins.socket(server, redis)
-
-  /**
-   * Listen on provided port, on all network interfaces.
-   */
-  server.on('error', onError.bind(null, serverPort))
-  server.on('listening', onListening.bind(null, server))
-
-  server.listen(serverPort)
+if (require.main === module) {
+  server.listen(port)
 }
+
+export default server

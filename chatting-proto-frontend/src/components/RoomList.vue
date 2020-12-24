@@ -1,13 +1,11 @@
 <template>
   <div class="list-group flex-fill overflow-auto">
     <div
-      v-show="rooms.length > 0"
-      v-for="room in rooms"
-      v-bind:key="room.roomKey"
-      v-bind:class="room.roomKey === store.joiningRoomKey
-        ? 'list-group-item active'
-        : 'list-group-item'"
-      v-on:click="(e) => setCurrRoom(room)"
+      class="list-group-item"
+      v-show="Object.keys(store.roomMap).length > 0"
+      v-for="(room, roomKey) in store.roomMap"
+      v-bind:key="roomKey"
+      v-on:click="(e) => setCurrRoom(roomKey)"
       >
       <div class="d-flex justify-content-between align-items-start">
         <div class="d-flex flex-column justify-content-between align-items-start">
@@ -24,13 +22,13 @@
             type="button"
             class="btn btn-sm btn-danger"
             v-show="store.userName === room.createBy"
-            v-on:click.stop="() => deleteRoom(room.roomKey)">
+            v-on:click.stop="() => deleteRoom(roomKey)">
             X
           </button>
         </div>
       </div>
     </div>
-    <div v-show="rooms.length === 0">
+    <div v-show="Object.keys(store.roomMap).length === 0">
       방이 없습니다
     </div>
   </div>

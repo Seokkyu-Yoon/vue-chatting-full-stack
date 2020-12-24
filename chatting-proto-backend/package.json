@@ -9,9 +9,9 @@
     "stop": "pm2 stop cluster",
     "del": "pm2 del cluster",
     "monit": "pm2 monit",
-    "dev": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* bin/www",
-    "dev:cluster": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* cluster.js",
-    "dev:socket": "set DEBUG=chatting-proto-backend:server:socket && nodemon  --ignore messages/* cluster.js"
+    "dev": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* --exec babel-node bin/www.js",
+    "dev:cluster": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* --babel-node cluster.js",
+    "dev:socket": "set DEBUG=chatting-proto-backend:server:socket && nodemon  --ignore messages/* --babel-node cluster.js"
   },
   "author": "",
   "license": "ISC",
@@ -33,8 +33,13 @@
     "socket.io-redis": "^6.0.1"
   },
   "devDependencies": {
-    "eslint": "^7.15.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1"
+    "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "eslint": "^7.16.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1"
   }
 }

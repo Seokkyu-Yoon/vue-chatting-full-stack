@@ -1,7 +1,7 @@
-const socketIo = require('./socket-io');
+import socketIo from './socket-io'
 
 const plugins = {
-  socket: socketIo,
-};
+  socket: socketIo
+}
 
-module.exports = plugins;
+export default plugins

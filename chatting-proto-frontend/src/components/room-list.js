@@ -1,81 +1,38 @@
-import store from '@/store';
+import store from '@/store'
+import Request from '@/core/request'
 
 export default {
   name: 'RoomList',
-  data() {
+  data () {
     return {
       store,
-      newRoomName: '',
-      roomMap: {},
-    };
-  },
-  computed: {
-    rooms() {
-      const rooms = Object.keys(store.roomMap).map((roomKey) => ({
-        roomKey,
-        ...store.roomMap[roomKey],
-      }));
-      return rooms;
-    },
+      newRoomName: ''
+    }
   },
   methods: {
-    leaveRoom() {
-      if (store.joiningRoomKey !== null) {
-        this.$request(
-          'req:room:leave',
-          {
-            userName: store.userName,
-            roomKey: store.joiningRoomKey,
-          },
-        );
-      }
+    setCurrRoom (roomKey) {
+      const body = { roomKey }
+      const req = new Request('req:room:join', body)
+      this.$request(req).then((res) => {
+        const { joined } = res.body
+        if (joined) {
+          store.joiningRoomKey = roomKey
+          this.$router.push('Chat')
+        }
+      })
     },
-    makeRoom() {
-      if (!this.newRoomName) {
-        // eslint-disable-next-line no-alert
-        alert('방 이름을 입력해주세요');
-        return;
-      }
-      this.$request(
-        'req:room:create',
-        {
-          userName: store.userName,
-          roomName: this.newRoomName,
-        },
-      );
-      this.newRoomName = '';
-    },
-    setCurrRoom({ roomKey }) {
-      const { joiningRoomKey } = store;
-      if (joiningRoomKey !== null) {
-        this.$request('req:room:leave', {
-          userName: store.userName,
-          roomKey: joiningRoomKey,
-        });
-      }
-      if (roomKey === joiningRoomKey) {
-        store.joiningRoomKey = null;
-        this.$request('req:user:list', { roomKey: null });
-        return;
-      }
-
-      this.$request(
-        'req:room:join',
-        {
-          userName: store.userName,
-          roomKey,
-        },
-      );
-      store.joiningRoomKey = roomKey;
-      this.$router.push('Chat');
-      this.$request('req:user:list', { roomKey });
-      this.$request('req:room:messages', { roomKey });
-    },
-    deleteRoom(roomKey) {
-      this.$socket.emit('req:room:delete', { roomKey });
-    },
+    deleteRoom (roomKey) {
+      const body = { roomKey }
+      const req = new Request('req:room:delete', body)
+      this.$order(req)
+    }
   },
-  mounted() {
-    this.$request('req:room:list');
-  },
-};
+  mounted () {
+    const body = {}
+    const req = new Request('req:room:list', body)
+    this.$request(req).then((res) => {
+      const { roomMap } = res.body
+      store.roomMap = roomMap
+    })
+  }
+}

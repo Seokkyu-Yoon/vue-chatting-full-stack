@@ -2,29 +2,15 @@
   <div id="cover-users">
     <div
       class="user mb-1"
-      v-for="user in users"
-      v-bind:key="`user-${user.socketId}`">
-      <div class="user-key">{{user.socketId}}</div>
+      v-for="(user, socketId) in store.userMap"
+      v-bind:key="`user-${socketId}`">
+      <div class="user-key">{{socketId}}</div>
       <div class="user-name">{{user.userName}}</div>
     </div>
   </div>
 </template>
 
-<script>
-
-export default {
-  name: 'Users',
-  props: ['users'],
-  methods: {
-    makeuser() {
-      if (!this.newuserName) {
-        // eslint-disable-next-line no-alert
-        alert('방 이름을 입력해주세요');
-      }
-    },
-  },
-};
-</script>
+<script src='./user-list.js'></script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>

@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import Vue from 'vue'
 
 const vue = new Vue({
   data: {
@@ -7,9 +7,8 @@ const vue = new Vue({
     joiningRoomKey: null,
     userMap: {},
     roomMap: {},
-    messages: [],
-    isValidUsername: false,
-  },
-});
+    messages: []
+  }
+})
 
-export default vue;
+export default vue

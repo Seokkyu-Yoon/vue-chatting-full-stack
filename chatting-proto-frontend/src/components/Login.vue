@@ -13,13 +13,13 @@
       <button type="button" class="btn btn-primary" v-on:click="login">접속</button>
     </div>
     <div
-      v-show="store.isValidUsername"
+      v-show="isValid"
       class="alert alert-success w-100"
       role="alert">
       사용가능한 별명입니다
     </div>
     <div
-      v-show="!store.isValidUsername"
+      v-show="!isValid"
       ref="alert"
       class="alert alert-danger w-100"
       role="alert">

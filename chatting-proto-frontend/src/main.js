@@ -1,18 +1,18 @@
-import Vue from 'vue';
-import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue';
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import Vue from 'vue'
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-import App from './App.vue';
-import router from './router';
-import PluginSocket from './plugin/socket';
+import App from './App.vue'
+import router from './router'
+import PluginSocket from './plugin/socket'
 
-Vue.config.productionTip = false;
-Vue.use(BootstrapVue);
-Vue.use(BootstrapVueIcons);
-Vue.use(PluginSocket);
+Vue.config.productionTip = false
+Vue.use(BootstrapVue)
+Vue.use(BootstrapVueIcons)
+Vue.use(PluginSocket)
 
 new Vue({
   router,
-  render: (h) => h(App),
-}).$mount('#app');
+  render: (h) => h(App)
+}).$mount('#app')

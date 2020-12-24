@@ -78,18 +78,7 @@
   </b-modal>
 </template>
 
-<script>
-export default {
-  name: 'Modal',
-  props: ['title', 'modifing'],
-  data() {
-    return {
-    };
-  },
-  methods: {
-  },
-};
-</script>
+<script src="./upsert-room.js"></script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped></style>

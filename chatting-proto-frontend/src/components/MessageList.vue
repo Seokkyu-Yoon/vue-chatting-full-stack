@@ -1,7 +1,12 @@
 <template>
   <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
-    <div id="chat-board" class="flex-fill p-2">
-      <div v-for="(message, index) in messages" v-bind:key="`message-${index}`">
+    <div id="chat-board" class="flex-fill p-2" >
+      <div class="d-flex w-100 h-100" v-show="store.messages.length === 0">
+        <div class="m-auto">
+          <p class="h4">대화내용 불러오는 중...</p>
+        </div>
+      </div>
+      <div v-show="store.messages.length > 0" v-for="(message, index) in store.messages" v-bind:key="`message-${index}`">
         <div class="message" v-if="message.type === 'message'">
           <div class="message-header">
             <div class="message-header-name">{{message.userName}}</div>
@@ -35,51 +40,7 @@
   </div>
 </template>
 
-<script>
-import store from '@/store';
-
-export default {
-  name: 'MessageList',
-  props: ['messages'],
-  data() {
-    return {
-      scrollToBottom: true,
-      newMessage: '',
-    };
-  },
-  methods: {
-    send() {
-      if (this.newMessage.trim() === '') return;
-      this.$request(
-        'req:room:write',
-        {
-          roomKey: store.joiningRoomKey,
-          text: this.newMessage.trim(),
-        },
-      );
-      console.log(this.roomKey, this.newMessage);
-      this.newMessage = '';
-    },
-  },
-  mounted() {
-    const chatBoard = document.querySelector('#chat-board');
-    this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
-    chatBoard.scrollTop = this.scrollTop;
-  },
-  beforeUpdate() {
-    const chatBoard = document.querySelector('#chat-board');
-    this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight;
-    this.scrollTop = chatBoard.scrollTop;
-  },
-  updated() {
-    const chatBoard = document.querySelector('#chat-board');
-    if (this.scrollToBottom) {
-      this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight;
-    }
-    chatBoard.scrollTop = this.scrollTop;
-  },
-};
-</script>
+<script src="./message-list.js"></script>
 
 <style scoped>
 #chat-board {

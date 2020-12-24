@@ -14,41 +14,6 @@
   </div>
 </template>
 
-<script>
-// import myFetch from '@/core/fetch';
-// @ is an alias to /src
-import store from '@/store';
-import RoomList from '@/components/RoomList.vue';
-import UpsertRoom from '@/components/UpsertRoom.vue';
-
-export default {
-  name: 'Rooms',
-  components: {
-    RoomList,
-    UpsertRoom,
-  },
-  data() {
-    return {
-      store,
-      userMap: {},
-    };
-  },
-  methods: {
-    createRoom() {
-      this.$refs.upsertRoom.$refs.modal.show();
-    },
-  },
-  beforeMount() {
-    if (store.userName === '') {
-      this.$router.go(-1);
-      return;
-    }
-    if (store.joiningRoomKey !== null) {
-      this.$request('req:room:leave', { roomKey: store.joiningRoomKey });
-      store.joiningRoomKey = null;
-    }
-  },
-};
-</script>
+<script src="./rooms.js"></script>
 
 <style scoped></style>
