@@ -218,7 +218,7 @@ async function deleteRoom ({ roomKey } = {}) {
   await messageFileManager.remove(messagesPath)
 }
 
-async function getRoom ({ roomKey = null } = {}) {
+async function getRoom (roomKey = null) {
   const radisRoomKeys = roomKey === null ? await redis.smembers('rooms') : [roomKey]
   const roomMap = {}
 

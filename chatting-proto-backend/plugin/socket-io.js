@@ -264,6 +264,8 @@ SocketHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRo
   }
   return {
     body: {
+      socketId,
+      roomKey,
       joined: false
     }
   }
@@ -483,27 +485,9 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const [
-        { code: codeUserMap, body: bodyUserMap },
-        { code: codeMessages, body: bodyMessages },
-        { code: codeRoomMap, body: bodyRoomMap }
-      ] = await Promise.all([
-        socketHandler.getUserMap(roomKey),
-        socketHandler.getMessages(roomKey),
-        socketHandler.getRoomMap()
-      ])
-
-      const callbackUserMap = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const resUserMap = new Res(callbackUserMap)
-      resUserMap.status(codeUserMap).send(bodyUserMap)
-
-      const callbackMessages = makeCallback(Interface.Broadcast.Room.MESSAGES, emitter.to(roomKey))
-      const resMessages = new Res(callbackMessages)
-      resMessages.status(codeMessages).send(bodyMessages)
-
-      const callbackRoomMap = makeCallback(Interface.Broadcast.Room.LIST, emitter.broadcast)
-      const resRoomMap = new Res(callbackRoomMap)
-      resRoomMap.status(codeRoomMap).send(bodyRoomMap)
+      const callbackLeaveRoom = makeCallback(Interface.Broadcast.Room.LEAVE, emitter.broadcast)
+      const resLeaveRoom = new Res(callbackLeaveRoom)
+      resLeaveRoom.status(code).send(body)
     })
 
     // *** Delete Room

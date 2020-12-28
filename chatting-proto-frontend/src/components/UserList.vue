@@ -2,7 +2,7 @@
   <div id="cover-users">
     <div
       class="user mb-1"
-      v-for="(user, socketId) in store.userMap"
+      v-for="(user, socketId) in userMap"
       v-bind:key="`user-${socketId}`">
       <div class="user-key">{{socketId}}</div>
       <div class="user-name">{{user.userName}}</div>

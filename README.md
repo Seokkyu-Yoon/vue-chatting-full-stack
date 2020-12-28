@@ -1,5 +1,10 @@
 # sky-chatting-proto
 
+## supplies
+redis
+nodejs 12.x
+vsCode
+
 ## backend
 ### use socket.io to plugin
 ### express server

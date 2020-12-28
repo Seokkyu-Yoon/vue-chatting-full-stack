@@ -8,6 +8,7 @@ const Interface = {
     },
     Room: {
       LIST: 'broadcast:room:list',
+      LEAVE: 'broadcast:room:leave',
       DELETE: 'broadcast:room:delete',
       MESSAGES: 'broadcast:room:messages'
     }

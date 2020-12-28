@@ -8,6 +8,11 @@ export default {
       store
     }
   },
+  computed: {
+    userMap () {
+      return store.userMap
+    }
+  },
   beforeCreate () {
     const req = new Request('req:user:list', { roomKey: store.joiningRoomKey })
     this.$request(req).then((res) => {

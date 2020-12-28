@@ -77,6 +77,48 @@ const SocketPlugin = {
       store.messages = messages
     })
 
+    socket.on('broadcast:room:join', (res) => {
+      const { roomKey, user } = res.body
+
+      if (roomKey === store.joiningRoomKey) {
+        Object.assign(store.userMap, user)
+        const req = new Req('req:room:messages', { roomKey })
+        $request(req).then((res) => {
+          const { messages = [] } = res.body
+          store.messages = messages
+        })
+      }
+
+      const reqRoomMap = new Req('req:room:list', { roomKey })
+      $request(reqRoomMap).then((res) => {
+        const { roomMap = {} } = res.body
+        Object.assign(store.roomMap, roomMap)
+      })
+    })
+
+    socket.on('broadcast:room:leave', (res) => {
+      const { roomKey, socketId } = res.body
+
+      if (roomKey !== store.joiningRoomKey) {
+        const req = new Req('req:room:list', { roomKey })
+        $request(req).then((res) => {
+          const { roomMap = {} } = res.body
+          Object.assign(store.roomMap, roomMap)
+        })
+        return
+      }
+
+      store.userMap = Object.keys(store.userMap).reduce((bucket, userSocketId) => {
+        if (userSocketId === socketId) return bucket
+        bucket[userSocketId] = store.userMap[userSocketId]
+        return bucket
+      }, {})
+      const req = new Req('req:room:messages', { roomKey })
+      $request(req).then((res) => {
+        const { messages = [] } = res.body
+        store.messages = messages
+      })
+    })
     vue.mixin({})
 
     Object.assign(
