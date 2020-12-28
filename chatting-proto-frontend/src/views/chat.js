@@ -13,10 +13,29 @@ export default {
   },
   data () {
     return {
-      store
+      store,
+      newMessage: '',
+      blockSend: false
     }
   },
   methods: {
+    send () {
+      if (this.newMessage.trim() === '') {
+        this.newMessage = ''
+        return
+      }
+      if (this.blockSend) return
+
+      const req = new Request('req:room:write', { roomKey: store.joiningRoomKey, text: this.newMessage })
+      this.blockSend = true
+      this.$request(req).then((res) => {
+        const { wrote } = res.body
+        if (wrote) {
+          this.newMessage = ''
+          this.blockSend = false
+        }
+      })
+    },
     updateRoom () {
       this.$refs.upsertRoom.$refs.modal.show()
     },

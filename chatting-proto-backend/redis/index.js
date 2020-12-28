@@ -144,7 +144,7 @@ async function createRoom ({
   roomName,
   roomPassword = '',
   roomMaxJoin = 0,
-  roonDesc = ''
+  roomDesc = ''
 } = {}) {
   const lastUpdated = new Date()
   lastUpdated.setDate(0)
@@ -157,13 +157,33 @@ async function createRoom ({
     .set(`${roomIdentify}:name`, roomName)
     .set(`${roomIdentify}:password`, roomPassword)
     .set(`${roomIdentify}:maxJoin`, roomMaxJoin)
-    .set(`${roomIdentify}:description`, roonDesc)
+    .set(`${roomIdentify}:description`, roomDesc)
     .set(`${roomIdentify}:lastUpdated`, lastUpdated)
     .exec((e) => {
       if (e === null) return
       throw new Error(e)
     })
   await messageToJson(roomKey)
+}
+
+async function updateRoom ({
+  roomKey,
+  roomName,
+  roomPassword = '',
+  roomMaxJoin = 0,
+  roomDesc = ''
+} = {}) {
+  const roomIdentify = `room:${roomKey}`
+
+  await redis.multi()
+    .set(`${roomIdentify}:name`, roomName)
+    .set(`${roomIdentify}:password`, roomPassword)
+    .set(`${roomIdentify}:maxJoin`, roomMaxJoin)
+    .set(`${roomIdentify}:description`, roomDesc)
+    .exec((e) => {
+      if (e === null) return
+      throw new Error(e)
+    })
 }
 
 async function leaveRoom ({ userName, roomKey } = {}) {
@@ -198,29 +218,10 @@ async function deleteRoom ({ roomKey } = {}) {
   await messageFileManager.remove(messagesPath)
 }
 
-async function getRoom ({ roomKey = '' } = {}) {
-  if (typeof roomKey !== 'string') return null
-  if (roomKey !== '') {
-    const roomIdentify = `room:${roomKey}`
-    const createBy = await redis.get(`${roomIdentify}:createBy`)
-    const roomName = await redis.get(`${roomIdentify}:name`)
-    const roomPassword = await redis.get(`${roomIdentify}:password`)
-    const roomMaxJoin = Number(await redis.get(`${roomIdentify}:maxJoin`))
-    const roomDesc = await redis.get(`${roomIdentify}:description`)
-    const roomLastUpdated = await redis.get(`${roomIdentify}:lastUpdated`)
-    const room = {
-      createBy,
-      roomName,
-      roomPassword,
-      roomMaxJoin,
-      roomDesc,
-      roomLastUpdated
-    }
-    return room
-  }
-
-  const radisRoomKeys = await redis.smembers('rooms')
+async function getRoom ({ roomKey = null } = {}) {
+  const radisRoomKeys = roomKey === null ? await redis.smembers('rooms') : [roomKey]
   const roomMap = {}
+
   await Promise.all(
     radisRoomKeys.map(async (radisRoomKey) => {
       const roomIdentify = `room:${radisRoomKey}`
@@ -253,6 +254,7 @@ export default {
 
   writeMessage,
   createRoom,
+  updateRoom,
   joinRoom,
   leaveRoom,
   existsRoom,

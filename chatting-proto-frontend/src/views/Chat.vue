@@ -11,7 +11,22 @@
           <button type="button" class="btn btn-sm btn-danger" v-on:click="leaveRoom">나가기</button>
         </div>
       </div>
-      <MessageList v-bind:messages="store.messages"/>
+      <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
+        <MessageList v-bind:messages="store.messages" />
+        <div class="mt-1">
+          <textarea
+            class="form-control"
+            v-model="newMessage"
+            v-on:keydown.enter.exact="(e) => {
+              e.preventDefault()
+              send()
+            }"/>
+          <div class="d-flex mt-1">
+            <p>~~~~~에게 전송합니다</p>
+            <button class="btn btn-info ml-auto" v-on:click="send">전송</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="d-flex flex-column col-4.5 col-md-3 ml-3 p-3 overflow-hidden">
       <UserList />
@@ -21,4 +36,8 @@
 
 <script src="./chat.js"></script>
 
-<style scoped></style>
+<style scoped>
+.form-control {
+  resize: none;
+}
+</style>

@@ -1,9 +1,13 @@
+import Req from '@/core/request'
+import store from '@/store'
 export default {
   name: 'Modal',
   props: ['title', 'modifing'],
   data () {
     return {
-      roomName: '',
+      defaultSetting: {},
+      show: false,
+      name: '',
       isPrivate: false,
       password: '',
       maxJoin: '0',
@@ -13,11 +17,11 @@ export default {
   },
   methods: {
     setRoomName (e) {
-      this.maxJoin = e.target.value.replace(/^0+/, '')
+      // this.maxJoin = e.target.value.replace(/^0+/, '')
     },
     setPublic () {
       this.isPrivate = false
-      this.password = ''
+      this.password = this.defaultSetting.password || ''
     },
     setPrivate () {
       this.isPrivate = true
@@ -38,12 +42,71 @@ export default {
         return base
       }
       return ''
+    },
+    createRoom () {
+      const req = new Req('req:room:create', {
+        roomName: this.name,
+        roomPassword: this.password,
+        roomMaxJoin: this.maxJoin,
+        roomDesc: this.description
+      })
+      this.$request(req).then((res) => {
+        const { roomKey } = res.body
+        store.joiningRoomKey = roomKey
+        this.$router.push('Chat')
+      })
+    },
+    updateRoom () {
+      const req = new Req('req:room:update', {
+        roomKey: store.joiningRoomKey,
+        roomName: this.name,
+        roomPassword: this.password,
+        roomMaxJoin: this.maxJoin,
+        roomDesc: this.description
+      })
+      this.$request(req)
+    },
+    deleteRoom () {
+      const req = new Req('req:room:delete', { roomKey: store.joiningRoomKey })
+      this.$request(req)
     }
   },
   watch: {
     isInfinity: {
-      handler () {
-        this.maxJoin = '0'
+      handler (value) {
+        this.maxJoin = value ? '0' : this.defaultSetting.maxJoin
+      }
+    },
+    isPrivate: {
+      handler (value) {
+        this.password = value ? this.defaultSetting.password : ''
+      }
+    },
+    show: {
+      handler (value) {
+        if (!value) return
+        const {
+          roomName: name = '',
+          roomPassword: password = '',
+          roomMaxJoin: maxJoin = '0',
+          roomDesc: description = ''
+        } = store.roomMap[store.joiningRoomKey] || {}
+
+        this.defaultSetting = {
+          name,
+          isPrivate: password !== '',
+          password,
+          isInfinity: Number(maxJoin) === 0,
+          maxJoin: String(maxJoin),
+          description
+        }
+
+        this.name = this.defaultSetting.name
+        this.isPrivate = this.defaultSetting.isPrivate
+        this.password = this.defaultSetting.password
+        this.isInfinity = this.defaultSetting.isInfinity
+        this.maxJoin = this.defaultSetting.maxJoin
+        this.description = this.defaultSetting.description
       }
     }
   }

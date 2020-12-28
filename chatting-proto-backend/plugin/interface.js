@@ -35,6 +35,7 @@ const Interface = {
       LIST: 'req:room:list',
       JOIN: 'req:room:join',
       CREATE: 'req:room:create',
+      UPDATE: 'req:room:update',
       LEAVE: 'req:room:leave',
       DELETE: 'req:room:delete',
       WRITE: 'req:room:write',

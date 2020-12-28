@@ -6,25 +6,7 @@ export default {
   data () {
     return {
       store,
-      scrollToBottom: true,
-      newMessage: '',
-      blockSend: false
-    }
-  },
-  methods: {
-    send () {
-      if (this.newMessage.trim() === '') return
-      if (this.blockSend) return
-
-      const req = new Request('req:room:write', { roomKey: store.joiningRoomKey, text: this.newMessage })
-      this.blockSend = true
-      this.$request(req).then((res) => {
-        const { wrote } = res.body
-        if (wrote) {
-          this.newMessage = ''
-          this.blockSend = false
-        }
-      })
+      scrollToBottom: true
     }
   },
   beforeCreate () {
@@ -35,17 +17,17 @@ export default {
     })
   },
   mounted () {
-    const chatBoard = document.querySelector('#chat-board')
+    const chatBoard = this.$refs.board
     this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight
     chatBoard.scrollTop = this.scrollTop
   },
   beforeUpdate () {
-    const chatBoard = document.querySelector('#chat-board')
+    const chatBoard = this.$refs.board
     this.scrollToBottom = chatBoard.scrollTop === chatBoard.scrollHeight - chatBoard.clientHeight
     this.scrollTop = chatBoard.scrollTop
   },
   updated () {
-    const chatBoard = document.querySelector('#chat-board')
+    const chatBoard = this.$refs.board
     if (this.scrollToBottom) {
       this.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight
     }

@@ -1,5 +1,5 @@
 <template>
-  <b-modal ref="modal" v-bind:title="title" centered size="xl">
+  <b-modal ref="modal" v-model="show" v-bind:title="title" centered size="xl">
     <template #modal-header={}>
     </template>
 
@@ -10,7 +10,7 @@
             방이름
           </div>
           <div class="col-15 col-md-10">
-            <input class="form-control" v-model="roomName"/>
+            <input class="form-control" v-model="name"/>
           </div>
         </div>
         <div class="row mt-3">
@@ -63,7 +63,7 @@
             설명
           </div>
           <div class="col-15 col-md-10">
-            <input class="form-control"/>
+            <textarea class="form-control" v-model="description"/>
           </div>
         </div>
       </div>
@@ -76,10 +76,12 @@
         v-on:click="() => {
           if (modifing) {
             // 수정
+            updateRoom()
+            ok()
             return
           }
-
-          ok();
+          createRoom()
+          ok()
         }">
         {{modifing ? '수정' : '등록'}}
       </button>
@@ -88,7 +90,8 @@
         class="btn btn-sm btn-danger"
         v-if="modifing"
         v-on:click="() => {
-          ok();
+          deleteRoom()
+          ok()
         }">
         삭제
       </button>
@@ -99,4 +102,8 @@
 <script src="./upsert-room.js"></script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped></style>
+<style scoped>
+.form-control {
+  resize: none;
+}
+</style>
