@@ -20,18 +20,24 @@ export default {
     }
   },
   beforeMount () {
+    if (typeof store.room.roomKey !== 'undefined') {
+      const body = { roomKey: store.room.roomKey }
+      const req = new Request('req:room:leave', body)
+      this.$request(req).then((res) => {
+        if (res.status === 200) {
+          store.room = {}
+        }
+      })
+    }
     if (store.userName === '') {
       this.$router.go(-1)
       return
     }
-    if (store.joiningRoomKey !== null) {
-      const body = { roomKey: store.joiningRoomKey }
-      const req = new Request('req:room:leave', body)
-      this.$request(req).then((res) => {
-        if (res.status === 200) {
-          store.joiningRoomKey = null
-        }
-      })
-    }
+    const body = {}
+    const req = new Request('req:room:list', body)
+    this.$request(req).then((res) => {
+      const { rooms = [] } = res.body
+      store.rooms = rooms
+    })
   }
 }

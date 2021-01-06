@@ -2,10 +2,10 @@
   <div id="cover-users">
     <div
       class="user mb-1"
-      v-for="(user, socketId) in userMap"
+      v-for="{userName, socketId} in users"
       v-bind:key="`user-${socketId}`">
       <div class="user-key">{{socketId}}</div>
-      <div class="user-name">{{user.userName}}</div>
+      <div class="user-name">{{userName}}</div>
     </div>
   </div>
 </template>

@@ -9,15 +9,15 @@ export default {
     }
   },
   computed: {
-    userMap () {
-      return store.userMap
+    users () {
+      return store.users
     }
   },
   beforeCreate () {
-    const req = new Request('req:user:list', { roomKey: store.joiningRoomKey })
+    const req = new Request('req:user:list', { roomKey: store.room.roomKey })
     this.$request(req).then((res) => {
-      const { userMap } = res.body
-      this.store.userMap = userMap
+      const { users = [] } = res.body
+      store.users = users
     })
   }
 }

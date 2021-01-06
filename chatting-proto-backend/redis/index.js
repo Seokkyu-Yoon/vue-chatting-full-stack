@@ -128,6 +128,7 @@ async function writeMessage ({
   }
   await redis.set(`room:${roomKey}:lastUpdated`, now)
   await messageToJson(roomKey, message)
+  return message
 }
 
 async function joinRoom ({ userName, roomKey } = {}) {

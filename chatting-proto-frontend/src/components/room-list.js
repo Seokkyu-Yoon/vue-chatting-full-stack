@@ -10,29 +10,39 @@ export default {
     }
   },
   methods: {
-    setCurrRoom (roomKey) {
-      const body = { roomKey }
-      const req = new Req('req:room:join', body)
+    setCurrRoom (room) {
+      const req = new Req('req:room:join', { roomKey: room.roomKey })
       this.$request(req).then((res) => {
-        const { joined } = res.body
-        if (joined) {
-          store.joiningRoomKey = roomKey
+        const { room: resRoom } = res.body
+        if (res.status === 200) {
+          store.room = resRoom
           this.$router.push('Chat')
         }
       })
     },
     deleteRoom (roomKey) {
-      const body = { roomKey }
-      const req = new Req('req:room:delete', body)
-      this.$order(req)
+      const req = new Req('req:room:delete', { roomKey })
+      this.$request(req).then((res) => {
+        if (res.status === 200) {
+          store.room = {}
+          const reqRoomList = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+          return this.$request(reqRoomList)
+        }
+      }).then((res) => {
+        if (!res) return
+        const { rooms } = res.body
+        store.rooms = rooms
+      })
     }
   },
+  beforeMount () {
+    store.startIndexRoom = 0
+  },
   mounted () {
-    const body = {}
-    const req = new Req('req:room:list', body)
+    const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
     this.$request(req).then((res) => {
-      const { roomMap } = res.body
-      store.roomMap = roomMap
+      const { rooms } = res.body
+      store.rooms = rooms
     })
   }
 }

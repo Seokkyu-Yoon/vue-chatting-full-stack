@@ -51,14 +51,14 @@ export default {
         roomDesc: this.description
       })
       this.$request(req).then((res) => {
-        const { roomKey } = res.body
-        store.joiningRoomKey = roomKey
+        const { room } = res.body
+        store.room = room
         this.$router.push('Chat')
       })
     },
     updateRoom () {
       const req = new Req('req:room:update', {
-        roomKey: store.joiningRoomKey,
+        roomKey: store.room.roomKey,
         roomName: this.name,
         roomPassword: this.password,
         roomMaxJoin: this.maxJoin,
@@ -67,7 +67,7 @@ export default {
       this.$request(req)
     },
     deleteRoom () {
-      const req = new Req('req:room:delete', { roomKey: store.joiningRoomKey })
+      const req = new Req('req:room:delete', { roomKey: store.room.roomKey })
       this.$request(req)
     }
   },
@@ -90,7 +90,7 @@ export default {
           roomPassword: password = '',
           roomMaxJoin: maxJoin = '0',
           roomDesc: description = ''
-        } = store.roomMap[store.joiningRoomKey] || {}
+        } = store.room || {}
 
         this.defaultSetting = {
           name,

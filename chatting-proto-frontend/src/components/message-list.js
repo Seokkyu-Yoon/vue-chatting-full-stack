@@ -10,7 +10,7 @@ export default {
     }
   },
   beforeCreate () {
-    const req = new Request('req:room:messages', { roomKey: store.joiningRoomKey })
+    const req = new Request('req:room:messages', { roomKey: store.room.roomKey })
     this.$request(req).then((res) => {
       const { messages } = res.body
       this.store.messages = messages

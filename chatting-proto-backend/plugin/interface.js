@@ -8,8 +8,12 @@ const Interface = {
     },
     Room: {
       LIST: 'broadcast:room:list',
+      JOIN: 'broadcast:room:join',
+      CREATE: 'broadcast:room:create',
       LEAVE: 'broadcast:room:leave',
+      UPDATE: 'broadcast:room:update',
       DELETE: 'broadcast:room:delete',
+      WRITE: 'broadcast:room:write',
       MESSAGES: 'broadcast:room:messages'
     }
   },
@@ -24,6 +28,11 @@ const Interface = {
       CREATE: 'res:room:create',
       DELETE: 'res:room:delete',
       MESSAGES: 'res:room:messages'
+    },
+    Message: {
+      LIST: 'res:message:list',
+      WRITE: 'res:message:write',
+      WROTE: 'res:message:wrote'
     }
   },
   Request: {
@@ -41,6 +50,11 @@ const Interface = {
       DELETE: 'req:room:delete',
       WRITE: 'req:room:write',
       MESSAGES: 'req:room:messages'
+    },
+    Message: {
+      LIST: 'req:message:list',
+      WRITE: 'req:message:write',
+      WROTE: 'req:message:wrote'
     }
   }
 }

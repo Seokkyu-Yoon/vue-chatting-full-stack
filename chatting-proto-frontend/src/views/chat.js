@@ -26,13 +26,11 @@ export default {
       }
       if (this.blockSend) return
 
-      const req = new Request('req:room:write', { roomKey: store.joiningRoomKey, text: this.newMessage })
-      this.blockSend = true
+      const req = new Request('req:room:write', { roomKey: store.room.roomKey, text: this.newMessage })
       this.$request(req).then((res) => {
         const { wrote } = res.body
         if (wrote) {
           this.newMessage = ''
-          this.blockSend = false
         }
       })
     },
@@ -40,23 +38,23 @@ export default {
       this.$refs.upsertRoom.$refs.modal.show()
     },
     leaveRoom () {
-      const req = new Request('req:room:leave', { roomKey: store.joiningRoomKey })
+      const req = new Request('req:room:leave', { roomKey: store.room.roomKey })
       this.$request(req).then((res) => {
         const { joined } = res.body
         if (!joined) {
-          store.joiningRoomKey = null
+          store.room = {}
           this.$router.go(-1)
         }
       })
     }
   },
   beforeCreate () {
-    if (store.joiningRoomKey === null || store.userName === '') {
+    if (store.room.roomKey === null || store.userName === '') {
       this.$router.go(-1)
     }
   },
   beforeUpdate () {
-    if (store.joiningRoomKey === null || store.userName === '') {
+    if (store.room.roomKey === null || store.userName === '') {
       this.$router.go(-1)
     }
   },
