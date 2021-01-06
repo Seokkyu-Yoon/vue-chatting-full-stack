@@ -32,3 +32,9 @@ $ npm start
 ```bash
 $ npm run serve
 ```
+
+if run it on your server
+1. install node
+2. install redis
+3. change serverIp in chatting-proto-frontend/store/index.js
+
