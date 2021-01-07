@@ -5,6 +5,7 @@ import socketIoRedis from 'socket.io-redis'
 import socketIoEmitter from 'socket.io-emitter'
 
 import Res from '../core/response'
+import MegaphoneFactory from '../core/megaphone-factory'
 
 import Interface from './interface'
 
@@ -24,6 +25,9 @@ const Config = {
 }
 
 const emitter = socketIoEmitter(Config.Redis)
+const megaphoneFactory = new MegaphoneFactory(emitter)
+const megaphone = megaphoneFactory.create.bind(megaphoneFactory)
+console.log(megaphone)
 
 async function getTrashUsers (connectingSocketIds = [], savedSocketIds = []) {
   const trashUsersSet = new Set(savedSocketIds)
@@ -38,12 +42,6 @@ function getBase36RandomStr () {
 }
 async function getRandomHash () {
   return `${getBase36RandomStr()}${getBase36RandomStr()}${getBase36RandomStr()}`
-}
-
-function makeCallback (type, eventEmitter) {
-  return (payload) => {
-    eventEmitter.emit(type, payload)
-  }
 }
 
 function SocketHandler (io, redis) {
@@ -330,31 +328,32 @@ SocketHandler.prototype.writeMessage = async function writeMessage (socketId, ro
 }
 
 async function activate (server, redis) {
-  const sockets = {}
-
   debug('activate socket.io')
   const io = SocketIo(server, Config.SocketIo)
   io.adapter(socketIoRedis(Config.Redis))
 
   const socketHandler = new SocketHandler(io, redis)
+  setTimeout(() => {
+    // 왜인지 모르겠지만... 대략 딜레이가 없으면 socketIo redis adapter가 초기화되지 않는 것으로 추정
+    // io.adapter를 await으로 하여도 문제가 있음...
+    socketHandler.init()
+  }, 50)
 
   async function disconnect (socket) {
     const socketId = socket.id
     const socketRooms = socket.rooms
     debug(`${socket.id} has disconnect`)
-    if (typeof sockets[socketId] === 'undefined') return
+    if (typeof socketHandler.sockets[socketId] === 'undefined') return
 
-    const roomKeys = sockets[socketId]
+    const roomKeys = socketHandler.sockets[socketId]
     await Promise.all(
       [...roomKeys].map(async (roomKey) => {
         const { code, body } = await socketHandler.leaveRoom(socketId, socketRooms, roomKey)
-        const callback = makeCallback(Interface.Broadcast.Room.LEAVE, emitter.broadcast)
-        const res = new Res(callback)
-        res.status(code).send(body)
+        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
       })
     )
     await redis.deleteUser(socketId)
-    delete sockets[socketId]
+    delete socketHandler.sockets[socketId]
   }
 
   async function connection (socket) {
@@ -370,9 +369,7 @@ async function activate (server, redis) {
 
       if (roomKey === null) return
       const { code: codeUserMap, body: bodyUserMap } = await socketHandler.getUsers(body.roomKey)
-      const callbackUserMap = makeCallback(Interface.Broadcast.User.LIST, emitter.to(roomKey))
-      const resUserMap = new Res(callbackUserMap)
-      resUserMap.status(codeUserMap).send(bodyUserMap)
+      megaphone(Interface.Broadcast.User.LIST).to(roomKey).status(codeUserMap).send(bodyUserMap)
     })
 
     // *** User List
@@ -408,9 +405,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackRoomJoin = makeCallback(Interface.Broadcast.Room.JOIN, emitter.broadcast)
-      const resRoomJoin = new Res(callbackRoomJoin)
-      resRoomJoin.status(code).send(body)
+      megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
     })
 
     // *** Create Room
@@ -426,9 +421,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackCreateRoom = makeCallback(Interface.Broadcast.Room.CREATE, emitter.broadcast)
-      const resCreateRoom = new Res(callbackCreateRoom)
-      resCreateRoom.status(code).send(body)
+      megaphone(Interface.Broadcast.Room.CREATE).status(code).send(body)
     })
 
     // *** Update Room
@@ -445,9 +438,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackUpdateRoom = makeCallback(Interface.Broadcast.Room.UPDATE, emitter.broadcast)
-      const resUpdateRoom = new Res(callbackUpdateRoom)
-      resUpdateRoom.status(code).send(body)
+      megaphone(Interface.Broadcast.Room.UPDATE).status(code).send(body)
     })
 
     // *** Leave Room
@@ -461,9 +452,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackLeaveRoom = makeCallback(Interface.Broadcast.Room.LEAVE, emitter.broadcast)
-      const resLeaveRoom = new Res(callbackLeaveRoom)
-      resLeaveRoom.status(code).send(body)
+      megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
     })
 
     // *** Delete Room
@@ -474,9 +463,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackRoomDelete = makeCallback(Interface.Broadcast.Room.DELETE, emitter.broadcast)
-      const resRoomDelete = new Res(callbackRoomDelete)
-      resRoomDelete.status(code).send(body)
+      megaphone(Interface.Broadcast.Room.DELETE).status(code).send(body)
     })
 
     // *** Get messages of room
@@ -495,9 +482,7 @@ async function activate (server, redis) {
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackWrite = makeCallback(Interface.Broadcast.Message.WRITE, emitter.to(roomKey))
-      const resWrite = new Res(callbackWrite)
-      resWrite.status(code).send(body)
+      megaphone(Interface.Broadcast.Message.WRITE).to(roomKey).status(code).send(body)
     })
 
     socket.on(Interface.DISCONNECT, disconnect.bind(null, socket))
@@ -505,9 +490,6 @@ async function activate (server, redis) {
   }
 
   io.on(Interface.CONNECTION, connection)
-  setTimeout(() => {
-    socketHandler.init()
-  }, 50)
 }
 
 export default activate

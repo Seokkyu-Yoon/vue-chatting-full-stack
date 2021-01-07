@@ -2,12 +2,23 @@ import io from 'socket.io-client'
 import store from '@/store'
 import Req from '@/core/request'
 
-const socket = process.env.NODE_ENV === 'development'
-  ? io(
-    `http://192.168.1.77:${process.env.VUE_APP_SERVER_PORT}`,
-    { transports: ['websocket'] }
-    )
-  : io({ transports: ['websocket'] })
+function getSocket ({
+  NODE_ENV,
+  VUE_APP_SERVER_PROTOCOL = 'http:',
+  VUE_APP_SERVER_IP = 'localhost',
+  VUE_APP_SERVER_PORT = '3000'
+}) {
+  const opts = {
+    transports: ['websocket']
+  }
+  if (NODE_ENV === 'development') {
+    const devServer = `${VUE_APP_SERVER_PROTOCOL}//${VUE_APP_SERVER_IP}:${VUE_APP_SERVER_PORT}`
+    return io(devServer, opts)
+  }
+  return io(opts)
+}
+
+const socket = getSocket(process.env)
 const SocketPlugin = {
   install (vue) {
     function $request (req) {
