@@ -1,4 +1,3 @@
-import Request from '@/core/request'
 import store from '@/store'
 
 export default {
@@ -12,12 +11,5 @@ export default {
     users () {
       return store.users
     }
-  },
-  beforeCreate () {
-    const req = new Request('req:user:list', { roomKey: store.room.roomKey })
-    this.$request(req).then((res) => {
-      const { users = [] } = res.body
-      store.users = users
-    })
   }
 }

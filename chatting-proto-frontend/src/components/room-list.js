@@ -37,12 +37,5 @@ export default {
   },
   beforeMount () {
     store.startIndexRoom = 0
-  },
-  mounted () {
-    const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
-    this.$request(req).then((res) => {
-      const { rooms } = res.body
-      store.rooms = rooms
-    })
   }
 }

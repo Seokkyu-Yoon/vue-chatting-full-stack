@@ -1,4 +1,4 @@
-import Request from '@/core/request'
+import Req from '@/core/request'
 import store from '@/store'
 import UpsertRoom from '@/components/UpsertRoom.vue'
 import MessageList from '@/components/MessageList.vue'
@@ -15,7 +15,8 @@ export default {
     return {
       store,
       newMessage: '',
-      blockSend: false
+      blockSend: false,
+      sended: false
     }
   },
   methods: {
@@ -26,11 +27,12 @@ export default {
       }
       if (this.blockSend) return
 
-      const req = new Request('req:room:write', { roomKey: store.room.roomKey, text: this.newMessage })
+      const req = new Req('req:message:write', { roomKey: store.room.roomKey, text: this.newMessage })
       this.$request(req).then((res) => {
         const { wrote } = res.body
         if (wrote) {
           this.newMessage = ''
+          this.sended = !this.sended
         }
       })
     },
@@ -38,7 +40,7 @@ export default {
       this.$refs.upsertRoom.$refs.modal.show()
     },
     leaveRoom () {
-      const req = new Request('req:room:leave', { roomKey: store.room.roomKey })
+      const req = new Req('req:room:leave', { roomKey: store.room.roomKey })
       this.$request(req).then((res) => {
         const { joined } = res.body
         if (!joined) {
@@ -49,12 +51,27 @@ export default {
     }
   },
   beforeCreate () {
-    if (store.room.roomKey === null || store.userName === '') {
+    if (typeof store.room.roomKey === 'undefined' || store.userName === '') {
       this.$router.go(-1)
+      return
     }
+
+    store.minIndexMessage = -1
+    const reqMessages = new Req('req:message:list', { roomKey: store.room.roomKey, minIndex: store.minIndexMessage })
+    this.$request(reqMessages).then((res) => {
+      const { messages, minIndex } = res.body
+      store.messages = messages
+      store.minIndexMessage = minIndex
+    })
+
+    const reqUsers = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
+    this.$request(reqUsers).then((res) => {
+      const { users = [] } = res.body
+      store.users = users
+    })
   },
   beforeUpdate () {
-    if (store.room.roomKey === null || store.userName === '') {
+    if (typeof store.room.roomKey === 'undefined' || store.userName === '') {
       this.$router.go(-1)
     }
   },

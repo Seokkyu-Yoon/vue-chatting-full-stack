@@ -133,27 +133,30 @@ SocketHandler.prototype.getRooms = async function getRooms (roomKey = null, star
   }
 }
 
-SocketHandler.prototype.getMessages = async function getMessages (roomKey = null, finalPosition = -1) {
+SocketHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1) {
   if (roomKey === null) {
     return {
       code: 304,
       body: {
+        minIndex: -1,
         messages: []
       }
     }
   }
   const messages = await this.redis.getMessages(roomKey)
   let tail = messages.length
-  if (finalPosition > -1) {
-    tail = finalPosition
+  if (minIndex > -1) {
+    tail = minIndex
   }
-  if (finalPosition > messages.length) {
+  if (minIndex > messages.length) {
     tail = messages.length
   }
+
+  const head = tail < 50 ? 0 : tail - 50
   return {
     body: {
-      messages: messages.slice(tail - 50, tail),
-      lastIndex: finalPosition
+      messages: messages.slice(head, tail),
+      minIndex: head
     }
   }
 }
@@ -256,17 +259,16 @@ SocketHandler.prototype.updateRoom = async function updateRoom (roomKey, roomNam
 SocketHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
   const userName = await this.redis.getUserName(socketId)
   debug(`${userName} join ${roomKey}`)
-  await this.redis.joinRoom({ userName, roomKey })
+  const message = await this.redis.joinRoom({ userName, roomKey })
   this.io.of('/').adapter.remoteJoin(socketId, roomKey)
   this.sockets[socketId].add(roomKey)
 
-  const room = await this.redis.getRoom(roomKey)
+  const roomMap = await this.redis.getRoom(roomKey)
+  const room = Object.assign({ roomKey }, roomMap[roomKey])
   return {
     body: {
-      room: {
-        roomKey,
-        ...room
-      }
+      room,
+      message
     }
   }
 }
@@ -274,15 +276,18 @@ SocketHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
 SocketHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRooms, roomKey) {
   const userName = await this.redis.getUserName(socketId)
   debug(`${userName} leave ${roomKey}`)
-  await this.redis.leaveRoom({ userName, roomKey })
+  const message = await this.redis.leaveRoom({ userName, roomKey })
   this.sockets[socketId].delete(roomKey)
   if (socketRooms.has(roomKey)) {
     this.io.of('/').adapter.remoteLeave(socketId, roomKey)
   }
+  const roomMap = await this.redis.getRoom(roomKey)
+  const room = Object.assign({ roomKey }, roomMap[roomKey])
   return {
     body: {
       socketId,
-      roomKey
+      room,
+      message
     }
   }
 }
@@ -290,6 +295,8 @@ SocketHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRo
 SocketHandler.prototype.deleteRoom = async function deleteRoom (socketId, roomKey) {
   const userName = await this.redis.getUserName(socketId)
   debug(`${userName} delete ${roomKey}`)
+  const roomMap = await this.redis.getRoom(roomKey)
+  const room = Object.assign({ roomKey }, roomMap[roomKey])
   const joiningSocketIds = await this.io.of('/').adapter.sockets([roomKey])
   await this.redis.deleteRoom({ roomKey })
 
@@ -301,7 +308,7 @@ SocketHandler.prototype.deleteRoom = async function deleteRoom (socketId, roomKe
   return {
     body: {
       socketIds,
-      roomKey
+      room
     }
   }
 }
@@ -473,22 +480,22 @@ async function activate (server, redis) {
     })
 
     // *** Get messages of room
-    socket.on(Interface.Request.Room.MESSAGES, async (req, callback) => {
-      const { roomKey } = req.body
-      const { code, body } = await socketHandler.getMessages(roomKey)
+    socket.on(Interface.Request.Message.LIST, async (req, callback) => {
+      const { roomKey, minIndex = -1 } = req.body
+      const { code, body } = await socketHandler.getMessages(roomKey, minIndex)
       const res = new Res(callback)
       res.status(code).send(body)
     })
 
     // *** Write messages to room
-    socket.on(Interface.Request.Room.WRITE, async (req, callback) => {
+    socket.on(Interface.Request.Message.WRITE, async (req, callback) => {
       const { id: socketId } = socket
       const { roomKey, text } = req.body
       const { code, body } = await socketHandler.writeMessage(socketId, roomKey, text)
       const res = new Res(callback)
       res.status(code).send(body)
 
-      const callbackWrite = makeCallback(Interface.Broadcast.Room.WRITE, emitter.to(roomKey))
+      const callbackWrite = makeCallback(Interface.Broadcast.Message.WRITE, emitter.to(roomKey))
       const resWrite = new Res(callbackWrite)
       resWrite.status(code).send(body)
     })

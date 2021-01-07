@@ -2,10 +2,12 @@ import io from 'socket.io-client'
 import store from '@/store'
 import Req from '@/core/request'
 
-const socket = io(store.serverIp, {
-  transports: ['websocket']
-})
-
+const socket = process.env.NODE_ENV === 'development'
+  ? io(
+    `http://192.168.1.77:${process.env.VUE_APP_SERVER_PORT}`,
+    { transports: ['websocket'] }
+    )
+  : io({ transports: ['websocket'] })
 const SocketPlugin = {
   install (vue) {
     function $request (req) {
@@ -37,14 +39,14 @@ const SocketPlugin = {
         return
       }
       if (roomKey === null) {
-        const reqRooms = new Req('req:room:list', {})
+        const reqRooms = new Req('req:room:list', { roomKey, startIndex: store.startIndexRoom })
         const resRooms = await $request(reqRooms)
         const { rooms = [] } = resRooms.body
         store.rooms = rooms
         return
       }
-      const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey })
-      const reqMessages = new Req('req:room:messages', { roomKey })
+      const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
+      const reqMessages = new Req('req:message:list', { roomKey, minIndex: store.minIndexMessage })
       const [
         resUser,
         resMessages
@@ -55,20 +57,24 @@ const SocketPlugin = {
       store.messages = messages
     })
 
+    socket.on('broadcast:room:create', () => {
+      if (typeof store.room.roomKey !== 'undefined') return
+      const req = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+      $request(req).then((res) => {
+        const { rooms } = res.body
+        store.rooms = rooms
+      })
+    })
+
     socket.on('broadcast:room:join', (res) => {
-      const { room } = res.body
+      const { room, message } = res.body
 
       if (store.room.roomKey === room.roomKey) {
-        const reqUsers = new Req('req:user:list', { roomKey: room.roomKey, startIndex: store.startIndexUser })
-        const reqMessages = new Req('req:room:messages', { roomKey: room.roomKey, startIndex: store.startIndexMessage })
-        Promise.all([
-          $request(reqUsers),
-          $request(reqMessages)
-        ]).then(([resUser, resMessages]) => {
-          const { users = [] } = resUser.body
-          const { messages = [] } = resMessages.body
+        store.messages.push(message)
+        const req = new Req('req:user:list', { roomKey: room.roomKey, startIndex: store.startIndexUser })
+        $request(req).then((res) => {
+          const { users = [] } = res.body
           store.users = users
-          store.messages = messages
         })
       }
 
@@ -86,32 +92,48 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:leave', (res) => {
-      const { roomKey } = res.body
+      const { room, message } = res.body
 
-      if (store.room.roomKey === roomKey) {
-        const reqUsers = new Req('req:user:list', { roomKey, startIndex: store.startIndexUser })
-        const reqMessages = new Req('req:room:messages', { roomKey, startIndex: store.startIndexMessage })
-        Promise.all([
-          $request(reqUsers),
-          $request(reqMessages)
-        ]).then(([resUser, resMessages]) => {
-          const { users = [] } = resUser.body
-          const { messages = [] } = resMessages.body
+      if (store.room.roomKey === room.roomKey) {
+        store.messages.push(message)
+        const req = new Req('req:user:list', { roomKey: room.roomKey, startIndex: store.startIndexUser })
+        $request(req).then((res) => {
+          const { users = [] } = res.body
           store.users = users
-          store.messages = messages
         })
       }
 
       if (typeof store.room.roomKey === 'undefined') {
-        const req = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
-        $request(req).then((res) => {
-          const { rooms = [] } = res.body
-          store.rooms = rooms
-        })
+        const roomIndex = store.rooms.findIndex(({ roomKey }) => roomKey === room.roomKey)
+        if (roomIndex === -1) return
+        const updatedRoom = Object.assign({}, store.rooms[roomIndex])
+        updatedRoom.joining -= 1
+        store.rooms = [
+          ...store.rooms.slice(0, roomIndex),
+          updatedRoom,
+          ...store.rooms.slice(roomIndex + 1)
+        ]
       }
     })
 
-    socket.on('broadcast:room:write', (res) => {
+    socket.on('broadcast:room:delete', (res) => {
+      const { room } = res.body
+
+      if (store.room.roomKey === room.roomKey) {
+        store.room = {}
+        return
+      }
+
+      if (typeof store.room.roomKey !== 'undefined') return
+
+      const reqRooms = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+      $request(reqRooms).then((resRooms) => {
+        const { rooms } = resRooms.body
+        store.rooms = rooms
+      })
+    })
+
+    socket.on('broadcast:message:write', (res) => {
       const { message } = res.body
       store.messages.push(message)
     })

@@ -80,9 +80,7 @@ async function getUserName (socketId) {
 async function isUserExists (userName) {
   const loginedIds = await getSocketIds()
 
-  // eslint-disable-next-line no-restricted-syntax
   for (const socketId of loginedIds) {
-    // eslint-disable-next-line no-await-in-loop
     const savedUserName = await getUserName(socketId)
     if (savedUserName === userName) {
       return true
@@ -132,7 +130,7 @@ async function writeMessage ({
 }
 
 async function joinRoom ({ userName, roomKey } = {}) {
-  await writeMessage({
+  return await writeMessage({
     type: 'join',
     userName,
     roomKey
@@ -188,7 +186,7 @@ async function updateRoom ({
 }
 
 async function leaveRoom ({ userName, roomKey } = {}) {
-  await writeMessage({
+  return await writeMessage({
     type: 'leave',
     userName,
     roomKey

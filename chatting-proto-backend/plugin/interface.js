@@ -12,9 +12,10 @@ const Interface = {
       CREATE: 'broadcast:room:create',
       LEAVE: 'broadcast:room:leave',
       UPDATE: 'broadcast:room:update',
-      DELETE: 'broadcast:room:delete',
-      WRITE: 'broadcast:room:write',
-      MESSAGES: 'broadcast:room:messages'
+      DELETE: 'broadcast:room:delete'
+    },
+    Message: {
+      WRITE: 'broadcast:message:write'
     }
   },
   Response: {
@@ -31,8 +32,7 @@ const Interface = {
     },
     Message: {
       LIST: 'res:message:list',
-      WRITE: 'res:message:write',
-      WROTE: 'res:message:wrote'
+      WRITE: 'res:message:write'
     }
   },
   Request: {
@@ -47,14 +47,11 @@ const Interface = {
       CREATE: 'req:room:create',
       UPDATE: 'req:room:update',
       LEAVE: 'req:room:leave',
-      DELETE: 'req:room:delete',
-      WRITE: 'req:room:write',
-      MESSAGES: 'req:room:messages'
+      DELETE: 'req:room:delete'
     },
     Message: {
       LIST: 'req:message:list',
-      WRITE: 'req:message:write',
-      WROTE: 'req:message:wrote'
+      WRITE: 'req:message:write'
     }
   }
 }

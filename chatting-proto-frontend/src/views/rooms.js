@@ -1,4 +1,4 @@
-import Request from '@/core/request'
+import Req from '@/core/request'
 import store from '@/store'
 import RoomList from '@/components/RoomList.vue'
 import UpsertRoom from '@/components/UpsertRoom.vue'
@@ -20,21 +20,21 @@ export default {
     }
   },
   beforeMount () {
+    if (store.userName === '') {
+      this.$router.go(-1)
+      return
+    }
     if (typeof store.room.roomKey !== 'undefined') {
-      const body = { roomKey: store.room.roomKey }
-      const req = new Request('req:room:leave', body)
+      const req = new Req('req:room:leave', { roomKey: store.room.roomKey })
       this.$request(req).then((res) => {
         if (res.status === 200) {
           store.room = {}
         }
       })
     }
-    if (store.userName === '') {
-      this.$router.go(-1)
-      return
-    }
-    const body = {}
-    const req = new Request('req:room:list', body)
+
+    store.startIndexRoom = 0
+    const req = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
     this.$request(req).then((res) => {
       const { rooms = [] } = res.body
       store.rooms = rooms

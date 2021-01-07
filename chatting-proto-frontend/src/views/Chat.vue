@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
-        <MessageList v-bind:messages="store.messages" />
+        <MessageList ref="messages" v-bind:sended="sended"/>
         <div class="mt-1">
           <textarea
             class="form-control"
