@@ -27,7 +27,6 @@ const Config = {
 const emitter = socketIoEmitter(Config.Redis)
 const megaphoneFactory = new MegaphoneFactory(emitter)
 const megaphone = megaphoneFactory.create.bind(megaphoneFactory)
-console.log(megaphone)
 
 async function getTrashUsers (connectingSocketIds = [], savedSocketIds = []) {
   const trashUsersSet = new Set(savedSocketIds)
