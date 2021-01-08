@@ -9,9 +9,7 @@
     "stop": "pm2 stop cluster",
     "del": "pm2 del cluster",
     "monit": "pm2 monit",
-    "dev": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* --exec babel-node bin/www.js",
-    "dev:cluster": "set DEBUG=chatting-proto-backend:server:* && nodemon --ignore messages/* --babel-node cluster.js",
-    "dev:socket": "set DEBUG=chatting-proto-backend:server:socket && nodemon  --ignore messages/* --babel-node cluster.js"
+    "dev": "nodemon --config nodemon.json --exec babel-node bin/www.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,7 +17,6 @@
     "cluster": "^0.7.7",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
-    "debug": "^4.3.1",
     "dotenv": "^8.2.0",
     "ejs": "^3.1.5",
     "express": "^4.17.1",
@@ -27,6 +24,8 @@
     "ioredis": "^4.19.2",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.6",
+    "pino": "^6.9.0",
+    "pino-pretty": "^4.3.0",
     "pm2": "^4.5.0",
     "socket.io": "^3.0.4",
     "socket.io-emitter": "^3.1.1",

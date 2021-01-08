@@ -1,15 +1,12 @@
-import logger from 'debug'
-
 import SocketIo from 'socket.io'
 import socketIoRedis from 'socket.io-redis'
 import socketIoEmitter from 'socket.io-emitter'
 
+import logger from '../core/logger'
 import Res from '../core/response'
 import MegaphoneFactory from '../core/megaphone-factory'
 
 import Interface from './interface'
-
-const debug = logger('chatting-proto-backend:server:socket')
 
 const Config = {
   SocketIo: {
@@ -43,32 +40,32 @@ async function getRandomHash () {
   return `${getBase36RandomStr()}${getBase36RandomStr()}${getBase36RandomStr()}`
 }
 
-function SocketHandler (io, redis) {
+function SocketIoHandler (io, db) {
   this.io = io
-  this.redis = redis
+  this.db = db
   this.sockets = {}
 }
-SocketHandler.prototype.getRoomKey = async function getRoomKey () {
+SocketIoHandler.prototype.getRoomKey = async function getRoomKey () {
   let roomKey = await getRandomHash()
-  while (await this.redis.existsRoom({ roomKey })) {
+  while (await this.db.existsRoom({ roomKey })) {
     roomKey = await getRandomHash()
   }
   return roomKey
 }
-SocketHandler.prototype.init = async function init () {
-  debug('cleaning users')
+SocketIoHandler.prototype.init = async function init () {
+  logger.info('cleaning users')
   const allSockets = await this.io.of('/').adapter.sockets([])
   const connectingSocketIds = [...allSockets]
-  const savedSocketIds = await this.redis.getSocketIds()
+  const savedSocketIds = await this.db.getSocketIds()
   const trashUsers = await getTrashUsers(connectingSocketIds, savedSocketIds)
 
   if (trashUsers.length === 0) {
-    debug('finished cleaning')
+    logger.info('finished cleaning')
     return
   }
   await Promise.all(
     trashUsers.map(async (socketId) => {
-      await this.redis.deleteUser(socketId)
+      await this.db.deleteUser(socketId)
       if (this.sockets[socketId]) {
         delete this.sockets[socketId]
       }
@@ -77,14 +74,14 @@ SocketHandler.prototype.init = async function init () {
 
   const userMap = {}
   await Promise.all(connectingSocketIds.map(async (socketId) => {
-    const userName = await this.redis.getUserName(socketId)
+    const userName = await this.db.getUserName(socketId)
     if (userName === null) return
     userMap[socketId] = { userName }
   }))
-  debug('finished cleaning')
+  logger.info('finished cleaning')
 }
 
-SocketHandler.prototype.getUsers = async function getUserMap (roomKey = null, startIndex = 0) {
+SocketIoHandler.prototype.getUsers = async function getUserMap (roomKey = null, startIndex = 0) {
   if (roomKey === null) {
     return {
       code: 304,
@@ -93,10 +90,11 @@ SocketHandler.prototype.getUsers = async function getUserMap (roomKey = null, st
       }
     }
   }
+  const COUNT = 10
   const socketIds = await this.io.of('/').adapter.sockets([roomKey])
 
   const users = await Promise.all([...socketIds].map(async (socketId) => {
-    const userName = await this.redis.getUserName(socketId)
+    const userName = await this.db.getUserName(socketId)
     if (userName === null) return
     return {
       socketId,
@@ -106,13 +104,14 @@ SocketHandler.prototype.getUsers = async function getUserMap (roomKey = null, st
 
   return {
     body: {
-      users: users.slice(startIndex, startIndex + 10)
+      users: users.slice(startIndex, startIndex + COUNT)
     }
   }
 }
 
-SocketHandler.prototype.getRooms = async function getRooms (roomKey = null, startIndex = 0) {
-  const roomMap = await this.redis.getRoom(roomKey)
+SocketIoHandler.prototype.getRooms = async function getRooms (roomKey = null, startIndex = 0) {
+  const COUNT = 10
+  const roomMap = await this.db.getRoom(roomKey)
 
   const rooms = await Promise.all(Object.keys(roomMap).map(async (savedRoomKey) => {
     const roomSockets = (await this.io.of('/').adapter.sockets([savedRoomKey])) || new Set()
@@ -125,12 +124,12 @@ SocketHandler.prototype.getRooms = async function getRooms (roomKey = null, star
   }))
   return {
     body: {
-      rooms: rooms.slice(startIndex, startIndex + 10)
+      rooms: rooms.slice(startIndex, startIndex + COUNT)
     }
   }
 }
 
-SocketHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1) {
+SocketIoHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1) {
   if (roomKey === null) {
     return {
       code: 304,
@@ -140,7 +139,8 @@ SocketHandler.prototype.getMessages = async function getMessages (roomKey = null
       }
     }
   }
-  const messages = await this.redis.getMessages(roomKey)
+  const COUNT = 50
+  const messages = await this.db.getMessages(roomKey)
   let tail = messages.length
   if (minIndex > -1) {
     tail = minIndex
@@ -149,7 +149,7 @@ SocketHandler.prototype.getMessages = async function getMessages (roomKey = null
     tail = messages.length
   }
 
-  const head = tail < 50 ? 0 : tail - 50
+  const head = tail < COUNT ? 0 : tail - COUNT
   return {
     body: {
       messages: messages.slice(head, tail),
@@ -158,7 +158,7 @@ SocketHandler.prototype.getMessages = async function getMessages (roomKey = null
   }
 }
 
-SocketHandler.prototype.isValidUser = async function isValidUser (userName) {
+SocketIoHandler.prototype.isValidUser = async function isValidUser (userName) {
   if (userName === '') {
     return {
       body: {
@@ -168,7 +168,7 @@ SocketHandler.prototype.isValidUser = async function isValidUser (userName) {
   }
   const socketIds = await this.io.of('/').adapter.sockets([])
   for (const socketId of [...socketIds]) {
-    const redisUserName = await this.redis.getUserName(socketId)
+    const redisUserName = await this.db.getUserName(socketId)
     if (redisUserName === userName) {
       return {
         body: {
@@ -184,7 +184,7 @@ SocketHandler.prototype.isValidUser = async function isValidUser (userName) {
   }
 }
 
-SocketHandler.prototype.loginUser = async function loginUser (socketId, userName, roomKey = null) {
+SocketIoHandler.prototype.loginUser = async function loginUser (socketId, userName, roomKey = null) {
   const { code, body } = await this.isValidUser(userName)
 
   if (!body.isValid) {
@@ -196,11 +196,11 @@ SocketHandler.prototype.loginUser = async function loginUser (socketId, userName
       }
     }
   }
-  await this.redis.addUser(socketId, userName)
+  await this.db.addUser(socketId, userName)
 
   const resBody = { ...body, userName, roomKey }
   const roomKeys = new Set()
-  if (roomKey !== null && this.redis.existsRoom(roomKey)) {
+  if (roomKey !== null && this.db.existsRoom(roomKey)) {
     await this.io.of('/').adapter.remoteJoin(socketId, roomKey)
     roomKeys.add(roomKey)
   }
@@ -212,11 +212,11 @@ SocketHandler.prototype.loginUser = async function loginUser (socketId, userName
   }
 }
 
-SocketHandler.prototype.createRoom = async function createRoom (socketId, roomName, roomPassword, roomMaxJoin, roomDesc) {
-  const userName = await this.redis.getUserName(socketId)
-  debug(`${userName} create room`)
+SocketIoHandler.prototype.createRoom = async function createRoom (socketId, roomName, roomPassword, roomMaxJoin, roomDesc) {
+  const userName = await this.db.getUserName(socketId)
+  logger.debug(`${userName} create room`)
   const roomKey = await this.getRoomKey()
-  await this.redis.createRoom({
+  await this.db.createRoom({
     userName,
     roomKey,
     roomName,
@@ -231,8 +231,8 @@ SocketHandler.prototype.createRoom = async function createRoom (socketId, roomNa
   }
 }
 
-SocketHandler.prototype.updateRoom = async function updateRoom (roomKey, roomName, roomPassword, roomMaxJoin, roomDesc) {
-  await this.redis.updateRoom({
+SocketIoHandler.prototype.updateRoom = async function updateRoom (roomKey, roomName, roomPassword, roomMaxJoin, roomDesc) {
+  await this.db.updateRoom({
     roomKey,
     roomName,
     roomPassword,
@@ -253,14 +253,14 @@ SocketHandler.prototype.updateRoom = async function updateRoom (roomKey, roomNam
   }
 }
 
-SocketHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
-  const userName = await this.redis.getUserName(socketId)
-  debug(`${userName} join ${roomKey}`)
-  const message = await this.redis.joinRoom({ userName, roomKey })
+SocketIoHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
+  const userName = await this.db.getUserName(socketId)
+  logger.debug(`${userName} join ${roomKey}`)
+  const message = await this.db.joinRoom({ userName, roomKey })
   this.io.of('/').adapter.remoteJoin(socketId, roomKey)
   this.sockets[socketId].add(roomKey)
 
-  const roomMap = await this.redis.getRoom(roomKey)
+  const roomMap = await this.db.getRoom(roomKey)
   const room = Object.assign({ roomKey }, roomMap[roomKey])
   return {
     body: {
@@ -270,15 +270,15 @@ SocketHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
   }
 }
 
-SocketHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRooms, roomKey) {
-  const userName = await this.redis.getUserName(socketId)
-  debug(`${userName} leave ${roomKey}`)
-  const message = await this.redis.leaveRoom({ userName, roomKey })
+SocketIoHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRooms, roomKey) {
+  const userName = await this.db.getUserName(socketId)
+  logger.debug(`${userName} leave ${roomKey}`)
+  const message = await this.db.leaveRoom({ userName, roomKey })
   this.sockets[socketId].delete(roomKey)
   if (socketRooms.has(roomKey)) {
     this.io.of('/').adapter.remoteLeave(socketId, roomKey)
   }
-  const roomMap = await this.redis.getRoom(roomKey)
+  const roomMap = await this.db.getRoom(roomKey)
   const room = Object.assign({ roomKey }, roomMap[roomKey])
   return {
     body: {
@@ -289,13 +289,13 @@ SocketHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRo
   }
 }
 
-SocketHandler.prototype.deleteRoom = async function deleteRoom (socketId, roomKey) {
-  const userName = await this.redis.getUserName(socketId)
-  debug(`${userName} delete ${roomKey}`)
-  const roomMap = await this.redis.getRoom(roomKey)
+SocketIoHandler.prototype.deleteRoom = async function deleteRoom (socketId, roomKey) {
+  const userName = await this.db.getUserName(socketId)
+  logger.debug(`${userName} delete ${roomKey}`)
+  const roomMap = await this.db.getRoom(roomKey)
   const room = Object.assign({ roomKey }, roomMap[roomKey])
   const joiningSocketIds = await this.io.of('/').adapter.sockets([roomKey])
-  await this.redis.deleteRoom({ roomKey })
+  await this.db.deleteRoom({ roomKey })
 
   const socketIds = [...joiningSocketIds]
   socketIds.forEach((socketId) => {
@@ -310,9 +310,9 @@ SocketHandler.prototype.deleteRoom = async function deleteRoom (socketId, roomKe
   }
 }
 
-SocketHandler.prototype.writeMessage = async function writeMessage (socketId, roomKey, text) {
-  const userName = await this.redis.getUserName(socketId)
-  const message = await this.redis.writeMessage({
+SocketIoHandler.prototype.writeMessage = async function writeMessage (socketId, roomKey, text) {
+  const userName = await this.db.getUserName(socketId)
+  const message = await this.db.writeMessage({
     type: 'message',
     userName,
     roomKey,
@@ -326,55 +326,56 @@ SocketHandler.prototype.writeMessage = async function writeMessage (socketId, ro
   }
 }
 
-async function activate (server, redis) {
-  debug('activate socket.io')
+async function activate (server, db) {
+  logger.info('activate socket.io')
   const io = SocketIo(server, Config.SocketIo)
   io.adapter(socketIoRedis(Config.Redis))
 
-  const socketHandler = new SocketHandler(io, redis)
+  const socketIoHandler = new SocketIoHandler(io, db)
   setTimeout(() => {
     // 왜인지 모르겠지만... 대략 딜레이가 없으면 socketIo redis adapter가 초기화되지 않는 것으로 추정
     // io.adapter를 await으로 하여도 문제가 있음...
-    socketHandler.init()
-  }, 50)
+    socketIoHandler.init()
+  }, 100)
 
   async function disconnect (socket) {
     const socketId = socket.id
     const socketRooms = socket.rooms
-    debug(`${socket.id} has disconnect`)
-    if (typeof socketHandler.sockets[socketId] === 'undefined') return
+    logger.info(`${socket.id} has disconnect`)
+    if (typeof socketIoHandler.sockets[socketId] === 'undefined') return
 
-    const roomKeys = socketHandler.sockets[socketId]
+    const roomKeys = socketIoHandler.sockets[socketId]
     await Promise.all(
       [...roomKeys].map(async (roomKey) => {
-        const { code, body } = await socketHandler.leaveRoom(socketId, socketRooms, roomKey)
+        const { code, body } = await socketIoHandler.leaveRoom(socketId, socketRooms, roomKey)
+
         megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
       })
     )
-    await redis.deleteUser(socketId)
-    delete socketHandler.sockets[socketId]
+    await db.deleteUser(socketId)
+    delete socketIoHandler.sockets[socketId]
   }
 
   async function connection (socket) {
-    debug(`${socket.id} has connect`)
+    logger.info(`${socket.id} has connect`)
     // *** User Login
     socket.on(Interface.Request.User.LOGIN, async (req, callback) => {
       const { userName, roomKey = null } = req.body
       const { id: socketId } = socket
 
-      const { code, body } = await socketHandler.loginUser(socketId, userName, roomKey)
+      const { code, body } = await socketIoHandler.loginUser(socketId, userName, roomKey)
       const res = new Res(callback)
       res.status(code).send(body)
 
       if (roomKey === null) return
-      const { code: codeUserMap, body: bodyUserMap } = await socketHandler.getUsers(body.roomKey)
+      const { code: codeUserMap, body: bodyUserMap } = await socketIoHandler.getUsers(body.roomKey)
       megaphone(Interface.Broadcast.User.LIST).to(roomKey).status(codeUserMap).send(bodyUserMap)
     })
 
     // *** User List
     socket.on(Interface.Request.User.LIST, async (req, callback) => {
       const { roomKey, startIndex } = req.body
-      const { code, body } = await socketHandler.getUsers(roomKey, startIndex)
+      const { code, body } = await socketIoHandler.getUsers(roomKey, startIndex)
 
       const res = new Res(callback)
       res.status(code).send(body)
@@ -383,7 +384,7 @@ async function activate (server, redis) {
     // *** Check valid user
     socket.on(Interface.Request.User.IS_VALID, async (req, callback) => {
       const { userName } = req.body
-      const { code, body } = await socketHandler.isValidUser(userName)
+      const { code, body } = await socketIoHandler.isValidUser(userName)
       const res = new Res(callback)
       res.status(code).send(body)
     })
@@ -391,7 +392,7 @@ async function activate (server, redis) {
     // *** Room List
     socket.on(Interface.Request.Room.LIST, async (req, callback) => {
       const { roomKey = null, startIndex = 0 } = req.body
-      const { code, body } = await socketHandler.getRooms(roomKey, startIndex)
+      const { code, body } = await socketIoHandler.getRooms(roomKey, startIndex)
       const res = new Res(callback)
       res.status(code).send(body)
     })
@@ -400,7 +401,7 @@ async function activate (server, redis) {
     socket.on(Interface.Request.Room.JOIN, async (req, callback) => {
       const { id: socketId } = socket
       const { roomKey } = req.body
-      const { code, body } = await socketHandler.joinRoom(socketId, roomKey)
+      const { code, body } = await socketIoHandler.joinRoom(socketId, roomKey)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -416,7 +417,7 @@ async function activate (server, redis) {
         roomMaxJoin,
         roomDesc
       } = req.body
-      const { code, body } = await socketHandler.createRoom(socketId, roomName, roomPassword, roomMaxJoin, roomDesc)
+      const { code, body } = await socketIoHandler.createRoom(socketId, roomName, roomPassword, roomMaxJoin, roomDesc)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -433,7 +434,7 @@ async function activate (server, redis) {
         roomDesc
       } = req.body
 
-      const { code, body } = await socketHandler.updateRoom(roomKey, roomName, roomPassword, roomMaxJoin, roomDesc)
+      const { code, body } = await socketIoHandler.updateRoom(roomKey, roomName, roomPassword, roomMaxJoin, roomDesc)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -447,7 +448,7 @@ async function activate (server, redis) {
         id: socketId,
         rooms: socketRooms
       } = socket
-      const { code, body } = await socketHandler.leaveRoom(socketId, socketRooms, roomKey)
+      const { code, body } = await socketIoHandler.leaveRoom(socketId, socketRooms, roomKey)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -458,7 +459,7 @@ async function activate (server, redis) {
     socket.on(Interface.Request.Room.DELETE, async (req, callback) => {
       const { id: socketId } = socket
       const { roomKey } = req.body
-      const { code, body } = await socketHandler.deleteRoom(socketId, roomKey)
+      const { code, body } = await socketIoHandler.deleteRoom(socketId, roomKey)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -468,7 +469,7 @@ async function activate (server, redis) {
     // *** Get messages of room
     socket.on(Interface.Request.Message.LIST, async (req, callback) => {
       const { roomKey, minIndex = -1 } = req.body
-      const { code, body } = await socketHandler.getMessages(roomKey, minIndex)
+      const { code, body } = await socketIoHandler.getMessages(roomKey, minIndex)
       const res = new Res(callback)
       res.status(code).send(body)
     })
@@ -477,7 +478,7 @@ async function activate (server, redis) {
     socket.on(Interface.Request.Message.WRITE, async (req, callback) => {
       const { id: socketId } = socket
       const { roomKey, text } = req.body
-      const { code, body } = await socketHandler.writeMessage(socketId, roomKey, text)
+      const { code, body } = await socketIoHandler.writeMessage(socketId, roomKey, text)
       const res = new Res(callback)
       res.status(code).send(body)
 
@@ -485,7 +486,7 @@ async function activate (server, redis) {
     })
 
     socket.on(Interface.DISCONNECT, disconnect.bind(null, socket))
-    socket.on('error', (e) => console.log(e))
+    socket.on('error', (e) => logger.error(e))
   }
 
   io.on(Interface.CONNECTION, connection)

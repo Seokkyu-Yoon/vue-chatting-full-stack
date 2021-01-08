@@ -1,15 +1,14 @@
 import path from 'path'
 import cluster from 'cluster'
 import fs from 'fs'
-import logger from 'debug'
 import http from 'http'
 import dotenv from 'dotenv'
 
+import logger from '../core/logger'
 import plugins from '../plugin'
 import redis from '../redis'
 import app from '../app'
 
-const debug = logger('chatting-proto-backend:server')
 /**
  * Get port from environment and store in Express.
  */
@@ -36,11 +35,9 @@ function onError (port, error) {
     case 'EACCES':
       console.error(`${bind} requires elevated privileges`)
       process.exit(1)
-      // eslint-disable-next-line no-fallthrough
     case 'EADDRINUSE':
       console.error(`${bind} is already in use`)
       process.exit(1)
-      // eslint-disable-next-line no-fallthrough
     default:
       throw error
   }
@@ -54,25 +51,25 @@ function onListening (server) {
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
     : `port ${addr.port}`
-  debug(`Listening on ${bind}`)
+  logger.info(`Listening on ${bind}`)
 }
 
 cluster.schedulingPolicy = cluster.SCHED_RR
 
 if (cluster.isMaster) {
-  console.log(cluster.worker.id)
+  logger.debug(cluster.worker.id)
   os.cpus().forEach((cpu) => {
     cluster.fork()
     cluster.on('exit', (worker, code, signal) => {
-      console.log('worker has stopped :', worker.id)
+      logger.error('worker has stopped :', worker.id)
       if (code === 200) {
         cluster.fork()
-        console.log('worker has restarted')
+        logger.info('worker has restarted')
       }
     })
   })
 } else {
-  console.log('worker has created :', cluster.worker.id)
+  logger.info('worker has created :', cluster.worker.id)
 
   /**
    * Create HTTP server.
