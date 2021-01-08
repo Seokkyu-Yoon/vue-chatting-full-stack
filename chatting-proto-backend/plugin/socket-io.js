@@ -7,21 +7,9 @@ import Res from '../core/response'
 import MegaphoneFactory from '../core/megaphone-factory'
 
 import Interface from './interface'
+import { ConfigRedis, ConfigSocketIo } from '../config'
 
-const Config = {
-  SocketIo: {
-    cors: {
-      origin: '*',
-      method: ['GET', 'POST']
-    }
-  },
-  Redis: {
-    host: 'localhost',
-    port: 6379
-  }
-}
-
-const emitter = socketIoEmitter(Config.Redis)
+const emitter = socketIoEmitter(ConfigRedis)
 const megaphoneFactory = new MegaphoneFactory(emitter)
 const megaphone = megaphoneFactory.create.bind(megaphoneFactory)
 
@@ -60,24 +48,23 @@ SocketIoHandler.prototype.init = async function init () {
   const trashUsers = await getTrashUsers(connectingSocketIds, savedSocketIds)
 
   if (trashUsers.length === 0) {
-    logger.info('finished cleaning')
-    return
-  }
-  await Promise.all(
-    trashUsers.map(async (socketId) => {
-      await this.db.deleteUser(socketId)
-      if (this.sockets[socketId]) {
-        delete this.sockets[socketId]
-      }
-    })
-  )
+    await Promise.all(
+      trashUsers.map(async (socketId) => {
+        await this.db.deleteUser(socketId)
+        if (this.sockets[socketId]) {
+          delete this.sockets[socketId]
+        }
+      })
+    )
 
-  const userMap = {}
-  await Promise.all(connectingSocketIds.map(async (socketId) => {
-    const userName = await this.db.getUserName(socketId)
-    if (userName === null) return
-    userMap[socketId] = { userName }
-  }))
+    const userMap = {}
+    await Promise.all(connectingSocketIds.map(async (socketId) => {
+      const userName = await this.db.getUserName(socketId)
+      if (userName === null) return
+      userMap[socketId] = { userName }
+    }))
+  }
+
   logger.info('finished cleaning')
 }
 
@@ -132,7 +119,7 @@ SocketIoHandler.prototype.getRooms = async function getRooms (roomKey = null, st
 SocketIoHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1) {
   if (roomKey === null) {
     return {
-      code: 304,
+      code: 500,
       body: {
         minIndex: -1,
         messages: []
@@ -231,7 +218,42 @@ SocketIoHandler.prototype.createRoom = async function createRoom (socketId, room
   }
 }
 
+SocketIoHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
+  if (roomKey === null || typeof roomKey === 'undefined') {
+    return {
+      code: 500,
+      body: {
+        room: {},
+        message: {}
+      }
+    }
+  }
+  const userName = await this.db.getUserName(socketId)
+  logger.debug(`${userName} join ${roomKey}`)
+  const message = await this.db.joinRoom({ userName, roomKey })
+  this.io.of('/').adapter.remoteJoin(socketId, roomKey)
+  this.sockets[socketId].add(roomKey)
+
+  const roomMap = await this.db.getRoom(roomKey)
+  const room = Object.assign({ roomKey }, roomMap[roomKey])
+  return {
+    body: {
+      room,
+      message
+    }
+  }
+}
+
 SocketIoHandler.prototype.updateRoom = async function updateRoom (roomKey, roomName, roomPassword, roomMaxJoin, roomDesc) {
+  if (roomKey === null || typeof roomKey === 'undefined') {
+    return {
+      code: 500,
+      body: {
+        room: {},
+        message: {}
+      }
+    }
+  }
   await this.db.updateRoom({
     roomKey,
     roomName,
@@ -253,24 +275,16 @@ SocketIoHandler.prototype.updateRoom = async function updateRoom (roomKey, roomN
   }
 }
 
-SocketIoHandler.prototype.joinRoom = async function joinRoom (socketId, roomKey) {
-  const userName = await this.db.getUserName(socketId)
-  logger.debug(`${userName} join ${roomKey}`)
-  const message = await this.db.joinRoom({ userName, roomKey })
-  this.io.of('/').adapter.remoteJoin(socketId, roomKey)
-  this.sockets[socketId].add(roomKey)
-
-  const roomMap = await this.db.getRoom(roomKey)
-  const room = Object.assign({ roomKey }, roomMap[roomKey])
-  return {
-    body: {
-      room,
-      message
+SocketIoHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRooms, roomKey) {
+  if (roomKey === null || typeof roomKey === 'undefined') {
+    return {
+      code: 500,
+      body: {
+        room: {},
+        message: {}
+      }
     }
   }
-}
-
-SocketIoHandler.prototype.leaveRoom = async function leaveRoom (socketId, socketRooms, roomKey) {
   const userName = await this.db.getUserName(socketId)
   logger.debug(`${userName} leave ${roomKey}`)
   const message = await this.db.leaveRoom({ userName, roomKey })
@@ -328,8 +342,8 @@ SocketIoHandler.prototype.writeMessage = async function writeMessage (socketId, 
 
 async function activate (server, db) {
   logger.info('activate socket.io')
-  const io = SocketIo(server, Config.SocketIo)
-  io.adapter(socketIoRedis(Config.Redis))
+  const io = SocketIo(server, ConfigSocketIo)
+  io.adapter(socketIoRedis(ConfigRedis))
 
   const socketIoHandler = new SocketIoHandler(io, db)
   setTimeout(() => {

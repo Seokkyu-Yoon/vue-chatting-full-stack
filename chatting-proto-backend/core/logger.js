@@ -1,12 +1,6 @@
 import pino from 'pino'
+import { ConfigPino } from '../config'
 
-const isDev = process.env.NODE_ENV === 'development'
-
-const logger = pino({
-  prettyPrint: {
-    colorize: true
-  },
-  level: isDev ? 'debug' : 'info'
-})
+const logger = pino(ConfigPino)
 
 export default logger
