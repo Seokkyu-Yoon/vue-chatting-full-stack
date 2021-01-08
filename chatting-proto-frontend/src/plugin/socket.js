@@ -57,15 +57,16 @@ const SocketPlugin = {
         return
       }
       const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
-      const reqMessages = new Req('req:message:list', { roomKey, minIndex: store.minIndexMessage })
+      const reqMessages = new Req('req:message:reconnect', { roomKey, minIndex: store.minIndexMessage })
       const [
         resUser,
         resMessages
       ] = await Promise.all([$request(reqUser), $request(reqMessages)])
       const { users = [] } = resUser.body
-      const { messages } = resMessages.body
+      const { messages, minIndex } = resMessages.body
       store.users = users
       store.messages = messages
+      store.minIndexMessage = minIndex
     })
 
     socket.on('broadcast:room:create', () => {

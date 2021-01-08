@@ -116,7 +116,7 @@ SocketIoHandler.prototype.getRooms = async function getRooms (roomKey = null, st
   }
 }
 
-SocketIoHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1) {
+SocketIoHandler.prototype.getMessages = async function getMessages (roomKey = null, minIndex = -1, reconnect = false) {
   if (roomKey === null) {
     return {
       code: 500,
@@ -128,6 +128,16 @@ SocketIoHandler.prototype.getMessages = async function getMessages (roomKey = nu
   }
   const COUNT = 50
   const messages = await this.db.getMessages(roomKey)
+
+  if (reconnect && minIndex > 0) {
+    return {
+      body: {
+        messages: messages.slice(minIndex),
+        minIndex
+      }
+    }
+  }
+
   let tail = messages.length
   if (minIndex > -1) {
     tail = minIndex
@@ -497,6 +507,13 @@ async function activate (server, db) {
       res.status(code).send(body)
 
       megaphone(Interface.Broadcast.Message.WRITE).to(roomKey).status(code).send(body)
+    })
+
+    socket.on(Interface.Request.Message.RECONNECT, async (req, callback) => {
+      const { roomKey, minIndex = -1 } = req.body
+      const { code, body } = await socketIoHandler.getMessages(roomKey, minIndex, true)
+      const res = new Res(callback)
+      res.status(code).send(body)
     })
 
     socket.on(Interface.DISCONNECT, disconnect.bind(null, socket))

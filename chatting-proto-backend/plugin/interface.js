@@ -32,7 +32,8 @@ const Interface = {
     },
     Message: {
       LIST: 'res:message:list',
-      WRITE: 'res:message:write'
+      WRITE: 'res:message:write',
+      RECONNECT: 'res:message:reconnect'
     }
   },
   Request: {
@@ -51,7 +52,8 @@ const Interface = {
     },
     Message: {
       LIST: 'req:message:list',
-      WRITE: 'req:message:write'
+      WRITE: 'req:message:write',
+      RECONNECT: 'req:message:reconnect'
     }
   }
 }
