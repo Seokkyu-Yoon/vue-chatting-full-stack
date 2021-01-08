@@ -6,11 +6,19 @@ export default {
   data () {
     return {
       store,
-      newRoomName: ''
+      newRoomName: '',
+      password: {}
     }
   },
   methods: {
     setCurrRoom (room) {
+      if (room.roomPassword) {
+        if (this.password[room.roomKey] !== room.roomPassword) {
+          alert('비밀번호를 확인해주세요')
+          this.password[room.roomKey] = ''
+          return
+        }
+      }
       const req = new Req('req:room:join', { roomKey: room.roomKey })
       this.$request(req).then((res) => {
         const { room: resRoom } = res.body
