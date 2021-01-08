@@ -1,7 +1,8 @@
 {
   "ignore": [
     "node_modules/*",
-    "messages/*"
+    "messages/*",
+    "public/*"
   ],
   "env": {
     "NODE_ENV": "development"
