@@ -41,13 +41,13 @@
               class="btn btn-sm btn-primary ml-1"
               v-on:click.stop="(e) => setCurrRoom(room)">
               참가
-            </button>
+            </b-btn>
           </div>
         </div>
-      </div>
-    </div>
-    <div v-show="store.rooms.joining === 0">
-      방이 없습니다
+      </b-card>
+    </b-card-group>
+    <div v-else>
+      <p class="h1">존재하는 방이 없습니다</p>
     </div>
   </div>
 </template>
@@ -59,4 +59,10 @@
 .list-group-item {
   cursor: pointer;
 }
+.delete-room {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
 </style>

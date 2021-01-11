@@ -11,6 +11,28 @@ export default {
     }
   },
   methods: {
+    getClassBadgeSecret ({ roomPassword }) {
+      const classBadge = ['badge', 'text-center', 'align-middle']
+      if (roomPassword) {
+        classBadge.push('badge-secondary')
+      } else {
+        classBadge.push('badge-info')
+      }
+      return classBadge.join(' ')
+    },
+    getClassBadgeMaxJoin ({ joining, roomMaxJoin }) {
+      const classBadge = ['badge', 'text-center', 'ml-1']
+      if (roomMaxJoin === 0) {
+        classBadge.push('badge-dark')
+      } else if (joining === roomMaxJoin) {
+        classBadge.push('badge-danger')
+      } else if (joining >= roomMaxJoin * 0.5) {
+        classBadge.push('badge-warning')
+      } else {
+        classBadge.push('badge-success')
+      }
+      return classBadge.join(' ')
+    },
     setCurrRoom (room) {
       if (room.roomPassword) {
         if (this.password[room.roomKey] !== room.roomPassword) {
