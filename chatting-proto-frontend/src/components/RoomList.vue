@@ -1,44 +1,37 @@
 <template>
   <div class="list-group flex-fill overflow-auto">
-    <div
-      class="list-group-item"
-      v-show="store.rooms.length > 0"
-      v-for="room in store.rooms"
-      v-bind:key="room.roomKey"
-      v-on:click="(e) => {
-
-      }"
-      >
-      <div class="d-flex justify-content-between">
-        <div class="d-flex flex-column justify-content-between align-items-start">
-          <span class="badge badge-dark">
-            {{room.roomPassword ? '비밀방' : '공개방'}}
-          </span>
-          <span class="badge badge-dark text-center mt-1">
-            {{`${room.joining} / ${room.roomMaxJoin || '∞'}`}}
-          </span>
-          <h4 class="mt-1">{{room.roomName}}</h4>
-        </div>
-        <div class="d-flex flex-column justify-content-between align-items-end">
-          <button
-            type="button"
-            class="btn btn-sm btn-danger"
-            v-visible="store.userName === room.createBy"
-            v-on:click.stop="() => deleteRoom(room.roomKey)">
-            X
-          </button>
-
-          <div class="form-inline">
-            <input
-              type="password"
-              class="form-control"
-              v-visible="room.roomPassword"
-              placeholder="비밀번호를 입력해주세요"
-              v-model="password[room.roomKey]"
-              v-on:keydown.enter.exact="setCurrRoom(room)"/>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary ml-1"
+    <b-card-group columns v-if="store.rooms.length > 0">
+      <b-card
+        v-show="store.rooms.length > 0"
+        v-for="(room, idx) in store.rooms"
+        v-bind:key="room.roomKey"
+        :title="room.roomName"
+        :img-src='"https://picsum.photos/200/100?random=" + idx'
+        img-alt="Image"
+        img-top>
+        <b-btn
+          class="mt-1 mr-1 delete-room"
+          size="sm"
+          variant="danger"
+          v-show="store.userName === room.createBy"
+          v-on:click.stop="() => deleteRoom(room.roomKey)">
+          X
+        </b-btn>
+        <div class="d-flex flex-column align-items-start">
+          <p class="h5 mb-1">
+            <span v-bind:class="getClassBadgeSecret(room)">
+              {{room.roomPassword ? '비밀방' : '공개방'}}
+            </span>
+            <span v-bind:class="getClassBadgeMaxJoin(room)">
+              {{`${room.joining} / ${room.roomMaxJoin || '∞'}`}}
+            </span>
+          </p>
+          <b-card-text>{{room.roomDesc}}</b-card-text>
+          <div class="w-100 d-flex justify-content-end">
+            <b-btn
+              class='ml-auto'
+              variant="primary"
+              size="sm"
               v-on:click.stop="(e) => setCurrRoom(room)">
               참가
             </b-btn>
