@@ -1,8 +1,13 @@
 import { EventEmitter } from 'events'
 import fs from 'fs'
+import { ConfigMessages } from '../config'
 
 const queue = []
 const event = new EventEmitter()
+
+if (!fs.existsSync(ConfigMessages.path)) {
+  fs.mkdirSync(ConfigMessages.path, { recursive: true })
+}
 
 let writting = false
 event.on('write', () => {

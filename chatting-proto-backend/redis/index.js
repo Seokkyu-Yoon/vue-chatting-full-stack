@@ -1,9 +1,10 @@
-import path from 'path'
 import Redis from 'ioredis'
+
+import { ConfigMessages } from '../config'
 import messageFileManager from './message-file-manager'
 
 const redis = new Redis()
-const messagesDir = path.join(__dirname, '..', 'messages')
+const messagesDir = ConfigMessages.path
 
 function getFormattedTime (date) {
   let hours = date.getHours()

@@ -1,3 +1,5 @@
+import path from 'path'
+
 const isDev = process.env.NODE_ENV === 'development'
 
 const ConfigPino = {
@@ -19,13 +21,19 @@ const ConfigRedis = {
   port: 6379
 }
 
+const ConfigMessages = {
+  path: path.join(__dirname, 'messages')
+}
+
 export {
   ConfigPino,
   ConfigSocketIo,
-  ConfigRedis
+  ConfigRedis,
+  ConfigMessages
 }
 export default {
   ConfigPino,
   ConfigSocketIo,
-  ConfigRedis
+  ConfigRedis,
+  ConfigMessages
 }
