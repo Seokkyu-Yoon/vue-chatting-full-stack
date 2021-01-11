@@ -1,5 +1,5 @@
 <template>
-  <div id="cover-users">
+  <div id="cover-users" class="d-flex flex-fill flex-column bg-users p-2">
     <div
       class="user mb-1"
       v-for="{userName, socketId} in users"
@@ -18,14 +18,8 @@ h1 {
   text-align: center;
 }
 #cover-users {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
   border-radius: 10px;
-  background-color: lightgreen;
   overflow-y: scroll;
-  padding: 10px;
-  margin-bottom: 1rem;
 }
 .user {
   border-radius: 5px;

@@ -4,7 +4,8 @@ export default {
   name: 'Users',
   data () {
     return {
-      store
+      store,
+      checked: []
     }
   },
   computed: {

@@ -19,6 +19,21 @@ export default {
       sended: false
     }
   },
+  computed: {
+    recipients () {
+      console.log(this.$refs.users)
+      // if (this.$refs.users.checked.length === 0) {
+      //   return '전체'
+      // }
+      // console.log(this.$refs.users)
+      // const users = this.$refs.users.checked.join(', ')
+      // if (users.length > 50) {
+      //   return `${users.slice(0, 50)}...`
+      // }
+      // return users
+      return '전체'
+    }
+  },
   methods: {
     send () {
       if (this.newMessage.trim() === '') {

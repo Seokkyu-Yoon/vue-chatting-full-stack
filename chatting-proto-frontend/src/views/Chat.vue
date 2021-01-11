@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
-        <MessageList ref="messages" v-bind:sended="sended"/>
+        <MessageList v-bind:sended="sended"/>
         <div class="mt-1">
           <textarea
             class="form-control"
@@ -26,13 +26,18 @@
               send()
             }"/>
           <div class="d-flex mt-1">
-            <p>~~~~~에게 전송합니다</p>
+            <p>{{recipients}}에게 전송합니다</p>
             <button class="btn btn-info ml-auto" v-on:click="send">전송</button>
           </div>
         </div>
       </div>
     </div>
-    <div class="d-flex flex-column col-4.5 col-md-3 ml-3 p-3 overflow-hidden">
+    <div class="d-flex col-4.5 col-md-3 ml-1 p-3 overflow-hidden mb-3">
+      <div class="d-flex mt-3 flex-column">
+        <div class="p-1 tap-item bg-users">참가자</div>
+        <div class="mt-1 p-1 tap-item bg-users">파일</div>
+        <div class="mt-1 p-1 tap-item bg-users">방정보</div>
+      </div>
       <UserList />
     </div>
   </div>
@@ -43,5 +48,16 @@
 <style scoped>
 .form-control {
   resize: none;
+}
+
+.bg-users {
+  background-color: #e9ecef
+}
+
+.tap-item {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
 }
 </style>

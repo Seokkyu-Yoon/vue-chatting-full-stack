@@ -29,7 +29,13 @@
           </button>
 
           <div class="form-inline">
-            <input type="password" class="form-control" v-visible="room.roomPassword" placeholder="비밀번호를 입력해주세요" v-model="password[room.roomKey]"/>
+            <input
+              type="password"
+              class="form-control"
+              v-visible="room.roomPassword"
+              placeholder="비밀번호를 입력해주세요"
+              v-model="password[room.roomKey]"
+              v-on:keydown.enter.exact="setCurrRoom(room)"/>
             <button
               type="button"
               class="btn btn-sm btn-primary ml-1"
