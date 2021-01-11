@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-fill overflow-hidden">
-    <div class="d-flex flex-column col-13.5 col-md-9 overflow-hidden">
+    <div class="d-flex flex-column col-12 col-md-8 overflow-hidden">
       <UpsertRoom ref="upsertRoom" title="방 수정" v-bind:modifing="true"/>
       <div class="d-flex align-items-center mt-2 mb-4">
         <p class="h3">{{(store.room || {}).roomName || ''}}</p>
@@ -32,7 +32,7 @@
         </div>
       </div>
     </div>
-    <div class="d-flex col-4.5 col-md-3 ml-1 p-3 overflow-hidden mb-3">
+    <div class="d-flex col-6 col-md-4 p-3 overflow-hidden">
       <div class="d-flex mt-3 flex-column">
         <div class="p-1 tap-item bg-users">참가자</div>
         <div class="mt-1 p-1 tap-item bg-users">파일</div>

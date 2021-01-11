@@ -1,5 +1,6 @@
 <template>
   <div class="list-group flex-fill overflow-auto">
+    <Password ref="password" v-bind:title="store.room.roomName"/>
     <b-card-group columns v-if="store.rooms.length > 0">
       <b-card
         v-show="store.rooms.length > 0"

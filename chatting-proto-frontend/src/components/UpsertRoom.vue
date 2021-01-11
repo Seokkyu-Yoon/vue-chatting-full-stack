@@ -1,5 +1,10 @@
 <template>
-  <b-modal ref="modal" v-model="show" v-bind:title="title" centered size="xl">
+  <b-modal
+    ref="modal"
+    v-model="show"
+    v-bind:title="title"
+    centered size="xl"
+    @shown="initInputs">
     <template #modal-header={}>
     </template>
 

@@ -1,13 +1,16 @@
 import store from '@/store'
 import Req from '@/core/request'
+import Password from '@/components/Password.vue'
 
 export default {
   name: 'RoomList',
+  components: {
+    Password
+  },
   data () {
     return {
       store,
-      newRoomName: '',
-      password: {}
+      newRoomName: ''
     }
   },
   methods: {
@@ -34,12 +37,16 @@ export default {
       return classBadge.join(' ')
     },
     setCurrRoom (room) {
-      if (room.roomPassword) {
-        if (this.password[room.roomKey] !== room.roomPassword) {
-          alert('비밀번호를 확인해주세요')
-          this.password[room.roomKey] = ''
+      if (room.joining === room.roomMaxJoin) {
+        if (room.roomMaxJoin !== 0) {
+          alert('인원이 꽉 찼습니다')
           return
         }
+      }
+      if (room.roomPassword) {
+        store.room = room
+        this.$refs.password.$refs.modal.show()
+        return
       }
       const req = new Req('req:room:join', { roomKey: room.roomKey })
       this.$request(req).then((res) => {

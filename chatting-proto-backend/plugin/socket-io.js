@@ -271,6 +271,7 @@ SocketIoHandler.prototype.updateRoom = async function updateRoom (roomKey, roomN
     roomMaxJoin,
     roomDesc
   })
+  const roomSockets = (await this.io.of('/').adapter.sockets([roomKey])) || new Set()
 
   return {
     body: {
@@ -279,7 +280,8 @@ SocketIoHandler.prototype.updateRoom = async function updateRoom (roomKey, roomN
         roomName,
         roomPassword,
         roomMaxJoin,
-        roomDesc
+        roomDesc,
+        joining: roomSockets.size
       }
     }
   }

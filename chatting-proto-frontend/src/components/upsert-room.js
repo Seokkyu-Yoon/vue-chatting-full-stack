@@ -69,6 +69,30 @@ export default {
     deleteRoom () {
       const req = new Req('req:room:delete', { roomKey: store.room.roomKey })
       this.$request(req)
+    },
+    initInputs () {
+      const {
+        roomName: name = '',
+        roomPassword: password = '',
+        roomMaxJoin: maxJoin = '0',
+        roomDesc: description = ''
+      } = store.room || {}
+
+      this.defaultSetting = {
+        name,
+        isPrivate: password !== '',
+        password,
+        isInfinity: Number(maxJoin) === 0,
+        maxJoin: String(maxJoin),
+        description
+      }
+
+      this.name = this.defaultSetting.name
+      this.isPrivate = this.defaultSetting.isPrivate
+      this.password = this.defaultSetting.password
+      this.isInfinity = this.defaultSetting.isInfinity
+      this.maxJoin = this.defaultSetting.maxJoin
+      this.description = this.defaultSetting.description
     }
   },
   watch: {
@@ -80,33 +104,6 @@ export default {
     isPrivate: {
       handler (value) {
         this.password = value ? this.defaultSetting.password : ''
-      }
-    },
-    show: {
-      handler (value) {
-        if (!value) return
-        const {
-          roomName: name = '',
-          roomPassword: password = '',
-          roomMaxJoin: maxJoin = '0',
-          roomDesc: description = ''
-        } = store.room || {}
-
-        this.defaultSetting = {
-          name,
-          isPrivate: password !== '',
-          password,
-          isInfinity: Number(maxJoin) === 0,
-          maxJoin: String(maxJoin),
-          description
-        }
-
-        this.name = this.defaultSetting.name
-        this.isPrivate = this.defaultSetting.isPrivate
-        this.password = this.defaultSetting.password
-        this.isInfinity = this.defaultSetting.isInfinity
-        this.maxJoin = this.defaultSetting.maxJoin
-        this.description = this.defaultSetting.description
       }
     }
   }

@@ -21,7 +21,6 @@ export default {
   },
   computed: {
     recipients () {
-      console.log(this.$refs.users)
       // if (this.$refs.users.checked.length === 0) {
       //   return '전체'
       // }
