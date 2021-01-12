@@ -1,5 +1,5 @@
 import pino from 'pino'
-import { ConfigPino } from '../config'
+import { ConfigPino } from '@/config'
 
 const logger = pino(ConfigPino)
 

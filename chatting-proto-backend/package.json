@@ -11,6 +11,9 @@
     "monit": "pm2 monit",
     "dev": "nodemon --config nodemon.json --exec babel-node bin/www.js"
   },
+  "_moduleAliases": {
+    "@": "."
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -22,6 +25,7 @@
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
     "ioredis": "^4.19.2",
+    "module-alias": "^2.2.2",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.6",
     "pino": "^6.10.0",

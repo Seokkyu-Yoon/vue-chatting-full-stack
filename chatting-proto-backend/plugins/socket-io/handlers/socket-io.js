@@ -1,4 +1,4 @@
-import { logger } from '../../../core'
+import { logger } from '@/core'
 
 async function getTrashUsers (connectingSocketIds = [], savedSocketIds = []) {
   const trashUsersSet = new Set(savedSocketIds)

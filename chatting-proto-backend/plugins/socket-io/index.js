@@ -1,8 +1,8 @@
 import SocketIo from 'socket.io'
 import socketIoRedis from 'socket.io-redis'
 
-import { ConfigRedis, ConfigSocketIo } from '../../config'
-import { logger } from '../../core'
+import { ConfigRedis, ConfigSocketIo } from '@/config'
+import { logger } from '@/core'
 
 import Interface from './interface'
 import { HandlerSocket, HandlerSocketIo } from './handlers'

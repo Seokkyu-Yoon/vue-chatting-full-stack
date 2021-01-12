@@ -1,9 +1,9 @@
 import socketIoEmitter from 'socket.io-emitter'
 
-import Interface from '../interface'
+import { ConfigRedis } from '@/config'
+import { logger, MegaphoneFactory, Res } from '@/core'
 
-import { ConfigRedis } from '../../../config'
-import { logger, MegaphoneFactory, Res } from '../../../core'
+import Interface from '../interface'
 
 const emitter = socketIoEmitter(ConfigRedis)
 const megaphoneFactory = new MegaphoneFactory(emitter)

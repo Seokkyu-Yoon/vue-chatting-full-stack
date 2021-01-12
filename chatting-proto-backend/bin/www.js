@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+import 'module-alias/register'
 /**
  * Module dependencies.
  */
@@ -8,9 +8,9 @@ import fs from 'fs'
 import http from 'http'
 import dotenv from 'dotenv'
 
-import { logger } from '../core'
-import plugins from '../plugins'
-import app from '../app'
+import { logger } from '@/core'
+import plugins from '@/plugins'
+import app from '@/app'
 
 /**
  * Get port from environment and store in Express.
