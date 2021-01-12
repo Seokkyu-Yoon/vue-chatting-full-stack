@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-column align-items-center justify-content-between jumbotron">
+  <div class="m-auto d-flex flex-column align-items-center justify-content-between jumbotron">
     <p class="h1 mb-4">별명</p>
     <div class="form-inline mb-2">
       <input

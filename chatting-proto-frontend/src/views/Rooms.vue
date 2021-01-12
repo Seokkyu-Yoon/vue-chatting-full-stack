@@ -1,7 +1,7 @@
 <template>
-  <div class="d-flex flex-column flex-fill p-3 overflow-hidden">
+  <div class="p-3">
     <UpsertRoom ref="upsertRoom" title="방 생성" />
-    <div class="d-flex mt-2 mb-4">
+    <div class="d-flex mt-2 mb-4 w-100">
       <button type="button" class="btn btn-success" v-on:click="createRoom">
         +
       </button>
