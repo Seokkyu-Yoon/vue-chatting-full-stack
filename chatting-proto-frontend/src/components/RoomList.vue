@@ -3,13 +3,24 @@
     <Password ref="password" v-bind:title="store.room.roomName"/>
     <b-card-group columns v-if="store.rooms.length > 0">
       <b-card
-        v-show="store.rooms.length > 0"
         v-for="(room, idx) in store.rooms"
         v-bind:key="room.roomKey"
-        :title="room.roomName"
         :img-src='"https://picsum.photos/200/100?random=" + idx'
         img-alt="Image"
         img-top>
+        <b-card-sub-title>
+          <p class="h5 mb-1">
+            <span v-bind:class="getClassBadgeSecret(room)">
+              {{room.roomPassword ? '비밀방' : '공개방'}}
+            </span>
+            <span v-bind:class="getClassBadgeMaxJoin(room)">
+              {{`${room.joining} / ${room.roomMaxJoin || '∞'}`}}
+            </span>
+          </p>
+          <div class="mt-2">
+            <p class="h4">{{room.roomName}}</p>
+          </div>
+        </b-card-sub-title>
         <b-btn
           class="mt-1 mr-1 delete-room"
           size="sm"
@@ -19,14 +30,6 @@
           X
         </b-btn>
         <div class="d-flex flex-column align-items-start">
-          <p class="h5 mb-1">
-            <span v-bind:class="getClassBadgeSecret(room)">
-              {{room.roomPassword ? '비밀방' : '공개방'}}
-            </span>
-            <span v-bind:class="getClassBadgeMaxJoin(room)">
-              {{`${room.joining} / ${room.roomMaxJoin || '∞'}`}}
-            </span>
-          </p>
           <b-card-text>{{room.roomDesc}}</b-card-text>
           <div class="w-100 d-flex justify-content-end">
             <b-btn

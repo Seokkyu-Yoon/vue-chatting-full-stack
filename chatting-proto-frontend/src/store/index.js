@@ -6,6 +6,7 @@ const vue = new Vue({
     room: {},
     users: [],
     rooms: [],
+    roomCount: 0,
     messages: [],
     startIndexRoom: 0,
     startIndexUser: 0,

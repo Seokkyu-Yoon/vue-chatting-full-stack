@@ -67,8 +67,9 @@ export default {
         }
       }).then((res) => {
         if (!res) return
-        const { rooms } = res.body
+        const { rooms, roomCount } = res.body
         store.rooms = rooms
+        store.roomCount = roomCount
       })
     }
   },
