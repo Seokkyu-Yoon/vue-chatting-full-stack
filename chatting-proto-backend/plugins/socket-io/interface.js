@@ -2,6 +2,7 @@ const Interface = {
   CONNECT: 'connect',
   CONNECTION: 'connection',
   DISCONNECT: 'disconnect',
+  ERROR: 'error',
   Broadcast: {
     User: {
       LIST: 'broadcast:user:list'

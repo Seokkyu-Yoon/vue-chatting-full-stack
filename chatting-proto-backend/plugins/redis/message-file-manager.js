@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import fs from 'fs'
-import { ConfigMessages } from '../config'
+import { ConfigMessages } from '../../config'
 
 const queue = []
 const event = new EventEmitter()

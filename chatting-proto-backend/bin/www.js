@@ -8,9 +8,8 @@ import fs from 'fs'
 import http from 'http'
 import dotenv from 'dotenv'
 
-import logger from '../core/logger'
-import plugins from '../plugin'
-import redis from '../redis'
+import { logger } from '../core'
+import plugins from '../plugins'
 import app from '../app'
 
 /**
@@ -26,7 +25,7 @@ app.set('port', port)
  * Create HTTP server.
  */
 const server = http.createServer(app)
-plugins.socket(server, redis)
+plugins.socket(server, plugins.db)
 
 /**
  * Event listener for HTTP server "error" event.

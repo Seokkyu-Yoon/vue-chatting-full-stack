@@ -1,6 +1,6 @@
 import Redis from 'ioredis'
 
-import { ConfigMessages } from '../config'
+import { ConfigMessages } from '../../config'
 import messageFileManager from './message-file-manager'
 
 const redis = new Redis()

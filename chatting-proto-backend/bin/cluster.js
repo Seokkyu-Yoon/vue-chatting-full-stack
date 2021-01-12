@@ -4,8 +4,8 @@ import fs from 'fs'
 import http from 'http'
 import dotenv from 'dotenv'
 
-import logger from '../core/logger'
-import plugins from '../plugin'
+import { logger } from '../core'
+import plugins from '../plugins'
 import redis from '../redis'
 import app from '../app'
 
