@@ -3,33 +3,30 @@ import store from '@/store'
 import UpsertRoom from '@/components/UpsertRoom.vue'
 import MessageList from '@/components/MessageList.vue'
 import UserList from '@/components/UserList.vue'
+import FileList from '@/components/FileList.vue'
+import RoomDetail from '@/components/RoomDetail.vue'
 
 export default {
   name: 'Chat',
   components: {
     UpsertRoom,
     MessageList,
-    UserList
+    UserList,
+    FileList,
+    RoomDetail
   },
   data () {
     return {
       store,
       newMessage: '',
       blockSend: false,
-      sended: false
+      sended: false,
+      showType: 'users'
     }
   },
   computed: {
     recipients () {
-      // if (this.$refs.users.checked.length === 0) {
-      //   return '전체'
-      // }
-      // console.log(this.$refs.users)
-      // const users = this.$refs.users.checked.join(', ')
-      // if (users.length > 50) {
-      //   return `${users.slice(0, 50)}...`
-      // }
-      // return users
+      // 선택된 사용자가 있으면 '전체'가 아닌 해당 사용자 반환
       return '전체'
     }
   },
@@ -62,6 +59,26 @@ export default {
           this.$router.go(-1)
         }
       })
+    },
+    changeShowType (type) {
+      this.showType = type
+    },
+    getClassTapItem (type) {
+      const classTapItem = [
+        'h6',
+        'm-0',
+        'p-2',
+        'tap-item',
+        'ml-auto',
+        `bg-${type}`
+      ]
+      if (type !== 'users') {
+        classTapItem.push('mt-1')
+      }
+      if (type === this.showType) {
+        classTapItem.push('curr-show-type')
+      }
+      return classTapItem.join(' ')
     }
   },
   beforeCreate () {

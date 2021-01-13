@@ -1,11 +1,16 @@
 <template>
   <div id="cover-users" class="d-flex flex-fill flex-column bg-users p-2">
-    <div
-      class="user mb-1"
-      v-for="{userName, socketId} in users"
-      v-bind:key="`user-${socketId}`">
-      <div class="user-key">{{socketId}}</div>
-      <div class="user-name">{{userName}}</div>
+    <button class="btn btn-sm btn-info ml-auto mb-2">선택 해제</button>
+    <div>
+      <div
+        class="d-flex align-items-center mb-1 user p-2"
+        v-for="({userName, socketId}, idx) in store.users"
+        v-bind:key="`user-${socketId}`">
+        <b-img
+          class="tumbnail"
+          :src="'https://picsum.photos/200/100?random=' + idx"/>
+        <p class="h5 ml-auto user-name">{{userName}}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -14,17 +19,15 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1 {
-  text-align: center;
-}
 #cover-users {
   border-radius: 10px;
-  overflow-y: scroll;
+  overflow-y: hidden;
 }
 .user {
   border-radius: 5px;
   padding: 5px;
-  background-color: coral;
+  height: 4rem;
+  background-color: #B4E4DF;
 }
 
 .selected {
@@ -32,7 +35,6 @@ h1 {
 }
 
 .user-name {
-  font-size: 16px;
   font-weight: bold;
 }
 
@@ -40,6 +42,12 @@ h1 {
   font-size: 12px;
   text-align: right;
   font-style: italic;
+}
+
+.tumbnail {
+  width: 46px;
+  height: 46px;
+  border-radius: 23px;
 }
 
 </style>
