@@ -26,12 +26,6 @@ $ npm start
 
 ## frontend
 ### use socket.io-client to plugin
-### vue.js
-
-### run with development mode
-```bash
-$ npm run serve
-```
 
 if run it on your server
 1. install node
