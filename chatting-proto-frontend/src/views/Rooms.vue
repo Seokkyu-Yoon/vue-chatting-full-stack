@@ -1,14 +1,10 @@
 <template>
-  <div class="p-3">
+  <div class="d-flex flex-column p-3">
     <UpsertRoom ref="upsertRoom" title="방 생성" />
-    <div class="d-flex mt-2 mb-4 w-100">
-      <button type="button" class="btn btn-success" v-on:click="createRoom">
-        +
-      </button>
-      <div class="form-inline ml-auto">
-        <input type="text" class="form-control mr-1" placeholder="검색"/>
-        <button type="button" class="btn btn-info">검색</button>
-      </div>
+    <div class="form-inline mb-4">
+      <button type="button" class="btn btn-success mt-1" v-on:click="createRoom">+</button>
+      <input type="text" class="form-control mt-1 mr-1 ml-auto" placeholder="검색"/>
+      <button type="button" class="btn btn-info mt-1">검색</button>
     </div>
     <RoomList />
   </div>
@@ -16,4 +12,5 @@
 
 <script src="./rooms.js"></script>
 
-<style scoped></style>
+<style scoped>
+</style>

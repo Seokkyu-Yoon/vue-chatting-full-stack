@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start bin/cluster.js -i max",
+    "start": "pm2 start bin/cluster.js -i max --interpreter babel-node",
     "restart": "pm2 restart cluster",
     "stop": "pm2 stop cluster",
     "del": "pm2 del cluster",

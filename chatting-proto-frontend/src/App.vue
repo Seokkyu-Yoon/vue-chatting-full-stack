@@ -1,7 +1,7 @@
 <template>
     <div id="app">
       <Nav />
-      <router-view class="container w-100 h-100" style="min-width: 576px;"/>
+      <router-view id="router-view" class="container w-100 h-100"/>
     </div>
 </template>
 
@@ -17,7 +17,6 @@ export default {
 <style>
 html, body{
   height: 100%;
-  min-width: 576px;
 }
 #app {
   position: absolute;
@@ -25,10 +24,12 @@ html, body{
   right: 0;
   bottom: 55.75px;
   left: 0;
-  min-width: 576px;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+html, body, nav, #router-view {
+  min-width: 576px;
 }
 </style>
