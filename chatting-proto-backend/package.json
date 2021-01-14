@@ -4,20 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start bin/cluster.js -i max --interpreter babel-node",
-    "restart": "pm2 restart cluster",
-    "stop": "pm2 stop cluster",
-    "del": "pm2 del cluster",
+    "start": "pm2 start",
+    "restart": "pm2 restart server",
+    "stop": "pm2 stop server",
+    "del": "pm2 del server",
     "monit": "pm2 monit",
-    "dev": "nodemon --config nodemon.json --exec babel-node bin/www.js"
-  },
-  "_moduleAliases": {
-    "@": "."
+    "build": "rm -rf dist && babel src --out-dir dist",
+    "dev": "nodemon --config nodemon.json --exec babel-node src/bin/www.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cluster": "^0.7.7",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -36,8 +33,10 @@
     "socket.io-redis": "^6.0.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",
     "@babel/node": "^7.12.10",
+    "@babel/plugin-transform-runtime": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "eslint": "^7.16.0",
     "eslint-config-standard": "^16.0.2",

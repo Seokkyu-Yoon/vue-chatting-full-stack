@@ -1,8 +1,6 @@
 {
-  "ignore": [
-    "node_modules/*",
-    "messages/*",
-    "public/*"
+  "watch": [
+    "src/*"
   ],
   "env": {
     "NODE_ENV": "development"

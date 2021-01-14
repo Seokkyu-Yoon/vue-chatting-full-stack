@@ -1,13 +1,14 @@
-#!/usr/bin/env node
 import 'module-alias/register'
-/**
- * Module dependencies.
- */
+import './module-alias'
+
 import path from 'path'
 import fs from 'fs'
 import http from 'http'
 import dotenv from 'dotenv'
 
+/**
+ * Module dependencies.
+ */
 import { logger } from '@/core'
 import plugins from '@/plugins'
 import app from '@/app'
@@ -15,10 +16,13 @@ import app from '@/app'
 /**
  * Get port from environment and store in Express.
  */
-const dotenvPath = path.join(__dirname, '..', '..', '.env')
-const env = dotenv.parse(fs.readFileSync(dotenvPath))
-Object.assign(process.env, env)
-const port = process.env.SERVER_PORT
+
+if (process.env.NODE_ENV === 'development') {
+  const dotenvPath = path.join(__dirname, '..', '..', '..', '.env')
+  const env = dotenv.parse(fs.readFileSync(dotenvPath))
+  Object.assign(process.env, env)
+}
+const port = process.env.SERVER_PORT || 3000
 app.set('port', port)
 
 /**
