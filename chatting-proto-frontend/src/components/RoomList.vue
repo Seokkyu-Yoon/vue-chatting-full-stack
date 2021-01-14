@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-column flex-fill overflow-hidden">
+  <div class="d-flex flex-column flex-fill overflow-hidden-y">
     <Password ref="password" v-bind:title="store.room.roomName"/>
     <div
       class="d-flex flex-wrap jumbotron mb-4 p-2 overflow-auto"
@@ -103,5 +103,8 @@
 .scrollable {
   overflow: auto;
   max-height: 7rem;
+}
+.overflow-hidden-y {
+  overflow-y: hidden;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
-  <div id="cover-users" class="d-flex flex-fill flex-column bg-users p-2">
-    <button class="btn btn-sm btn-info ml-auto mb-2">선택 해제</button>
-    <div>
+  <div id="cover-users" class="d-flex flex-fill flex-column bg-users p-1 pl-2">
+    <button class="btn btn-sm btn-info m-2 ml-auto">선택 해제</button>
+    <div class="overflow-auto pr-2">
       <div
         class="d-flex align-items-center mb-1 user p-2"
         v-for="({userName, socketId}, idx) in store.users"

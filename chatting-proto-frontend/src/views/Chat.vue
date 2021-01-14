@@ -1,6 +1,6 @@
 <template>
-  <div class="d-flex flex-fill overflow-hidden">
-    <div class="d-flex flex-column flex-fill overflow-hidden">
+  <div class="d-flex flex-fill">
+    <div class="d-flex flex-column flex-fill">
       <UpsertRoom ref="upsertRoom" title="방 수정" v-bind:modifing="true"/>
       <div class="d-flex mt-4 mb-2">
         <p class="h3">{{(store.room || {}).roomName || ''}}</p>
@@ -15,7 +15,7 @@
           <button type="button" class="btn btn-sm btn-danger" v-on:click="leaveRoom">나가기</button>
         </div>
       </div>
-      <div class='jumbotron d-flex flex-column flex-fill overflow-hidden p-2'>
+      <div class='jumbotron d-flex flex-column flex-fill p-2 overflow-hidden-y'>
         <MessageList v-bind:sended="sended"/>
         <div class="mt-1">
           <textarea
@@ -32,15 +32,17 @@
         </div>
       </div>
     </div>
-    <div class="d-flex col-6 col-md-4 mt-2 overflow-hidden right-menu">
+    <div class="d-flex col-6 col-md-4 mt-2 right-menu">
       <div class="mt-3">
         <p v-bind:class="getClassTapItem('users')" @click="() => changeShowType('users')">참가자</p>
         <p v-bind:class="getClassTapItem('files')" @click="() => changeShowType('files')">파일</p>
         <p v-bind:class="getClassTapItem('detail')" @click="() => changeShowType('detail')">방정보</p>
       </div>
-      <UserList v-if="showType === 'users'"/>
-      <FileList v-if="showType === 'files'"/>
-      <RoomDetail v-if="showType === 'detail'"/>
+      <div class="d-flex flex-fill">
+        <UserList v-if="showType === 'users'"/>
+        <FileList v-if="showType === 'files'"/>
+        <RoomDetail v-if="showType === 'detail'"/>
+      </div>
     </div>
   </div>
 </template>
@@ -77,5 +79,8 @@
 }
 .curr-show-type {
   padding-left: 0.75rem !important;
+}
+.overflow-hidden-y {
+  overflow-y: hidden;
 }
 </style>
