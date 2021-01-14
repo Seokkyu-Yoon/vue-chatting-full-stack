@@ -22,7 +22,7 @@ const ConfigRedis = {
 }
 
 const ConfigMessages = {
-  path: path.join(__dirname, 'messages')
+  path: path.join(__dirname, '..', 'messages')
 }
 
 export {
