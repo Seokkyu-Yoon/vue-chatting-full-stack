@@ -1,5 +1,5 @@
-node_modules
-messages
-public
-dist
-mysql
+/node_modules/
+/messages/
+/public/
+/dist/
+/mysql/
