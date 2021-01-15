@@ -1,9 +1,9 @@
 import Redis from 'ioredis'
 
-import { ConfigMessages } from '@/config'
+import { ConfigMessages, ConfigRedis } from '@/config'
 import messageFileManager from './message-file-manager'
 
-const redis = new Redis()
+const redis = new Redis(ConfigRedis.port, ConfigRedis.host)
 const messagesDir = ConfigMessages.path
 
 function getFormattedTime (date) {

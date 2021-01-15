@@ -65,7 +65,7 @@ function onListening () {
     ? `pipe ${addr}`
     : `port ${addr.port}`
   logger.debug(`Listening on ${bind}`)
-  logger.info(`http://192.168.1.77:${port}`)
+  logger.info(`http://localhost:${port}`)
 }
 
 /**
