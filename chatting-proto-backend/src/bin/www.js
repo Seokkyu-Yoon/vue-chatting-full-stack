@@ -22,6 +22,7 @@ if (process.env.NODE_ENV === 'development') {
   const env = dotenv.parse(fs.readFileSync(dotenvPath))
   Object.assign(process.env, env)
 }
+
 const port = process.env.SERVER_PORT || 3000
 app.set('port', port)
 

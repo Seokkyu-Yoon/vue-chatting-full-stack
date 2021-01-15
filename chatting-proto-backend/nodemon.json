@@ -3,6 +3,10 @@
     "src/*"
   ],
   "env": {
-    "NODE_ENV": "development"
+    "NODE_ENV": "development",
+    "REDIS_IP": "localhost",
+    "REDIS_PORT": "3032",
+    "SQL_IP": "localhost",
+    "SQL_PORT": "3031"
   }
 }

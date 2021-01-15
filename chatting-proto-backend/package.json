@@ -10,7 +10,7 @@
     "del": "pm2 del server",
     "monit": "pm2 monit",
     "build": "rm -rf dist && babel src --out-dir dist",
-    "dev": "nodemon --config nodemon.json --exec babel-node src/bin/www.js"
+    "dev": "docker-compose up -d && nodemon --config nodemon.json --exec babel-node src/bin/www.js"
   },
   "author": "",
   "license": "ISC",

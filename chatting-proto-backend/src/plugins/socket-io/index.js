@@ -1,7 +1,7 @@
 import SocketIo from 'socket.io'
 import socketIoRedis from 'socket.io-redis'
 
-import { ConfigRedis, ConfigSocketIo } from '@/config'
+import { ConfigSocketIo } from '@/config'
 import { logger } from '@/core'
 
 import Interface from './interface'
@@ -10,7 +10,11 @@ import { HandlerSocket, HandlerSocketIo } from './handlers'
 async function activate (server, db) {
   logger.info('activate socket.io')
   const io = SocketIo(server, ConfigSocketIo)
-  io.adapter(socketIoRedis(ConfigRedis))
+  const { REDIS_IP, REDIS_PORT } = process.env
+  io.adapter(socketIoRedis({
+    host: REDIS_IP,
+    port: REDIS_PORT
+  }))
 
   const socketIoHandler = new HandlerSocketIo(io, db)
   setTimeout(() => {

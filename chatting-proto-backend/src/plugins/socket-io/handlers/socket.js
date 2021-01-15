@@ -1,11 +1,14 @@
 import socketIoEmitter from 'socket.io-emitter'
 
-import { ConfigRedis } from '@/config'
 import { logger, MegaphoneFactory, Res } from '@/core'
 
 import Interface from '../interface'
 
-const emitter = socketIoEmitter(ConfigRedis)
+const { REDIS_IP, REDIS_PORT } = process.env
+const emitter = socketIoEmitter({
+  host: REDIS_IP,
+  port: REDIS_PORT
+})
 const megaphoneFactory = new MegaphoneFactory(emitter)
 const megaphone = megaphoneFactory.create.bind(megaphoneFactory)
 

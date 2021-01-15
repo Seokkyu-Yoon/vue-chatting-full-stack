@@ -16,11 +16,6 @@ const ConfigSocketIo = {
   }
 }
 
-const ConfigRedis = {
-  host: 'localhost',
-  port: 6379
-}
-
 const ConfigMessages = {
   path: path.join(__dirname, '..', 'messages')
 }
@@ -28,12 +23,10 @@ const ConfigMessages = {
 export {
   ConfigPino,
   ConfigSocketIo,
-  ConfigRedis,
   ConfigMessages
 }
 export default {
   ConfigPino,
   ConfigSocketIo,
-  ConfigRedis,
   ConfigMessages
 }
