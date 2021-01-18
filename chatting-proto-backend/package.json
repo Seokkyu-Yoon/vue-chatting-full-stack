@@ -10,7 +10,8 @@
     "del": "pm2 del server",
     "monit": "pm2 monit",
     "build": "rm -rf dist && babel src --out-dir dist",
-    "dev": "docker-compose up -d && nodemon --config nodemon.json --exec babel-node src/bin/www.js"
+    "dev": "docker-compose up -d && nodemon --config nodemon.json --exec babel-node src/bin/www.js",
+    "test": "docker-compose up -d && tape -r @babel/register src/**/*.test.js | faucet"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +25,7 @@
     "ioredis": "^4.19.2",
     "module-alias": "^2.2.2",
     "morgan": "^1.10.0",
+    "mysql": "^2.18.1",
     "nodemon": "^2.0.6",
     "pino": "^6.10.0",
     "pino-pretty": "^4.3.0",
@@ -38,10 +40,13 @@
     "@babel/node": "^7.12.10",
     "@babel/plugin-transform-runtime": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
+    "@babel/register": "^7.12.10",
     "eslint": "^7.16.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1"
+    "eslint-plugin-promise": "^4.2.1",
+    "faucet": "0.0.1",
+    "tape": "^5.1.1"
   }
 }

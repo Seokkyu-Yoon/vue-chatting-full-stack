@@ -17,9 +17,7 @@ async function activate (server, db) {
   }))
 
   const socketIoHandler = new HandlerSocketIo(io, db)
-  setTimeout(() => {
-    socketIoHandler.init()
-  }, 100)
+  await socketIoHandler.init()
 
   io.on(Interface.CONNECTION, async (socket) => {
     return new HandlerSocket(socket, socketIoHandler)

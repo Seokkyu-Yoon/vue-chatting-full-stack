@@ -1,8 +1,9 @@
 import socketIo from './socket-io'
-import redis from './redis'
+import mysql from './mysql'
+
 const plugins = {
   socket: socketIo,
-  db: redis
+  db: mysql
 }
 
 export default plugins

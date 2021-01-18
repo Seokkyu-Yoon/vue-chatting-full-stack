@@ -1,4 +1,3 @@
-import 'module-alias/register'
 import './module-alias'
 
 import path from 'path'
