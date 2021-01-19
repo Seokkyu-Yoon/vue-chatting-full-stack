@@ -40,33 +40,33 @@ const SocketPlugin = {
       const {
         isValid,
         userName,
-        roomKey
+        roomTitle
       } = resLogin.body
 
       store.userName = userName
-      store.room.roomKey = roomKey
+      store.roomTitle = roomTitle
 
       if (!isValid) {
         return
       }
-      if (roomKey === null) {
-        const reqRooms = new Req('req:room:list', { roomKey, startIndex: store.startIndexRoom })
-        const resRooms = await $request(reqRooms)
-        const { rooms = [] } = resRooms.body
-        store.rooms = rooms
+      if (roomTitle) {
+        // const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
+        // const reqMessages = new Req('req:message:reconnect', { minIndex: store.minIndexMessage })
+        // const [
+        //   resUser,
+        //   resMessages
+        // ] = await Promise.all([$request(reqUser), $request(reqMessages)])
+        // const { users = [] } = resUser.body
+        // const { messages, minIndex } = resMessages.body
+        // store.users = users
+        // store.messages = messages
+        // store.minIndexMessage = minIndex
         return
       }
-      const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
-      const reqMessages = new Req('req:message:reconnect', { roomKey, minIndex: store.minIndexMessage })
-      const [
-        resUser,
-        resMessages
-      ] = await Promise.all([$request(reqUser), $request(reqMessages)])
-      const { users = [] } = resUser.body
-      const { messages, minIndex } = resMessages.body
-      store.users = users
-      store.messages = messages
-      store.minIndexMessage = minIndex
+      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
+      const resRooms = await $request(reqRooms)
+      const { rooms = [] } = resRooms.body
+      store.rooms = rooms
     })
 
     socket.on('broadcast:room:create', () => {

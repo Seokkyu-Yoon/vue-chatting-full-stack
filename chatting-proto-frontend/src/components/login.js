@@ -16,23 +16,28 @@ export default {
       const body = { userName: this.userName }
       const req = new Req('req:user:isValid', body)
       this.$request(req).then((res) => {
-        this.isValid = res.body.isValid
+        const { isValid } = res.body
+        this.isValid = isValid
       }).catch(console.error)
     },
     login () {
       const body = { userName: this.userName }
       const req = new Req('req:user:login', body)
-      this.$request(req).then((res) => {
-        const { isValid, userName } = res.body
-        this.isValid = isValid
-        if (this.isValid) {
-          store.userName = userName
-          this.$router.push('Rooms')
-          return
-        }
-        this.$refs.alert.style.animation = 'shake 0.5s 1'
-        this.$refs.nicknameField.focus()
-      }).catch(console.error)
+      this.$request(req)
+        .then((res) => {
+          const { isValid, userName, roomTitle } = res.body
+          this.isValid = isValid
+          if (this.isValid) {
+            store.userName = userName
+            store.roomTitle = roomTitle
+            this.$router.push('Rooms')
+          }
+        })
+        .catch((err) => {
+          console.log(err)
+          this.$refs.alert.style.animation = 'shake 0.5s 1'
+          this.$refs.nicknameField.focus()
+        })
     }
   },
   beforeCreate () {

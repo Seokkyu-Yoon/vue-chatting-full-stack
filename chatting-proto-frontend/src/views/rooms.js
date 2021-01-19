@@ -34,10 +34,11 @@ export default {
     }
 
     store.startIndexRoom = 0
-    const req = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+    const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
     this.$request(req).then((res) => {
       const { rooms = [] } = res.body
       store.rooms = rooms
+      console.log(rooms)
     })
   }
 }

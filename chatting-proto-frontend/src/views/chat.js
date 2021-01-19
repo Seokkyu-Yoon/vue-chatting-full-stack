@@ -82,11 +82,6 @@ export default {
     }
   },
   beforeCreate () {
-    if (typeof store.room.roomKey === 'undefined' || store.userName === '') {
-      this.$router.go(-1)
-      return
-    }
-
     store.minIndexMessage = -1
     const reqMessages = new Req('req:message:list', { roomKey: store.room.roomKey, minIndex: store.minIndexMessage })
     this.$request(reqMessages).then((res) => {
@@ -100,11 +95,6 @@ export default {
       const { users = [] } = res.body
       store.users = users
     })
-  },
-  beforeUpdate () {
-    if (typeof store.room.roomKey === 'undefined' || store.userName === '') {
-      this.$router.go(-1)
-    }
   },
   beforeDestroy () {
     store.messages = []

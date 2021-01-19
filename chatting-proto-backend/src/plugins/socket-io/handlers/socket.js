@@ -41,55 +41,64 @@ function SocketHandler (socket, socketIoHandler) {
   socket.on(Interface.ERROR, this.onError.bind(this))
 }
 
-SocketHandler.prototype.userLogin = async function (req, callback) {
-  const { userName, roomKey = null } = req.body
-  const { id: socketId } = this.socket
-
-  const { code, body } = await this.socketIoHandler.loginUser(socketId, userName, roomKey)
-  const res = new Res(callback)
-  res.status(code).send(body)
-
-  if (roomKey === null) return
-  const { code: codeUserMap, body: bodyUserMap } = await this.socketIoHandler.getUsers(body.roomKey)
-  megaphone(Interface.Broadcast.User.LIST).to(roomKey).status(codeUserMap).send(bodyUserMap)
-}
-SocketHandler.prototype.userList = async function (req, callback) {
-  const { roomKey, startIndex } = req.body
-  const { code, body } = await this.socketIoHandler.getUsers(roomKey, startIndex)
-
-  const res = new Res(callback)
-  res.status(code).send(body)
-}
 SocketHandler.prototype.userIsValid = async function (req, callback) {
   const { userName } = req.body
   const { code, body } = await this.socketIoHandler.isValidUser(userName)
   const res = new Res(callback)
   res.status(code).send(body)
 }
+SocketHandler.prototype.userLogin = async function (req, callback) {
+  const { userName = '', room = '' } = req.body
+  const { id: socketId } = this.socket
+
+  const { code, body } = await this.socketIoHandler.loginUser(socketId, userName, room)
+  const res = new Res(callback)
+  res.status(code).send(body)
+
+  if (!room) return
+  const { code: codeUserMap, body: bodyUserMap } = await this.socketIoHandler.getUsers(body.roomKey)
+  megaphone(Interface.Broadcast.User.LIST).to(room).status(codeUserMap).send(bodyUserMap)
+}
+SocketHandler.prototype.userList = async function (req, callback) {
+  const { roomTitle = '', startIndex } = req.body
+  const { code, body } = await this.socketIoHandler.getUsers(roomTitle, startIndex)
+
+  const res = new Res(callback)
+  res.status(code).send(body)
+}
 SocketHandler.prototype.roomList = async function (req, callback) {
-  const { roomKey = null, startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getRooms(roomKey, startIndex)
+  const { startIndex = 0 } = req.body
+  const { code, body } = await this.socketIoHandler.getRooms(startIndex)
   const res = new Res(callback)
   res.status(code).send(body)
 }
 SocketHandler.prototype.roomJoin = async function (req, callback) {
   const { id: socketId } = this.socket
-  const { roomKey } = req.body
-  const { code, body } = await this.socketIoHandler.joinRoom(socketId, roomKey)
+  const { roomTitle = '' } = req.body
+  const { code, body } = await this.socketIoHandler.joinRoom(roomTitle)
+  if (code === 200) {
+    this.socketIoHandler.io.of('/').adapter.remoteJoin(socketId, roomTitle)
+  }
   const res = new Res(callback)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
 }
 SocketHandler.prototype.roomCreate = async function (req, callback) {
-  const { id: socketId } = this.socket
   const {
-    roomName,
-    roomPassword,
-    roomMaxJoin,
-    roomDesc
+    title,
+    createBy,
+    pw,
+    maxJoin,
+    description
   } = req.body
-  const { code, body } = await this.socketIoHandler.createRoom(socketId, roomName, roomPassword, roomMaxJoin, roomDesc)
+  const { code, body } = await this.socketIoHandler.createRoom({
+    title,
+    createBy,
+    pw,
+    maxJoin,
+    description
+  })
   const res = new Res(callback)
   res.status(code).send(body)
 
@@ -153,23 +162,16 @@ SocketHandler.prototype.messageReconnect = async function (req, callback) {
   res.status(code).send(body)
 }
 SocketHandler.prototype.disconnect = async function () {
-  const {
-    id: socketId,
-    rooms: socketRooms
-  } = this.socket
+  const { id: socketId } = this.socket
   logger.info(`${socketId} has disconnect`)
-  if (typeof this.socketIoHandler.sockets[socketId] === 'undefined') return
 
-  const roomKeys = this.socketIoHandler.sockets[socketId]
+  const { body: { rooms } } = await this.socketIoHandler.disconnect(socketId)
+
   await Promise.all(
-    [...roomKeys].map(async (roomKey) => {
-      const { code, body } = await this.socketIoHandler.leaveRoom(socketId, socketRooms, roomKey)
-
-      megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
+    rooms.map(async (roomTitle) => {
+      megaphone(Interface.Broadcast.Room.LEAVE).status(200).send({ roomTitle, socketId })
     })
   )
-  await this.socketIoHandler.db.deleteUser(socketId)
-  delete this.socketIoHandler.sockets[socketId]
 }
 SocketHandler.prototype.onError = async function (err) {
   logger.error(err)

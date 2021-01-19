@@ -22,6 +22,7 @@ async function activate (server, db) {
   io.on(Interface.CONNECTION, async (socket) => {
     return new HandlerSocket(socket, socketIoHandler)
   })
+  return socketIoHandler
 }
 
 export default activate

@@ -1,4 +1,5 @@
 import path from 'path'
+import nodemonJson from '../nodemon.json'
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -16,17 +17,21 @@ const ConfigSocketIo = {
   }
 }
 
-const ConfigMessages = {
-  path: path.join(__dirname, '..', 'messages')
+const ConfigMysql = {
+  host: process.env.MYSQL_IP || nodemonJson.env.MYSQL_IP,
+  port: Number(process.env.MYSQL_PORT) || nodemonJson.env.MYSQL_PORT,
+  user: 'root',
+  password: 'qwer1234',
+  database: process.env.MYSQL_DATABASE || nodemonJson.env.MYSQL_DATABASE
 }
 
 export {
   ConfigPino,
   ConfigSocketIo,
-  ConfigMessages
+  ConfigMysql
 }
 export default {
   ConfigPino,
   ConfigSocketIo,
-  ConfigMessages
+  ConfigMysql
 }

@@ -1,12 +1,12 @@
 import { logger } from '@/core'
 
-// async function getTrashUsers (connectingSocketIds = [], savedSocketIds = []) {
-//   const trashUsersSet = new Set(savedSocketIds)
-//   await Promise.all(connectingSocketIds.map(async (socketId) => {
-//     trashUsersSet.delete(socketId)
-//   }))
-//   return [...trashUsersSet]
-// }
+async function getTrashUsers (connectingSocketIds = [], savedSocketIds = []) {
+  const trashUsersSet = new Set(savedSocketIds)
+  await Promise.all(connectingSocketIds.map(async (socketId) => {
+    trashUsersSet.delete(socketId)
+  }))
+  return [...trashUsersSet]
+}
 
 function getBase36RandomStr () {
   return Math.random().toString(36).substring(2, 14)
@@ -14,51 +14,90 @@ function getBase36RandomStr () {
 async function getRandomHash () {
   return `${getBase36RandomStr()}${getBase36RandomStr()}${getBase36RandomStr()}`
 }
-
 function SocketIoHandler (io, db) {
   this.io = io
   this.db = db
 }
 
 SocketIoHandler.prototype.init = async function () {
+  logger.info('initializing db')
   await this.db.init()
+
+  const allSockets = await this.io.of('/').adapter.sockets([])
+  const connectingSocketIds = [...allSockets]
+  await this.db.removeTrashUser(connectingSocketIds)
 }
 
-SocketIoHandler.prototype.getRoomKey = async function () {
-  let roomKey = await getRandomHash()
-  while (await this.db.existsRoom({ roomKey })) {
-    roomKey = await getRandomHash()
+SocketIoHandler.prototype.disconnect = async function (socketId) {
+  const body = await this.db.logout({ socketId })
+  return {
+    code: 200,
+    body
   }
-  return roomKey
 }
 
-// SocketIoHandler.prototype.init = async function () {
-//   logger.info('cleaning users')
-//   const allSockets = await this.io.of('/').adapter.sockets([])
-//   const connectingSocketIds = [...allSockets]
-//   const savedSocketIds = await this.db.getSocketIds()
-//   const trashUsers = await getTrashUsers(connectingSocketIds, savedSocketIds)
+SocketIoHandler.prototype.isValidUser = async function (userName) {
+  const body = await this.db.isValidUser({ userName })
+  return {
+    code: 200,
+    body
+  }
+}
 
-//   if (trashUsers.length === 0) {
-//     await Promise.all(
-//       trashUsers.map(async (socketId) => {
-//         await this.db.deleteUser(socketId)
-//         if (this.sockets[socketId]) {
-//           delete this.sockets[socketId]
-//         }
-//       })
-//     )
+SocketIoHandler.prototype.loginUser = async function (socketId, userName, roomTitle) {
+  try {
+    const body = await this.db.login({ socketId, userName, roomTitle })
+    return {
+      code: 200,
+      body
+    }
+  } catch (e) {
+    return {
+      code: 304,
+      body: {
+        isValid: false,
+        userName: '',
+        title: ''
+      }
+    }
+  }
+}
 
-//     const userMap = {}
-//     await Promise.all(connectingSocketIds.map(async (socketId) => {
-//       const userName = await this.db.getUserName(socketId)
-//       if (userName === null) return
-//       userMap[socketId] = { userName }
-//     }))
-//   }
+SocketIoHandler.prototype.getRooms = async function (startIndex) {
+  const body = await this.db.getRooms({ startIndex })
+  return {
+    code: 200,
+    body
+  }
+}
 
-//   logger.info('finished cleaning')
-// }
+SocketIoHandler.prototype.createRoom = async function ({
+  title = '',
+  createBy = '',
+  pw = '',
+  maxJoin = 0,
+  description = ''
+}) {
+  const body = await this.db.createRoom({
+    title,
+    createBy,
+    pw,
+    maxJoin,
+    description
+  })
+  return {
+    code: 200,
+    body
+  }
+}
+SocketIoHandler.prototype.joinRoom = async function (roomTitle, userId) {
+  const body = await this.db.joinRoom({ roomTitle, userId })
+
+  return {
+    code: 200,
+    body
+  }
+}
 
 // SocketIoHandler.prototype.getUsers = async function (roomKey = null, startIndex = 0) {
 //   if (roomKey === null) {

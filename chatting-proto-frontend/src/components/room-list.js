@@ -48,7 +48,7 @@ export default {
         this.$refs.password.$refs.modal.show()
         return
       }
-      const req = new Req('req:room:join', { roomKey: room.roomKey })
+      const req = new Req('req:room:join', { roomTitle: store.room.title })
       this.$request(req).then((res) => {
         const { room: resRoom } = res.body
         if (res.status === 200) {
