@@ -190,17 +190,17 @@ async function login ({ socketId = '', userName = '', roomTitle = '' }) {
   }
 }
 
-async function logout ({ socketId = '' }) {
-  if (socketId === '') throw new Error('socketId is empty')
+async function logout ({ userId = '' }) {
+  if (userId === '') throw new Error('socketId is empty')
   const sqlRoomsOfUser = `
   SELECT room_title
   FROM participant
-  WHERE user_id='${socketId}'
+  WHERE user_id='${userId}'
   `
   const result = await query(sqlRoomsOfUser)
 
   const sql = `
-  DELETE FROM user WHERE id='${socketId}'
+  DELETE FROM user WHERE id='${userId}'
   `
   await query(sql)
 
@@ -277,7 +277,9 @@ async function createRoom ({
   )`
 
   await query(sql)
-  return { title }
+
+  const { room } = await getRoom({ title })
+  return { room }
 }
 
 async function updateRoom ({
@@ -287,6 +289,10 @@ async function updateRoom ({
   description = ''
 }) {
   if (!title) throw new Error('title is empty to update room')
+
+  const { isExists } = await existsRoom({ title })
+  if (isExists) throw new Error(`title('${title}') is already used`)
+
   const sql = `
   UPDATE room
     SET title='${title}',
@@ -298,13 +304,14 @@ async function updateRoom ({
   `
 
   await query(sql)
-  return { title }
+
+  const { room } = await getRoom({ title })
+  return { room }
 }
 
 async function deleteRoom ({ title = '' }) {
-  if (!title) {
-    throw new Error('title is empty to delete room')
-  }
+  if (!title) throw new Error('title is empty to delete room')
+
   const sqlDeleteRoom = `
   DELETE FROM room
   WHERE title='${title}'
@@ -321,75 +328,89 @@ async function deleteRoom ({ title = '' }) {
   return { title }
 }
 
-async function joinRoom ({ roomTitle = '', pw = '', userId = '' }) {
-  if (!roomTitle || !userId) throw new Error('Invalid to join room')
+async function joinRoom ({ title = '', pw = '', userId = '' }) {
+  if (!title || !userId) throw new Error('Invalid to join room')
 
-  const { room } = await getRoom({ title: roomTitle })
+  const { room } = await getRoom({ title })
   if (room.pw && room.pw !== pw) throw new Error('Invalid to join room')
 
   const sql = `
   INSERT INTO participant (room_title, user_id)
-  VALUES ('${roomTitle}', '${userId}')
+  VALUES ('${title}', '${userId}')
   `
   await query(sql)
 
   return { room }
 }
 
-async function leaveRoom ({ roomTitle = '', userId = '' }) {
-  if (!roomTitle || !userId) throw new Error('Invalid to leave room')
+async function leaveRoom ({ title = '', userId = '' }) {
+  if (!title || !userId) throw new Error('Invalid to leave room')
 
-  const { isExists } = await existsRoom({ title: roomTitle })
-  if (!isExists) return { roomTitle: '' }
+  const { isExists } = await existsRoom({ title })
+  if (!isExists) throw new Error(`title('${title}') room is not exists`)
 
   const sql = `
-  DELETE FROM participant WHERE room_title='${roomTitle}' AND user_id='${userId}'
+  DELETE FROM participant
+  WHERE room_title='${title}' AND user_id='${userId}'
   `
   await query(sql)
-  return { roomTitle }
+  return { title }
 }
 
-async function getMessages ({ roomTitle = '', startIndex = -1 }) {
-  if (!roomTitle) throw new Error('roomTitle is empty')
+async function getMessages ({ title = '', minIndex = -1 }) {
+  if (!title) throw new Error('title is empty')
   const COUNT = 50
 
-  let fixedIndex = startIndex
-  if (startIndex === -1) {
+  let fixedIndex = minIndex
+  if (minIndex === -1) {
     const sql = `
     SELECT COUNT(*) AS 'length'
     FROM message
-    WHERE room_title='${roomTitle}'
+    WHERE room_title='${title}'
     `
 
     const result = await query(sql)
-    fixedIndex = result[0].length - COUNT
-    if (fixedIndex < 0) {
-      fixedIndex = 0
-    }
+    fixedIndex = result[0].length
+  }
+  fixedIndex -= COUNT
+  if (fixedIndex < 0) {
+    fixedIndex = 0
   }
   const sql = `
   SELECT *
   FROM message
-  WHERE room_title='${roomTitle}'
-  ORDERS LIMIT ${COUNT} OFFSET ${fixedIndex}
+  WHERE room_title='${title}'
+  LIMIT ${COUNT} OFFSET ${fixedIndex}
   `
 
   const messages = await query(sql)
-  return { messages, fixedIndex }
+  return { messages, minIndex: fixedIndex }
+}
+
+async function getMessageReconnect ({ title = '', startIndex = 0 }) {
+  if (!title) throw new Error('title is empty')
+  const sql = `
+  SELECT *
+  FROM message
+  WHERE room_title='${title}'
+  LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ${startIndex}`
+
+  const messages = await query(sql)
+  return { messages }
 }
 
 async function writeMessage ({
-  roomTitle = '',
+  title = '',
   typeIdx = 1,
   writter = '',
   content = '',
   recipients = []
 }) {
-  if (!roomTitle || !writter || !content) throw new Error('Invalid to write message')
+  if (!title || !writter || !content) throw new Error('Invalid to write message')
 
   const sql = `
   INSERT INTO message (room_title, type_idx, writter, content)
-  VALUES ('${roomTitle}', ${typeIdx}, '${writter}', '${content}');
+  VALUES ('${title}', ${typeIdx}, '${writter}', '${content}');
 
   SELECT *
   FROM message
@@ -432,5 +453,6 @@ export default {
   leaveRoom,
 
   getMessages,
+  getMessageReconnect,
   writeMessage
 }
