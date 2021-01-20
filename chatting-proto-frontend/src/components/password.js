@@ -3,7 +3,7 @@ import Req from '@/core/request'
 
 export default {
   name: 'roomPassword',
-  props: ['title'],
+  props: ['propTitle'],
   data () {
     return {
       show: false,
@@ -12,28 +12,25 @@ export default {
   },
   methods: {
     join () {
-      if (store.room.joining === store.room.roomMaxJoin) {
-        if (store.room.roomMaxJoin !== 0) {
-          alert('인원이 꽉 찼습니다')
-          this.$refs.modal.hide()
-          return
-        }
+      if (store.room.joining === (store.room.maxJoin || -1)) {
+        alert('인원이 꽉 찼습니다')
+        this.$refs.modal.hide()
+        return
       }
 
-      if (store.room.roomPassword === this.password) {
-        const req = new Req('req:room:join', { roomKey: store.room.roomKey })
-        this.$request(req).then((res) => {
-          const { room: resRoom } = res.body
-          if (res.status === 200) {
-            store.room = resRoom
-            this.$router.push('Chat')
-          }
-        })
-      } else {
+      const req = new Req('req:room:join', { title: store.room.title, pw: this.password })
+      this.$request(req).then((res) => {
+        const { room: resRoom } = res.body
+        if (res.status === 200) {
+          store.room = resRoom
+          this.$router.push('Chat')
+        }
+      }).catch((e) => {
+        console.log(e)
         alert('비밀번호를 확인해주세요')
         this.password = ''
         this.$refs.password.focus()
-      }
+      })
     },
     shown () {
       this.$refs.password.focus()

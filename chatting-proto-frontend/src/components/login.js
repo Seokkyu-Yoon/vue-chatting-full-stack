@@ -13,23 +13,21 @@ export default {
   methods: {
     setUserName (e) {
       this.userName = e.target.value.replace(' ', '')
-      const body = { userName: this.userName }
-      const req = new Req('req:user:isValid', body)
+      const req = new Req('req:user:isValid', { userName: this.userName })
       this.$request(req).then((res) => {
         const { isValid } = res.body
         this.isValid = isValid
       }).catch(console.error)
     },
     login () {
-      const body = { userName: this.userName }
-      const req = new Req('req:user:login', body)
+      const req = new Req('req:user:login', { userName: this.userName })
       this.$request(req)
         .then((res) => {
-          const { isValid, userName, roomTitle } = res.body
+          const { isValid, userName, room } = res.body
           this.isValid = isValid
           if (this.isValid) {
             store.userName = userName
-            store.roomTitle = roomTitle
+            store.room = room
             this.$router.push('Rooms')
           }
         })

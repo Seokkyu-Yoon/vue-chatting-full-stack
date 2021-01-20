@@ -1,9 +1,9 @@
 <template>
   <div class="d-flex flex-fill">
     <div class="d-flex flex-column flex-fill">
-      <UpsertRoom ref="upsertRoom" title="방 수정" v-bind:modifing="true"/>
+      <UpsertRoom ref="upsertRoom" v-bind:modifing="true"/>
       <div class="d-flex mt-4 mb-2">
-        <p class="h3">{{(store.room || {}).roomName || ''}}</p>
+        <p class="h3">{{(store.room || {}).title || ''}}</p>
         <div class="ml-auto">
           <button
             v-show="store.userName === store.room.createBy || ''"
@@ -20,7 +20,7 @@
         <div class="mt-1">
           <textarea
             class="form-control"
-            v-model="newMessage"
+            v-model="content"
             v-on:keydown.enter.exact="(e) => {
               e.preventDefault()
               send()

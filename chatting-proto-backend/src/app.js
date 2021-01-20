@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import logger from 'morgan'
 import cors from 'cors'
 import ejs from 'ejs'
+import { routerApi } from './router'
 
 const app = express()
 
@@ -20,6 +21,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, '..', 'public')))
+
+app.use('/api', routerApi)
 
 app.get('/', (req, res, next) => {
   res.render('index.html')

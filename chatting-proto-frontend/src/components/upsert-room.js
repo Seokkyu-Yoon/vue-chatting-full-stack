@@ -2,26 +2,23 @@ import Req from '@/core/request'
 import store from '@/store'
 export default {
   name: 'Modal',
-  props: ['title', 'modifing'],
+  props: ['modifing'],
   data () {
     return {
       defaultSetting: {},
       show: false,
-      name: '',
+      title: '',
       isPrivate: false,
-      password: '',
+      pw: '',
       maxJoin: '0',
       isInfinity: true,
       description: ''
     }
   },
   methods: {
-    setRoomName (e) {
-      // this.maxJoin = e.target.value.replace(/^0+/, '')
-    },
     setPublic () {
       this.isPrivate = false
-      this.password = this.defaultSetting.password || ''
+      this.pw = this.defaultSetting.pw || ''
     },
     setPrivate () {
       this.isPrivate = true
@@ -45,51 +42,47 @@ export default {
     },
     createRoom () {
       const req = new Req('req:room:create', {
-        roomName: this.name,
-        roomPassword: this.password,
-        roomMaxJoin: this.maxJoin,
-        roomDesc: this.description
+        title: this.title,
+        pw: this.pw,
+        createBy: store.userName,
+        maxJoin: this.maxJoin,
+        description: this.description
       })
-      this.$request(req).then((res) => {
-        const { room } = res.body
-        store.room = room
-        this.$router.push('Chat')
-      })
+      this.$request(req).catch(console.log)
     },
     updateRoom () {
       const req = new Req('req:room:update', {
-        roomKey: store.room.roomKey,
-        roomName: this.name,
-        roomPassword: this.password,
-        roomMaxJoin: this.maxJoin,
-        roomDesc: this.description
+        title: this.title,
+        pw: this.pw,
+        maxJoin: this.maxJoin,
+        description: this.description
       })
       this.$request(req)
     },
     deleteRoom () {
-      const req = new Req('req:room:delete', { roomKey: store.room.roomKey })
+      const req = new Req('req:room:delete', { title: store.room.title })
       this.$request(req)
     },
     initInputs () {
       const {
-        roomName: name = '',
-        roomPassword: password = '',
-        roomMaxJoin: maxJoin = '0',
-        roomDesc: description = ''
+        title = '',
+        pw = '',
+        maxJoin = '0',
+        description = ''
       } = store.room || {}
 
       this.defaultSetting = {
-        name,
-        isPrivate: password !== '',
-        password,
+        title,
+        isPrivate: pw !== '',
+        pw,
         isInfinity: Number(maxJoin) === 0,
         maxJoin: String(maxJoin),
         description
       }
 
-      this.name = this.defaultSetting.name
+      this.title = this.defaultSetting.title
       this.isPrivate = this.defaultSetting.isPrivate
-      this.password = this.defaultSetting.password
+      this.pw = this.defaultSetting.pw
       this.isInfinity = this.defaultSetting.isInfinity
       this.maxJoin = this.defaultSetting.maxJoin
       this.description = this.defaultSetting.description
@@ -103,7 +96,7 @@ export default {
     },
     isPrivate: {
       handler (value) {
-        this.password = value ? this.defaultSetting.password : ''
+        this.pw = value ? this.defaultSetting.pw : ''
       }
     }
   }

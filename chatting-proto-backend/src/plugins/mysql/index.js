@@ -18,32 +18,6 @@ function query (sql = '') {
   })
 }
 
-function transaction (sqls = []) {
-  const connection = mysql.createConnection(ConfigMysql)
-  return new Promise((resolve, reject) => {
-    connection.beginTransaction(async (err) => {
-      if (err) {
-        reject(err)
-        connection.end()
-        return
-      }
-      await Promise.all(sqls.map(async (sql) => await query(sql)))
-        .then((results) => {
-          connection.commit((err) => {
-            if (err) {
-              connection.rollback(() => reject(err))
-              connection.end()
-              return
-            }
-            resolve(results)
-          })
-        })
-        .catch((err) => connection.rollback(() => reject(err)))
-    })
-    connection.end()
-  })
-}
-
 async function init () {
   const tableResult = await query('SHOW TABLES')
   const tableKeys = Object.keys(tableResult)
@@ -91,10 +65,15 @@ async function init () {
 
   if (!tables.includes('message_type')) {
     const sql = `CREATE TABLE message_type (
-      idx INT NOT NULL AUTO_INCREMENT,
+      idx INT NOT NULL UNIQUE,
       type TEXT NOT NULL,
       PRIMARY KEY (idx)
-    )`
+    );
+    
+    INSERT INTO message_type (idx, type) VALUES
+    (1, 'access'),
+    (2, 'text')
+    `
     await query(sql)
   }
 
@@ -150,50 +129,53 @@ async function isValidUser ({ userName = '' }) {
   return { isValid }
 }
 
-async function getUsers ({ roomTitle = '', startIndex = 0 }) {
-  if (!roomTitle) throw new Error('room title is empty')
+async function getUserName ({ id = '' }) {
+  if (!id) return { name: '' }
+  const sql = `
+  SELECT name
+  FROM user
+  WHERE id='${id}'
+  `
+  const result = await query(sql)
+  const { name } = result[0]
+  return { name }
+}
+
+async function getUsers ({ title = '', startIndex = 0 }) {
+  if (!title) throw new Error('room title is empty')
   const COUNT = 10
   const sql = `
-  SELECT user.id, user.name
-  FROM user
-  RIGHT JOIN user ON id=user_id
-  WHERE room_title='${roomTitle}'
+  SELECT user.id AS id, user.name AS name
+  FROM participant
+  LEFT JOIN user ON id=user_id
+  WHERE room_title='${title}'
   LIMIT ${COUNT} OFFSET ${startIndex}
   `
   const users = await query(sql)
   return { users }
 }
 
-async function login ({ socketId = '', userName = '', roomTitle = '' }) {
-  if (!socketId || !userName) throw new Error('Fail to login')
+async function login ({ userId = '', userName = '' }) {
+  if (!userId || !userName) throw new Error('Fail to login')
   const { isValid } = await isValidUser({ userName })
 
   if (!isValid) throw new Error(`'${userName}' is already used`)
   const sqlInsertUser = `
-  INSERT INTO user (id, name) VALUES ('${socketId}', '${userName}')
+  INSERT INTO user (id, name) VALUES ('${userId}', '${userName}')
   `
   await query(sqlInsertUser)
 
-  if (!roomTitle) {
-    return {
-      isValid,
-      userName,
-      roomTitle
-    }
-  }
-
-  const body = await joinRoom(roomTitle, userName)
   return {
-    ...body,
     isValid,
-    userName
+    userName,
+    room: {}
   }
 }
 
 async function logout ({ userId = '' }) {
   if (userId === '') throw new Error('socketId is empty')
   const sqlRoomsOfUser = `
-  SELECT room_title
+  SELECT room_title AS title
   FROM participant
   WHERE user_id='${userId}'
   `
@@ -204,7 +186,7 @@ async function logout ({ userId = '' }) {
   `
   await query(sql)
 
-  const rooms = result.map(({ room_title: roomTitle }) => roomTitle)
+  const rooms = result.map(({ title }) => title)
   return { rooms }
 }
 
@@ -214,7 +196,7 @@ async function existsRoom ({ title }) {
   FROM room
   WHERE title='${title}'
   `
-  const result = query(sql)
+  const result = await query(sql)
   const isExists = result[0].length > 0
   return { isExists }
 }
@@ -223,10 +205,10 @@ async function getRoom ({ title = '' }) {
   const { isExists } = await existsRoom({ title })
   if (!isExists) throw new Error(`'${title}' is not exists`)
   const sql = `
-  SELECT room.title, room.create_by, room.pw, room.max_join, room.description, room.last_updated, COUNT(participant.room_title) AS joining
+  SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
   FROM room
-  WHERE title='${title}'
   LEFT JOIN participant ON title=room_title
+  WHERE title='${title}'
   GROUP BY room.title
   `
   const result = await query(sql)
@@ -238,7 +220,7 @@ async function getRooms ({ startIndex = 0 }) {
   const COUNT = 10
 
   const sql = `
-  SELECT room.title, room.create_by, room.pw, room.max_join, room.description, room.last_updated, COUNT(participant.room_title) AS joining
+  SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
   FROM room
   LEFT JOIN participant ON title=room_title
   GROUP BY room.title
@@ -264,7 +246,7 @@ async function createRoom ({
   const sql = `
   INSERT INTO room (
     title,
-    create_by
+    create_by,
     pw,
     max_join,
     description
@@ -275,7 +257,6 @@ async function createRoom ({
     ${maxJoin},
     '${description}'
   )`
-
   await query(sql)
 
   const { room } = await getRoom({ title })
@@ -290,17 +271,14 @@ async function updateRoom ({
 }) {
   if (!title) throw new Error('title is empty to update room')
 
-  const { isExists } = await existsRoom({ title })
-  if (isExists) throw new Error(`title('${title}') is already used`)
-
   const sql = `
-  UPDATE room
-    SET title='${title}',
-    SET pw='${pw}',
-    SET max_join=${maxJoin},
-    SET description='${description}',
-    SET last_updated=NOW()
-  WHERE title=${title}'
+  UPDATE room SET
+    title='${title}',
+    pw='${pw}',
+    max_join=${maxJoin},
+    description='${description}',
+    last_updated=NOW()
+  WHERE title='${title}'
   `
 
   await query(sql)
@@ -321,10 +299,8 @@ async function deleteRoom ({ title = '' }) {
   WHERE room_title='${title}'
   `
 
-  await transaction([
-    sqlDeleteRoom,
-    sqlDeleteUsersInRoom
-  ])
+  await query(sqlDeleteRoom)
+  await query(sqlDeleteUsersInRoom)
   return { title }
 }
 
@@ -373,14 +349,17 @@ async function getMessages ({ title = '', minIndex = -1 }) {
     fixedIndex = result[0].length
   }
   fixedIndex -= COUNT
+  let fixedLimit = COUNT
   if (fixedIndex < 0) {
+    fixedLimit = COUNT + fixedIndex
     fixedIndex = 0
   }
   const sql = `
-  SELECT *
+  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
+  LEFT JOIN message_type ON type_idx=message_type.idx
   WHERE room_title='${title}'
-  LIMIT ${COUNT} OFFSET ${fixedIndex}
+  LIMIT ${fixedLimit} OFFSET ${fixedIndex}
   `
 
   const messages = await query(sql)
@@ -389,9 +368,11 @@ async function getMessages ({ title = '', minIndex = -1 }) {
 
 async function getMessageReconnect ({ title = '', startIndex = 0 }) {
   if (!title) throw new Error('title is empty')
+  console.log(startIndex)
   const sql = `
-  SELECT *
+  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
+  LEFT JOIN message_type ON type_idx=message_type.idx
   WHERE room_title='${title}'
   LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ${startIndex}`
 
@@ -401,22 +382,27 @@ async function getMessageReconnect ({ title = '', startIndex = 0 }) {
 
 async function writeMessage ({
   title = '',
-  typeIdx = 1,
+  type = '',
   writter = '',
   content = '',
   recipients = []
 }) {
-  if (!title || !writter || !content) throw new Error('Invalid to write message')
+  if (!title || !type || !writter || !content) throw new Error('Invalid to write message')
 
-  const sql = `
+  const sqlWrite = `
   INSERT INTO message (room_title, type_idx, writter, content)
-  VALUES ('${title}', ${typeIdx}, '${writter}', '${content}');
-
-  SELECT *
-  FROM message
-  WHERE idx=LAST_INSERT_ID();
+  VALUES ('${title}', (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content}')
   `
-  const result = await query(sql)
+  const sqlGet = `
+  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
+  FROM message
+  LEFT JOIN message_type ON type_idx=message_type.idx
+  ORDER BY message.idx DESC
+  LIMIT 1;
+  `
+
+  await query(sqlWrite)
+  const result = await query(sqlGet)
   const message = result[0]
 
   const hasRecipients = recipients.length
@@ -429,8 +415,10 @@ async function writeMessage ({
   }
 
   return {
-    ...message,
-    recipients
+    message: {
+      ...message,
+      recipients
+    }
   }
 }
 
@@ -439,6 +427,7 @@ export default {
   removeTrashUser,
 
   isValidUser,
+  getUserName,
   getUsers,
   login,
   logout,

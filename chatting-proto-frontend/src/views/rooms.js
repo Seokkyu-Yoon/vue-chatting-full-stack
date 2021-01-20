@@ -38,7 +38,6 @@ export default {
     this.$request(req).then((res) => {
       const { rooms = [] } = res.body
       store.rooms = rooms
-      console.log(rooms)
     })
   }
 }

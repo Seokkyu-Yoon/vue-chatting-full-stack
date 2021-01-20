@@ -6,21 +6,22 @@
       </div>
     </div>
     <div v-for="(message, index) in store.messages" v-bind:key="`message-${index}`">
-      <div class="message" v-if="message.type === 'message'">
-        <div class="message-header">
-          <div class="message-header-name">{{message.userName}}</div>
-          <div class="message-header-time">{{message.time}}</div>
-        </div>
-        <div class="text">{{message.text}}</div>
+      <div class="access-record" v-if="message.type === 'access'">
+        {{message.writter}}님이 {{message.content}}
       </div>
-      <div v-else-if="message.type === 'time'">
+      <div class="message" v-else-if="message.type === 'text'">
+        <div class="message-header">
+          <div class="message-header-name">{{message.writter}}</div>
+          <div class="message-header-time">{{message.datetime}}</div>
+        </div>
+        <div class="text">{{message.content}}</div>
+      </div>
+      <!-- <div v-else-if="message.type === 'access'">
         <div>
           {{message.text}}
         </div>
-      </div>
-      <div class="access-record" v-else>
-        {{message.userName}}님이 {{message.type === 'join' ? '입장' : '퇴장'}}하였습니다.
-      </div>
+      </div> -->
+
     </div>
   </div>
 </template>

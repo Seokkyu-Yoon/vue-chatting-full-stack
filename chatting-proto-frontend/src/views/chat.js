@@ -18,10 +18,11 @@ export default {
   data () {
     return {
       store,
-      newMessage: '',
+      content: '',
+      type: 'text',
+      showType: 'users',
       blockSend: false,
-      sended: false,
-      showType: 'users'
+      sended: false
     }
   },
   computed: {
@@ -32,32 +33,25 @@ export default {
   },
   methods: {
     send () {
-      if (this.newMessage.trim() === '') {
-        this.newMessage = ''
+      if (this.content.trim() === '') {
+        this.content = ''
         return
       }
       if (this.blockSend) return
-
-      const req = new Req('req:message:write', { roomKey: store.room.roomKey, text: this.newMessage })
-      this.$request(req).then((res) => {
-        const { wrote } = res.body
-        if (wrote) {
-          this.newMessage = ''
-          this.sended = !this.sended
-        }
+      const req = new Req('req:message:write', { title: store.room.title, type: this.type, writter: store.userName, content: this.content, recipients: [] })
+      this.$request(req).then(() => {
+        this.content = ''
+        this.sended = !this.sended
       })
     },
     updateRoom () {
       this.$refs.upsertRoom.$refs.modal.show()
     },
     leaveRoom () {
-      const req = new Req('req:room:leave', { roomKey: store.room.roomKey })
-      this.$request(req).then((res) => {
-        const { joined } = res.body
-        if (!joined) {
-          store.room = {}
-          this.$router.go(-1)
-        }
+      const req = new Req('req:room:leave', { title: store.room.title })
+      this.$request(req).then(() => {
+        store.room = {}
+        this.$router.go(-1)
       })
     },
     changeShowType (type) {
@@ -82,18 +76,44 @@ export default {
     }
   },
   beforeCreate () {
+    store.startIndexUser = 0
     store.minIndexMessage = -1
-    const reqMessages = new Req('req:message:list', { roomKey: store.room.roomKey, minIndex: store.minIndexMessage })
-    this.$request(reqMessages).then((res) => {
-      const { messages, minIndex } = res.body
+    const { title = '', userName = '', pw = '' } = this.$route.query
+    if (!title || !userName) {
+      this.$router.go(-1)
+    }
+    const reqLogin = new Req('req:user:login', { userName, title, pw })
+    const promiseLogin = store.userName === userName
+      ? Promise.resolve({ body: { userName: store.userName, room: store.room } })
+      : this.$request(reqLogin)
+
+    promiseLogin.then((res) => {
+      const {
+        userName,
+        room
+      } = res.body
+
+      store.userName = userName
+      store.room = room
+
+      const reqMessages = new Req('req:message:list', { title: store.room.title, minIndex: store.minIndexMessage })
+      const reqUsers = new Req('req:user:list', { title: store.room.title, startIndex: store.startIndexUser })
+      return Promise.all([
+        this.$request(reqMessages),
+        this.$request(reqUsers)
+      ])
+    }).then(([resMessages, resUsers]) => {
+      const { messages, minIndex } = resMessages.body
+      const { users = [] } = resUsers.body
       store.messages = messages
       store.minIndexMessage = minIndex
-    })
-
-    const reqUsers = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
-    this.$request(reqUsers).then((res) => {
-      const { users = [] } = res.body
       store.users = users
+    }).catch(() => {
+      if (!store.userName) {
+        this.$router.push('/')
+        return
+      }
+      this.$router.push('Rooms')
     })
   },
   beforeDestroy () {

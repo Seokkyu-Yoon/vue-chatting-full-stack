@@ -1,27 +1,27 @@
 <template>
   <div class="d-flex flex-column flex-fill overflow-hidden-y">
-    <Password ref="password" v-bind:title="store.room.roomName"/>
+    <Password ref="password" v-bind:propTitle="store.room.title"/>
     <div
       class="d-flex flex-wrap jumbotron mb-4 p-2 overflow-auto"
       v-if="store.rooms.length > 0">
       <b-card
         class="b-card m-2"
         v-for="(room, idx) in store.rooms"
-        v-bind:key="room.roomKey"
+        v-bind:key="room.title"
         :img-src='"https://picsum.photos/200/100?random=" + idx'
         img-alt="Image"
         img-top>
         <b-card-sub-title>
           <p class="h5 mb-1">
             <span v-bind:class="getClassBadgeSecret(room)">
-              {{room.roomPassword ? '비밀방' : '공개방'}}
+              {{room.pw ? '비밀방' : '공개방'}}
             </span>
             <span v-bind:class="getClassBadgeMaxJoin(room)">
-              {{`${room.joining} / ${room.roomMaxJoin || '∞'}`}}
+              {{`${room.joining} / ${room.maxJoin || '∞'}`}}
             </span>
           </p>
           <div class="mt-2">
-            <p class="h4">{{room.roomName}}</p>
+            <p class="h4">{{room.title}}</p>
           </div>
         </b-card-sub-title>
         <b-btn
@@ -29,11 +29,11 @@
           size="sm"
           variant="danger"
           v-show="store.userName === room.createBy"
-          v-on:click.stop="() => deleteRoom(room.roomKey)">
+          v-on:click.stop="() => deleteRoom(room.title)">
           X
         </b-btn>
         <div class="d-flex flex-column flex-fill justify-content-between">
-          <div class="white-space-pre-wrap scrollable mb-2">{{room.roomDesc}}</div>
+          <div class="white-space-pre-wrap scrollable mb-2">{{room.description}}</div>
           <div class="w-100 d-flex justify-content-end">
             <b-btn
               class='ml-auto'

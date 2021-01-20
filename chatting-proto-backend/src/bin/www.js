@@ -73,9 +73,4 @@ function onListening () {
  */
 server.on('error', onError)
 server.on('listening', onListening)
-
-if (require.main === module) {
-  server.listen(port)
-}
-
-export default server
+server.listen(port)

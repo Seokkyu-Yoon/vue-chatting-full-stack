@@ -48,55 +48,59 @@ SocketHandler.prototype.disconnect = async function () {
   const { id: userId = '' } = this.socket
   logger.info(`${userId} has disconnect`)
 
-  const { body: { rooms } } = await this.socketIoHandler.disconnect(userId)
+  try {
+    const { code, body } = await this.socketIoHandler.disconnect(userId)
 
-  await Promise.all(
-    rooms.map(async (roomTitle) => {
-      megaphone(Interface.Broadcast.Room.LEAVE).status(200).send({ roomTitle, socketId: userId })
-    })
-  )
+    await Promise.all(
+      body.map(async ({ title, message }) => {
+        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send({ title, message })
+      })
+    )
+  } catch (e) {
+    // user not logined
+  }
 }
 
 SocketHandler.prototype.userIsValid = async function (req, callback) {
+  const res = new Res(callback)
   const { userName } = req.body
   const { code, body } = await this.socketIoHandler.isValidUser(userName)
-  const res = new Res(callback)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.userList = async function (req, callback) {
-  const { roomTitle = '', startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getUsers(roomTitle, startIndex)
-
   const res = new Res(callback)
+  const { title = '', startIndex = 0 } = req.body
+  const { code, body } = await this.socketIoHandler.getUsers(title, startIndex)
+
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.userLogin = async function (req, callback) {
-  const { userName = '', room = '' } = req.body
+  const { userName = '', title = '', pw = '' } = req.body
   const { id: userId = '' } = this.socket
   const res = new Res(callback)
 
   try {
-    const { code, body } = await this.socketIoHandler.loginUser(userId, userName, room)
+    const { code, body } = await this.socketIoHandler.loginUser(userId, userName, title, pw)
     res.status(code).send(body)
 
-    if (!room) return
-    const { code: codeUserMap, body: bodyUserMap } = await this.socketIoHandler.getUsers(body.roomKey)
-    megaphone(Interface.Broadcast.User.LIST).to(room).status(codeUserMap).send(bodyUserMap)
+    if (!body.room.title) return
+    megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
   } catch (err) {
     res.status(304).send(err.message)
   }
 }
 
 SocketHandler.prototype.roomList = async function (req, callback) {
+  const res = new Res(callback)
   const { startIndex = 0 } = req.body
   const { code, body } = await this.socketIoHandler.getRooms(startIndex)
-  const res = new Res(callback)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.roomCreate = async function (req, callback) {
+  const res = new Res(callback)
   const {
     title = '',
     createBy = '',
@@ -104,17 +108,21 @@ SocketHandler.prototype.roomCreate = async function (req, callback) {
     maxJoin = 0,
     description = ''
   } = req.body
-  const { code, body } = await this.socketIoHandler.createRoom({
-    title,
-    createBy,
-    pw,
-    maxJoin,
-    description
-  })
-  const res = new Res(callback)
-  res.status(code).send(body)
 
-  megaphone(Interface.Broadcast.Room.CREATE).status(code).send(body)
+  try {
+    const { code, body } = await this.socketIoHandler.createRoom(
+      title,
+      createBy,
+      pw,
+      maxJoin,
+      description
+    )
+    res.status(code).send(body)
+
+    megaphone(Interface.Broadcast.Room.CREATE).status(code).send(body)
+  } catch (e) {
+    res.status(403).send(e.message)
+  }
 }
 SocketHandler.prototype.roomUpdate = async function (req, callback) {
   const {
@@ -137,68 +145,67 @@ SocketHandler.prototype.roomUpdate = async function (req, callback) {
 }
 
 SocketHandler.prototype.roomDelete = async function (req, callback) {
+  const res = new Res(callback)
   const { title = '' } = req.body
   const { code, body } = await this.socketIoHandler.deleteRoom(title)
-  const res = new Res(callback)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.DELETE).status(code).send(body)
 }
 
 SocketHandler.prototype.roomJoin = async function (req, callback) {
-  const { title = '' } = req.body
-  const { id: userId = '' } = this.socket
-  const { code, body } = await this.socketIoHandler.joinRoom(title, userId)
   const res = new Res(callback)
+  const { title = '', pw = '' } = req.body
+  const { id: userId = '' } = this.socket
+  const { code, body } = await this.socketIoHandler.joinRoom(title, userId, pw)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
 }
 
 SocketHandler.prototype.roomLeave = async function (req, callback) {
+  const res = new Res(callback)
   const { title = '' } = req.body
   const {
     id: userId = ''
   } = this.socket
-  const { code, body } = await this.socketIoHandler.leaveRoom(userId, title)
-  const res = new Res(callback)
+  const { code, body } = await this.socketIoHandler.leaveRoom(title, userId)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
 }
 
 SocketHandler.prototype.messageList = async function (req, callback) {
+  const res = new Res(callback)
   const { title = '', minIndex = -1 } = req.body
   const { code, body } = await this.socketIoHandler.getMessages(title, minIndex)
-  const res = new Res(callback)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.messageListReconnect = async function (req, callback) {
+  const res = new Res(callback)
   const { title = '', startIndex = 0 } = req.body
   const { code, body } = await this.socketIoHandler.getMessages(title, startIndex)
-  const res = new Res(callback)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.messageWrite = async function (req, callback) {
+  const res = new Res(callback)
   const {
     title = '',
-    typeIdx = 1,
+    type = '',
     writter = '',
     content = '',
     recipients = []
   } = req.body
   const { code, body } = await this.socketIoHandler.writeMessage(
     title,
-    typeIdx,
+    type,
     writter,
     content,
     recipients
   )
-  const res = new Res(callback)
   res.status(code).send(body)
-
   megaphone(Interface.Broadcast.Message.WRITE).to(title).status(code).send(body)
 }
 

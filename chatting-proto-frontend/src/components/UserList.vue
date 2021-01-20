@@ -4,12 +4,12 @@
     <div class="overflow-auto pr-2">
       <div
         class="d-flex align-items-center mb-1 user p-2"
-        v-for="({userName, socketId}, idx) in store.users"
-        v-bind:key="`user-${socketId}`">
+        v-for="({id, name}, idx) in store.users"
+        v-bind:key="`user-${id}`">
         <b-img
           class="tumbnail"
           :src="'https://picsum.photos/200/100?random=' + idx"/>
-        <p class="h5 ml-auto user-name">{{userName}}</p>
+        <p class="h5 ml-auto user-name">{{name}}</p>
       </div>
     </div>
   </div>

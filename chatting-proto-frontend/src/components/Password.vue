@@ -2,7 +2,7 @@
   <b-modal
     ref="modal"
     v-model="show"
-    v-bind:title="title"
+    v-bind:title="propTitle"
     centered size="xl"
     hide-footer
     @shown="shown"

@@ -35,32 +35,34 @@ const SocketPlugin = {
 
     socket.on('connect', async () => {
       if (store.userName === '') return
-      const reqLogin = new Req('req:user:login', { userName: store.userName, roomKey: store.room.roomKey })
+      const reqLogin = new Req('req:user:login', { userName: store.userName, title: store.room.title, pw: store.room.pw })
       const resLogin = await $request(reqLogin)
       const {
         isValid,
         userName,
-        roomTitle
+        room
       } = resLogin.body
 
       store.userName = userName
-      store.roomTitle = roomTitle
+      store.room = room
 
       if (!isValid) {
         return
       }
-      if (roomTitle) {
-        // const reqUser = new Req('req:user:list', { roomKey: store.room.roomKey, startIndex: store.startIndexUser })
-        // const reqMessages = new Req('req:message:reconnect', { minIndex: store.minIndexMessage })
-        // const [
-        //   resUser,
-        //   resMessages
-        // ] = await Promise.all([$request(reqUser), $request(reqMessages)])
-        // const { users = [] } = resUser.body
-        // const { messages, minIndex } = resMessages.body
-        // store.users = users
-        // store.messages = messages
-        // store.minIndexMessage = minIndex
+      if (room.title) {
+        const reqUser = new Req('req:user:list', { title: store.room.title, startIndex: store.startIndexUser })
+        const reqMessages = new Req('req:message:reconnect', { title: store.room.title, startIndex: store.minIndexMessage + store.messages.length })
+        const [
+          resUser,
+          resMessages
+        ] = await Promise.all([$request(reqUser), $request(reqMessages)])
+        const { users = [] } = resUser.body
+        const { messages } = resMessages.body
+        store.users = users
+        store.messages = [
+          ...store.messages,
+          ...messages
+        ]
         return
       }
       const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
@@ -70,8 +72,8 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:create', () => {
-      if (typeof store.room.roomKey !== 'undefined') return
-      const req = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+      if (store.room.title) return
+      const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
       $request(req).then((res) => {
         const { rooms } = res.body
         store.rooms = rooms
@@ -81,12 +83,12 @@ const SocketPlugin = {
     socket.on('broadcast:room:update', (res) => {
       const { room } = res.body
 
-      if (store.room.roomKey === room.roomKey) {
+      if (store.room.title === room.title) {
         Object.assign(store.room, room)
         return
       }
 
-      const roomIndex = store.rooms.findIndex(({ roomKey }) => roomKey === room.roomKey)
+      const roomIndex = store.rooms.findIndex(({ title }) => title === room.title)
       if (roomIndex === -1) return
       store.rooms = [
         ...store.rooms.slice(0, roomIndex),
@@ -98,17 +100,19 @@ const SocketPlugin = {
     socket.on('broadcast:room:join', (res) => {
       const { room, message } = res.body
 
-      if (store.room.roomKey === room.roomKey) {
+      if (store.room.title === room.title) {
         store.room.joining += 1
-        store.messages.push(message)
-        const req = new Req('req:user:list', { roomKey: room.roomKey, startIndex: store.startIndexUser })
+        if (message) {
+          store.messages.push(message)
+        }
+        const req = new Req('req:user:list', { title: room.title, startIndex: store.startIndexUser })
         $request(req).then((res) => {
           const { users = [] } = res.body
           store.users = users
         })
       }
 
-      const roomIndex = store.rooms.findIndex(({ roomKey }) => roomKey === room.roomKey)
+      const roomIndex = store.rooms.findIndex(({ title }) => title === room.title)
       if (roomIndex === -1) return
       const updatedRoom = Object.assign({}, store.rooms[roomIndex])
       updatedRoom.joining += 1
@@ -120,19 +124,19 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:leave', (res) => {
-      const { room, message } = res.body
+      const { title, message } = res.body
 
-      if (store.room.roomKey === room.roomKey) {
+      if (store.room.title === title) {
         store.room.joining -= 1
         store.messages.push(message)
-        const req = new Req('req:user:list', { roomKey: room.roomKey, startIndex: store.startIndexUser })
+        const req = new Req('req:user:list', { title: title, startIndex: store.startIndexUser })
         $request(req).then((res) => {
           const { users = [] } = res.body
           store.users = users
         })
       }
 
-      const roomIndex = store.rooms.findIndex(({ roomKey }) => roomKey === room.roomKey)
+      const roomIndex = store.rooms.findIndex(({ title: savedTitle }) => savedTitle === title)
       if (roomIndex === -1) return
       const updatedRoom = Object.assign({}, store.rooms[roomIndex])
       updatedRoom.joining -= 1
@@ -144,14 +148,14 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:delete', (res) => {
-      const { room } = res.body
+      const { title } = res.body
 
-      if (store.room.roomKey === room.roomKey) {
+      if (store.room.title === title) {
         store.room = {}
         return
       }
 
-      const reqRooms = new Req('req:room:list', { roomKey: null, startIndex: store.startIndexRoom })
+      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
       $request(reqRooms).then((resRooms) => {
         const { rooms } = resRooms.body
         store.rooms = rooms

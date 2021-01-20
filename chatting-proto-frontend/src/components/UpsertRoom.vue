@@ -2,7 +2,7 @@
   <b-modal
     ref="modal"
     v-model="show"
-    v-bind:title="title"
+    v-bind:title="modifing ? '방 수정' : '방 생성'"
     centered size="xl"
     @shown="initInputs">
     <template #modal-header={}>
@@ -15,7 +15,7 @@
             방이름
           </div>
           <div class="col-15 col-md-10">
-            <input class="form-control" v-model="name"/>
+            <input class="form-control" v-model="title"/>
           </div>
         </div>
         <div class="row mt-3">
@@ -40,7 +40,7 @@
             비밀번호
           </div>
           <div class="col-15 col-md-10">
-            <input type="password" class="form-control" v-model="password"/>
+            <input type="password" class="form-control" v-model="pw"/>
           </div>
         </div>
         <div class="row mt-3">
@@ -51,7 +51,7 @@
             <input type="checkbox" v-model="isInfinity" class="form-check-input" id="infinity" checked/>
             <label class="form-check-label" for="infinity">무제한</label>
             <div v-visible="!isInfinity" class="ml-3">
-              <input type="number" class="form-control mr-1" min="0" v-model="maxJoin"  @input="setRoomName"/>명
+              <input type="number" class="form-control mr-1" min="0" v-model="maxJoin"/>명
             </div>
           </div>
         </div>
