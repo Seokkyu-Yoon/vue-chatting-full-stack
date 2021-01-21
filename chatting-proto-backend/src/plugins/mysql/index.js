@@ -391,7 +391,7 @@ async function writeMessage ({
 
   const sqlWrite = `
   INSERT INTO message (room_title, type_idx, writter, content)
-  VALUES ('${title}', (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content}')
+  VALUES ('${title}', (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')
   `
   const sqlGet = `
   SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime

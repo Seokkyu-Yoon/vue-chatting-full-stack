@@ -19,10 +19,11 @@ const ConfigSocketIo = {
 const ConfigMysql = {
   host: process.env.MYSQL_IP || nodemonJson.env.MYSQL_IP,
   port: Number(process.env.MYSQL_PORT) || nodemonJson.env.MYSQL_PORT,
+  database: process.env.MYSQL_DATABASE || nodemonJson.env.MYSQL_DATABASE,
   user: 'root',
   password: 'qwer1234',
   timezone: 'Asia/Seoul',
-  database: process.env.MYSQL_DATABASE || nodemonJson.env.MYSQL_DATABASE
+  charset: 'utf8mb4'
 }
 
 export {
