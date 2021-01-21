@@ -1,4 +1,3 @@
-import path from 'path'
 import nodemonJson from '../nodemon.json'
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -22,6 +21,7 @@ const ConfigMysql = {
   port: Number(process.env.MYSQL_PORT) || nodemonJson.env.MYSQL_PORT,
   user: 'root',
   password: 'qwer1234',
+  timezone: 'Asia/Seoul',
   database: process.env.MYSQL_DATABASE || nodemonJson.env.MYSQL_DATABASE
 }
 

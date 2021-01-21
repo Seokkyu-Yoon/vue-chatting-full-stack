@@ -15,20 +15,9 @@ SocketIoHandler.prototype.init = async function () {
 }
 
 SocketIoHandler.prototype.disconnect = async function (userId = '') {
-  const { name: writter } = await this.db.getUserName({ id: userId })
   const { rooms } = await this.db.logout({ userId })
   const body = await Promise.all(
-    rooms.map(async (title) => {
-      const message = {
-        title,
-        type: 'access',
-        writter,
-        content: '퇴장하였습니다',
-        recipients: []
-      }
-      await this.db.writeMessage(message)
-      return { title, message }
-    })
+    rooms.map(async (title) => ({ title }))
   )
   return {
     code: 200,
@@ -56,20 +45,11 @@ SocketIoHandler.prototype.loginUser = async function (userId = '', userName = ''
   const body = await this.db.login({ userId, userName })
   if (title) {
     const bodyJoin = await this.db.joinRoom({ title, userId, pw })
-    const message = {
-      title,
-      type: 'access',
-      writter: userName,
-      content: '참가하였습니다',
-      recipients: []
-    }
-    this.db.writeMessage(message)
     this.io.of('/').adapter.remoteJoin(userId, title)
     return {
       body: {
         ...body,
-        ...bodyJoin,
-        message
+        ...bodyJoin
       }
     }
   }
@@ -136,43 +116,19 @@ SocketIoHandler.prototype.deleteRoom = async function (title = '') {
 
 SocketIoHandler.prototype.joinRoom = async function (title = '', userId = '', pw = '') {
   const body = await this.db.joinRoom({ title, userId, pw })
-  const { name: writter } = await this.db.getUserName({ id: userId })
-  const message = {
-    title,
-    type: 'access',
-    writter,
-    content: '참가하였습니다',
-    recipients: []
-  }
-  this.db.writeMessage(message)
   this.io.of('/').adapter.remoteJoin(userId, title)
   return {
     code: 200,
-    body: {
-      ...body,
-      message
-    }
+    body
   }
 }
 
 SocketIoHandler.prototype.leaveRoom = async function (title = '', userId = '') {
   const body = await this.db.leaveRoom({ title, userId })
   this.io.of('/').adapter.remoteLeave(userId, title)
-  const { name: writter } = await this.db.getUserName({ id: userId })
-  const message = {
-    title,
-    type: 'access',
-    writter,
-    content: '퇴장하였습니다',
-    recipients: []
-  }
-  this.db.writeMessage(message)
   return {
     code: 200,
-    body: {
-      ...body,
-      message
-    }
+    body
   }
 }
 

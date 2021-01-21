@@ -6,22 +6,23 @@
       </div>
     </div>
     <div v-for="(message, index) in store.messages" v-bind:key="`message-${index}`">
-      <div class="access-record" v-if="message.type === 'access'">
-        {{message.writter}}님이 {{message.content}}
+      <div v-if="isDateChanged(index)" >
+        <div class="mt-3" v-if="index === 0 && store.minIndexMessage > 0"></div>
+        <div>{{getDateFormatted(message)}}</div>
+        <div class="mb-1"/>
       </div>
-      <div class="message" v-else-if="message.type === 'text'">
-        <div class="message-header">
+      <div class="message mb-2 p-2" v-if="message.type === 'text'">
+        <div class="d-flex justify-content-between">
           <div class="message-header-name">{{message.writter}}</div>
-          <div class="message-header-time">{{message.datetime}}</div>
+          <div class="message-header-time d-flex justify-content-center align-items-center p-1">
+            {{getTimeFormatted(message)}}
+          </div>
         </div>
         <div class="text">{{message.content}}</div>
       </div>
-      <!-- <div v-else-if="message.type === 'access'">
-        <div>
-          {{message.text}}
-        </div>
-      </div> -->
-
+      <div v-else>
+        <p class="h4">{{message.content}}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -35,26 +36,9 @@
   border-radius: 10px;
 }
 
-.access-record {
-  display: flex;
-  margin-bottom: 10px;
-  border-radius: 20px;
-  background-color: dimgray;
-  color: white;
-  align-items: center;
-  justify-content: center;
-}
-
 .message {
-  margin-bottom: 10px;
   background-color:lightcyan;
   border-radius: 20px;
-  padding: 10px;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
 }
 
 .message-header-name {
@@ -63,13 +47,9 @@
 }
 
 .message-header-time {
-  display: flex;
   font-size: 10px;
   background-color: dimgray;
-  justify-content: center;
-  align-items: center;
-  padding: 5px;
-  border-radius: 20px;
+  border-radius: 0.75rem;
   color: white;
 }
 

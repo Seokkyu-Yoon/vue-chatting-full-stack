@@ -105,7 +105,12 @@ export default {
     }).then(([resMessages, resUsers]) => {
       const { messages, minIndex } = resMessages.body
       const { users = [] } = resUsers.body
-      store.messages = messages
+      store.messages = messages.length
+        ? messages
+        : [{
+            type: 'dummy',
+            content: '대화가 없습니다'
+          }]
       store.minIndexMessage = minIndex
       store.users = users
     }).catch(() => {

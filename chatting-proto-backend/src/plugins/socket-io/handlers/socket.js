@@ -52,8 +52,8 @@ SocketHandler.prototype.disconnect = async function () {
     const { code, body } = await this.socketIoHandler.disconnect(userId)
 
     await Promise.all(
-      body.map(async ({ title, message }) => {
-        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send({ title, message })
+      body.map(async ({ title }) => {
+        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send({ title })
       })
     )
   } catch (e) {

@@ -46,7 +46,7 @@ async function init () {
       max_join INT NOT NULL DEFAULT 0,
       description TEXT NOT NULL,
       last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (title),
+      PRIMARY KEY (title)
     )`
     await query(sql)
   }
@@ -56,25 +56,26 @@ async function init () {
     CREATE TABLE participant (
       room_title VARCHAR(100) NOT NULL,
       user_id VARCHAR(25) NOT NULL,
-      PRIMARY KEY (room_title, user_name),
-      FOREIGN KEY (room_title) REFERENCES room (title) ON UPDATE CASCADE ON DELETE CASCADE
+      PRIMARY KEY (room_title, user_id),
+      FOREIGN KEY (room_title) REFERENCES room (title) ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
     )`
     await query(sql)
   }
 
   if (!tables.includes('message_type')) {
-    const sql = `CREATE TABLE message_type (
+    const sqlCreate = `CREATE TABLE message_type (
       idx INT NOT NULL UNIQUE,
       type TEXT NOT NULL,
       PRIMARY KEY (idx)
-    );
-    
-    INSERT INTO message_type (idx, type) VALUES
-    (1, 'access'),
-    (2, 'text')
+    )
     `
-    await query(sql)
+    const sqlInsert = `
+    INSERT INTO message_type (idx, type) VALUES
+    (1, 'text')
+    `
+    await query(sqlCreate)
+    await query(sqlInsert)
   }
 
   if (!tables.includes('message')) {
@@ -368,7 +369,6 @@ async function getMessages ({ title = '', minIndex = -1 }) {
 
 async function getMessageReconnect ({ title = '', startIndex = 0 }) {
   if (!title) throw new Error('title is empty')
-  console.log(startIndex)
   const sql = `
   SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
@@ -413,7 +413,6 @@ async function writeMessage ({
     `
     await query(sqlRecipient)
   }
-
   return {
     message: {
       ...message,

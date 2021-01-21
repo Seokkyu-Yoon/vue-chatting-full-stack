@@ -39,7 +39,6 @@ router.post('/', async (req, res, next) => {
     maxJoin = 0,
     description = ''
   } = req.body
-  console.log(title, createBy, pw, maxJoin, description)
   const sqlCreate = `
   INSERT INTO room (title, create_by, pw, max_join, description) VALUES
   ('${title}', '${createBy}', '${pw}', ${maxJoin}, '${description}')

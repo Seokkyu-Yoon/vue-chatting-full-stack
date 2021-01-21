@@ -98,13 +98,10 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:join', (res) => {
-      const { room, message } = res.body
+      const { room } = res.body
 
       if (store.room.title === room.title) {
         store.room.joining += 1
-        if (message) {
-          store.messages.push(message)
-        }
         const req = new Req('req:user:list', { title: room.title, startIndex: store.startIndexUser })
         $request(req).then((res) => {
           const { users = [] } = res.body
@@ -124,11 +121,10 @@ const SocketPlugin = {
     })
 
     socket.on('broadcast:room:leave', (res) => {
-      const { title, message } = res.body
+      const { title } = res.body
 
       if (store.room.title === title) {
         store.room.joining -= 1
-        store.messages.push(message)
         const req = new Req('req:user:list', { title: title, startIndex: store.startIndexUser })
         $request(req).then((res) => {
           const { users = [] } = res.body
@@ -152,7 +148,6 @@ const SocketPlugin = {
 
       if (store.room.title === title) {
         store.room = {}
-        return
       }
 
       const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
@@ -165,6 +160,9 @@ const SocketPlugin = {
     socket.on('broadcast:message:write', (res) => {
       const { message } = res.body
       store.messages.push(message)
+      if (store.messages[0].type === 'dummy') {
+        store.messages = store.messages.slice(1)
+      }
     })
     vue.mixin({})
 
