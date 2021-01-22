@@ -8,7 +8,8 @@
         class="b-card m-2"
         v-for="(room, idx) in store.rooms"
         v-bind:key="room.title"
-        :img-src='"https://picsum.photos/200/100?random=" + idx'
+        :img-src='`https://picsum.photos/id/${idx}/500/300`'
+        img-height="200"
         img-alt="Image"
         img-top>
         <b-card-sub-title>

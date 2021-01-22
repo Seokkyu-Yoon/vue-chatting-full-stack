@@ -23,7 +23,14 @@ export default {
         const { room: resRoom } = res.body
         if (res.status === 200) {
           store.room = resRoom
-          this.$router.push('Chat')
+          this.$router.push({
+            name: 'Chat',
+            query: {
+              title: store.room.title,
+              userName: store.userName,
+              pw: this.password
+            }
+          })
         }
       }).catch((e) => {
         console.log(e)

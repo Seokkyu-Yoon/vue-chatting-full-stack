@@ -12,6 +12,10 @@ export default {
     }
   },
   methods: {
+    isShown ({ recipients = [] }) {
+      console.log(store.messages)
+      return recipients.length === 0 || recipients.includes(store.userName)
+    },
     isDifferentDate (yyyyMMdd1, yyyyMMdd2) {
       const checkList = ['year', 'month', 'date']
       const isSame = checkList.every((checkKey) => yyyyMMdd1[checkKey] === yyyyMMdd2[checkKey])

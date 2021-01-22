@@ -121,9 +121,6 @@ export default {
       this.$router.push('Rooms')
     })
   },
-  beforeUpdate () {
-    console.log(store.room.title)
-  },
   beforeDestroy () {
     store.room = {}
     store.messages = []

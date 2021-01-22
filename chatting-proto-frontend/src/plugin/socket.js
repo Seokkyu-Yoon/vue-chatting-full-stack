@@ -97,6 +97,20 @@ const SocketPlugin = {
       ]
     })
 
+    socket.on('broadcast:room:delete', (res) => {
+      const { title } = res.body
+
+      if (store.room.title === title) {
+        store.room = {}
+      }
+
+      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
+      $request(reqRooms).then((resRooms) => {
+        const { rooms } = resRooms.body
+        store.rooms = rooms
+      })
+    })
+
     socket.on('broadcast:room:join', (res) => {
       const { room } = res.body
 
@@ -141,20 +155,6 @@ const SocketPlugin = {
         updatedRoom,
         ...store.rooms.slice(roomIndex + 1)
       ]
-    })
-
-    socket.on('broadcast:room:delete', (res) => {
-      const { title } = res.body
-
-      if (store.room.title === title) {
-        store.room = {}
-      }
-
-      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
-      $request(reqRooms).then((resRooms) => {
-        const { rooms } = resRooms.body
-        store.rooms = rooms
-      })
     })
 
     socket.on('broadcast:message:write', (res) => {

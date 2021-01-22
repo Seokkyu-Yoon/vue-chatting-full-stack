@@ -8,7 +8,7 @@
         v-bind:key="`user-${id}`">
         <b-img
           class="tumbnail"
-          :src="'https://picsum.photos/200/100?random=' + idx"/>
+          :src='`https://picsum.photos/id/${idx}/100`'/>
         <p class="h5 ml-auto user-name">{{name}}</p>
       </div>
     </div>
