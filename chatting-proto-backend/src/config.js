@@ -25,7 +25,6 @@ const ConfigMysql = {
   timezone: 'Asia/Seoul',
   charset: 'utf8mb4'
 }
-console.log(ConfigMysql)
 
 export {
   ConfigPino,
