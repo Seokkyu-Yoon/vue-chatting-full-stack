@@ -355,28 +355,77 @@ async function getMessages ({ title = '', minIndex = -1 }) {
     fixedLimit = COUNT + fixedIndex
     fixedIndex = 0
   }
-  const sql = `
-  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
+  const sqlGetMessages = `
+  SELECT message.idx AS idx, message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
   WHERE room_title='${title}'
   LIMIT ${fixedLimit} OFFSET ${fixedIndex}
   `
 
-  const messages = await query(sql)
+  const results = await query(sqlGetMessages)
+  const messages = await Promise.all(results.map(async ({
+    idx,
+    title,
+    type,
+    writter,
+    content,
+    datetime
+  }) => {
+    const sqlGetRecipients = `
+    SELECT user_name AS userName
+    FROM recipient
+    WHERE message_idx=${idx}
+    `
+    const result = await query(sqlGetRecipients)
+    const recipients = result.map(({ userName }) => userName)
+    return {
+      title,
+      type,
+      writter,
+      content,
+      datetime,
+      recipients
+    }
+  }))
   return { messages, minIndex: fixedIndex }
 }
 
 async function getMessageReconnect ({ title = '', startIndex = 0 }) {
   if (!title) throw new Error('title is empty')
-  const sql = `
+  const sqlGetMessages = `
   SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
   WHERE room_title='${title}'
   LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ${startIndex}`
 
-  const messages = await query(sql)
+  const results = await query(sqlGetMessages)
+  const messages = await Promise.all(results.map(async ({
+    idx,
+    title,
+    type,
+    writter,
+    content,
+    datetime
+  }) => {
+    const sqlGetRecipients = `
+    SELECT user_name AS userName
+    FROM recipient
+    WHERE message_idx=${idx}
+    `
+    const result = await query(sqlGetRecipients)
+    const recipients = result.map(({ userName }) => userName)
+    return {
+      title,
+      type,
+      writter,
+      content,
+      datetime,
+      recipients
+    }
+  }))
+
   return { messages }
 }
 
