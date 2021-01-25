@@ -327,6 +327,7 @@ async function joinRoom ({ id = null, pw = '', userId = '' }) {
   const { room } = await getRoom({ id })
   if (room.pw && room.pw !== pw) throw new Error('Invalid to join room')
 
+  if (room.maxJoin !== 0 && room.joining >= room.maxJoin) throw new Error('Room is full')
   const sql = `
   INSERT INTO participant (room_id, user_id)
   VALUES (${id}, '${userId}')

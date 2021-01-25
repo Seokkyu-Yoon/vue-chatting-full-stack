@@ -25,7 +25,7 @@ export default {
           store.room = resRoom
           this.$router.push({
             name: 'Chat',
-            query: {
+            params: {
               roomId: store.room.id,
               userName: store.userName,
               pw: this.password

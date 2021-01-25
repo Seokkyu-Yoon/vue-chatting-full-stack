@@ -53,7 +53,7 @@ export default {
         const { room } = res.body
         if (res.status === 200) {
           store.room = room
-          this.$router.push({ name: 'Chat', query: { roomId: room.id, userName: store.userName, pw: room.pw } })
+          this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, pw: room.pw } })
         }
       }).catch(console.log)
     },

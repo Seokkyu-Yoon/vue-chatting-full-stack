@@ -24,12 +24,8 @@ app.use(express.static(path.join(__dirname, '..', 'public')))
 
 app.use('/api', routerApi)
 
-app.get('/', (req, res, next) => {
-  res.render('index.html')
-})
-
 app.get('/*', (req, res, next) => {
-  res.redirect('/')
+  res.render('index.html')
 })
 
 export default app

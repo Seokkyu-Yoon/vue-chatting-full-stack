@@ -31,7 +31,18 @@ function query (sql = '') {
 }
 
 const router = Router()
-router.post('/', async (req, res, next) => {
+
+router.post('/room', async (req, res, next) => {
+  const {
+    roomId,
+    userName,
+    pw
+  } = req.body
+
+  res.redirect(`/chat/${roomId}/${userName}/${pw}`)
+})
+
+router.put('/room', async (req, res, next) => {
   const {
     id = null,
     title = '',
@@ -65,7 +76,7 @@ router.post('/', async (req, res, next) => {
   }
 })
 
-router.delete('/', async (req, res, next) => {
+router.delete('/room', async (req, res, next) => {
   const { id = null } = req.body
   if (id === null) return res.send('id is empty')
   const sql = `

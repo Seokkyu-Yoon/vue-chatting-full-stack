@@ -76,7 +76,7 @@ export default {
   beforeCreate () {
     // store.startIndexUser = 0
     store.minIndexMessage = -1
-    const { roomId = null, userName = '', pw = '' } = this.$route.query
+    const { roomId = null, userName = '', pw = '' } = this.$route.params
     if (roomId === null || !userName) {
       this.$router.go(-1)
     }
