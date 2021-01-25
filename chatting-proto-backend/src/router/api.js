@@ -33,15 +33,18 @@ function query (sql = '') {
 const router = Router()
 router.post('/', async (req, res, next) => {
   const {
+    id = null,
     title = '',
     createBy = '',
     pw = '',
     maxJoin = 0,
     description = ''
   } = req.body
+
+  if (id === null) return res.send('id is empty')
   const sqlCreate = `
-  INSERT INTO room (title, create_by, pw, max_join, description) VALUES
-  ('${title}', '${createBy}', '${pw}', ${maxJoin}, '${description}')
+  INSERT INTO room (id, title, create_by, pw, max_join, description) VALUES
+  (${id}, '${title}', '${createBy}', '${pw}', ${maxJoin}, '${description}')
   `
   try {
     await query(sqlCreate)
@@ -63,13 +66,14 @@ router.post('/', async (req, res, next) => {
 })
 
 router.delete('/', async (req, res, next) => {
-  const { title = '' } = req.body
+  const { id = null } = req.body
+  if (id === null) return res.send('id is empty')
   const sql = `
-  DELETE FROM room WHERE title='${title}'
+  DELETE FROM room WHERE id=${id}
   `
   try {
     await query(sql)
-    megaphone(Interface.Broadcast.Room.DELETE).status(200).send({ title })
+    megaphone(Interface.Broadcast.Room.DELETE).status(200).send({ id })
     return res.send('success')
   } catch (e) {
     return res.send('fail')
