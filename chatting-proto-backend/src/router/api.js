@@ -61,18 +61,19 @@ router.put('/room', async (req, res, next) => {
     await query(sqlCreate)
 
     const sqlSelect = `
-    SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
+    SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
     FROM room
-    LEFT JOIN participant ON title=room_title
+    LEFT JOIN participant ON id=room_id
     WHERE title='${title}'
-    GROUP BY room.title
+    GROUP BY room.id
     `
     const result = await query(sqlSelect)
+    console.log(result)
     const room = result[0]
     megaphone(Interface.Broadcast.Room.CREATE).status(200).send({ room })
     return res.send('success')
   } catch (e) {
-    return res.send('fail')
+    return res.status(403).send('fail')
   }
 })
 
@@ -87,7 +88,7 @@ router.delete('/room', async (req, res, next) => {
     megaphone(Interface.Broadcast.Room.DELETE).status(200).send({ id })
     return res.send('success')
   } catch (e) {
-    return res.send('fail')
+    return res.status(403).send('fail')
   }
 })
 export default router

@@ -51,8 +51,8 @@ const SocketPlugin = {
       }
       if (typeof room.id !== 'undefined') {
         // const reqUser = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
-        const reqUser = new Req('req:user:list', { roomId: store.room.id })
-        const reqMessages = new Req('req:message:reconnect', { roomId: store.room.id, startIndex: store.minIndexMessage + store.messages.length })
+        const reqUser = new Req('req:user:list', { roomId: room.id })
+        const reqMessages = new Req('req:message:reconnect', { roomId: room.id, startIndex: store.minIndexMessage + store.messages.length })
         const [
           resUser,
           resMessages
