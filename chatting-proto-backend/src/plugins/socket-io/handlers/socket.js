@@ -52,8 +52,8 @@ SocketHandler.prototype.disconnect = async function () {
     const { code, body } = await this.socketIoHandler.disconnect(userId)
 
     await Promise.all(
-      body.map(async ({ title }) => {
-        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send({ title })
+      body.map(async ({ roomId }) => {
+        megaphone(Interface.Broadcast.Room.LEAVE).status(code).send({ roomId })
       })
     )
   } catch (e) {
@@ -70,22 +70,22 @@ SocketHandler.prototype.userIsValid = async function (req, callback) {
 
 SocketHandler.prototype.userList = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '', startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getUsers(title, startIndex)
+  const { roomId = null, startIndex = 0 } = req.body
+  const { code, body } = await this.socketIoHandler.getUsers(roomId, startIndex)
 
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.userLogin = async function (req, callback) {
-  const { userName = '', title = '', pw = '' } = req.body
+  const { userName = '', roomId = null, pw = '' } = req.body
   const { id: userId = '' } = this.socket
   const res = new Res(callback)
 
   try {
-    const { code, body } = await this.socketIoHandler.loginUser(userId, userName, title, pw)
+    const { code, body } = await this.socketIoHandler.loginUser(userId, userName, roomId, pw)
     res.status(code).send(body)
 
-    if (!body.room.title) return
+    if (typeof body.room.id === 'undefined') return
     megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
   } catch (err) {
     res.status(304).send(err.message)
@@ -102,6 +102,7 @@ SocketHandler.prototype.roomList = async function (req, callback) {
 SocketHandler.prototype.roomCreate = async function (req, callback) {
   const res = new Res(callback)
   const {
+    id = null,
     title = '',
     createBy = '',
     pw = '',
@@ -111,6 +112,7 @@ SocketHandler.prototype.roomCreate = async function (req, callback) {
 
   try {
     const { code, body } = await this.socketIoHandler.createRoom(
+      id,
       title,
       createBy,
       pw,
@@ -126,6 +128,7 @@ SocketHandler.prototype.roomCreate = async function (req, callback) {
 }
 SocketHandler.prototype.roomUpdate = async function (req, callback) {
   const {
+    id = null,
     title = '',
     pw = '',
     maxJoin = 0,
@@ -133,6 +136,7 @@ SocketHandler.prototype.roomUpdate = async function (req, callback) {
   } = req.body
 
   const { code, body } = await this.socketIoHandler.updateRoom(
+    id,
     title,
     pw,
     maxJoin,
@@ -146,8 +150,8 @@ SocketHandler.prototype.roomUpdate = async function (req, callback) {
 
 SocketHandler.prototype.roomDelete = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '' } = req.body
-  const { code, body } = await this.socketIoHandler.deleteRoom(title)
+  const { id = null } = req.body
+  const { code, body } = await this.socketIoHandler.deleteRoom(id)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.DELETE).status(code).send(body)
@@ -155,9 +159,9 @@ SocketHandler.prototype.roomDelete = async function (req, callback) {
 
 SocketHandler.prototype.roomJoin = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '', pw = '' } = req.body
+  const { id = null, pw = '' } = req.body
   const { id: userId = '' } = this.socket
-  const { code, body } = await this.socketIoHandler.joinRoom(title, userId, pw)
+  const { code, body } = await this.socketIoHandler.joinRoom(id, userId, pw)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body)
@@ -165,11 +169,11 @@ SocketHandler.prototype.roomJoin = async function (req, callback) {
 
 SocketHandler.prototype.roomLeave = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '' } = req.body
+  const { id = null } = req.body
   const {
     id: userId = ''
   } = this.socket
-  const { code, body } = await this.socketIoHandler.leaveRoom(title, userId)
+  const { code, body } = await this.socketIoHandler.leaveRoom(id, userId)
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
@@ -177,36 +181,36 @@ SocketHandler.prototype.roomLeave = async function (req, callback) {
 
 SocketHandler.prototype.messageList = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '', minIndex = -1 } = req.body
-  const { code, body } = await this.socketIoHandler.getMessages(title, minIndex)
+  const { roomId = null, minIndex = -1 } = req.body
+  const { code, body } = await this.socketIoHandler.getMessages(roomId, minIndex)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.messageListReconnect = async function (req, callback) {
   const res = new Res(callback)
-  const { title = '', startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getMessages(title, startIndex)
+  const { roomId = null, startIndex = 0 } = req.body
+  const { code, body } = await this.socketIoHandler.getMessages(roomId, startIndex)
   res.status(code).send(body)
 }
 
 SocketHandler.prototype.messageWrite = async function (req, callback) {
   const res = new Res(callback)
   const {
-    title = '',
+    roomId = null,
     type = '',
     writter = '',
     content = '',
     recipients = []
   } = req.body
   const { code, body } = await this.socketIoHandler.writeMessage(
-    title,
+    roomId,
     type,
     writter,
     content,
     recipients
   )
   res.status(code).send(body)
-  megaphone(Interface.Broadcast.Message.WRITE).to(title).status(code).send(body)
+  megaphone(Interface.Broadcast.Message.WRITE).to(String(roomId)).status(code).send(body)
 }
 
 SocketHandler.prototype.onError = async function (err) {

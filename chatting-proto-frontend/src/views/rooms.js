@@ -24,8 +24,8 @@ export default {
       this.$router.go(-1)
       return
     }
-    if (typeof store.room.roomKey !== 'undefined') {
-      const req = new Req('req:room:leave', { roomKey: store.room.roomKey })
+    if (typeof store.room.id !== 'undefined') {
+      const req = new Req('req:room:leave', { id: store.room.id })
       this.$request(req).then((res) => {
         if (res.status === 200) {
           store.room = {}

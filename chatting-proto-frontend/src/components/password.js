@@ -18,7 +18,7 @@ export default {
         return
       }
 
-      const req = new Req('req:room:join', { title: store.room.title, pw: this.password })
+      const req = new Req('req:room:join', { id: store.room.id, pw: this.password })
       this.$request(req).then((res) => {
         const { room: resRoom } = res.body
         if (res.status === 200) {
@@ -26,7 +26,7 @@ export default {
           this.$router.push({
             name: 'Chat',
             query: {
-              title: store.room.title,
+              roomId: store.room.id,
               userName: store.userName,
               pw: this.password
             }

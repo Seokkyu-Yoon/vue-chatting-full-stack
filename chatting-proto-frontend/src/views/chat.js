@@ -3,7 +3,6 @@ import store from '@/store'
 import UpsertRoom from '@/components/UpsertRoom.vue'
 import MessageList from '@/components/MessageList.vue'
 import UserList from '@/components/UserList.vue'
-import FileList from '@/components/FileList.vue'
 import RoomDetail from '@/components/RoomDetail.vue'
 
 export default {
@@ -12,7 +11,6 @@ export default {
     UpsertRoom,
     MessageList,
     UserList,
-    FileList,
     RoomDetail
   },
   data () {
@@ -38,7 +36,7 @@ export default {
         return
       }
       if (this.blockSend) return
-      const req = new Req('req:message:write', { title: store.room.title, type: this.type, writter: store.userName, content: this.content, recipients: [] })
+      const req = new Req('req:message:write', { roomId: store.room.id, type: this.type, writter: store.userName, content: this.content, recipients: [] })
       this.$request(req).then(() => {
         this.content = ''
         this.sended = !this.sended
@@ -48,7 +46,7 @@ export default {
       this.$refs.upsertRoom.$refs.modal.show()
     },
     leaveRoom () {
-      const req = new Req('req:room:leave', { title: store.room.title })
+      const req = new Req('req:room:leave', { id: store.room.id })
       this.$request(req).then(() => {
         store.room = {}
         this.$router.go(-1)
@@ -78,11 +76,11 @@ export default {
   beforeCreate () {
     store.startIndexUser = 0
     store.minIndexMessage = -1
-    const { title = '', userName = '', pw = '' } = this.$route.query
-    if (!title || !userName) {
+    const { roomId = null, userName = '', pw = '' } = this.$route.query
+    if (roomId === null || !userName) {
       this.$router.go(-1)
     }
-    const reqLogin = new Req('req:user:login', { userName, title, pw })
+    const reqLogin = new Req('req:user:login', { userName, roomId, pw })
     const promiseLogin = store.userName === userName
       ? Promise.resolve({ body: { userName: store.userName, room: store.room } })
       : this.$request(reqLogin)
@@ -96,8 +94,8 @@ export default {
       store.userName = userName
       store.room = room
 
-      const reqMessages = new Req('req:message:list', { title: store.room.title, minIndex: store.minIndexMessage })
-      const reqUsers = new Req('req:user:list', { title: store.room.title, startIndex: store.startIndexUser })
+      const reqMessages = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
+      const reqUsers = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
       return Promise.all([
         this.$request(reqMessages),
         this.$request(reqUsers)

@@ -52,6 +52,7 @@ export default {
     },
     updateRoom () {
       const req = new Req('req:room:update', {
+        id: store.room.id,
         title: this.title,
         pw: this.pw,
         maxJoin: this.maxJoin,
@@ -60,7 +61,7 @@ export default {
       this.$request(req)
     },
     deleteRoom () {
-      const req = new Req('req:room:delete', { title: store.room.title })
+      const req = new Req('req:room:delete', { id: store.room.id })
       this.$request(req)
     },
     initInputs () {

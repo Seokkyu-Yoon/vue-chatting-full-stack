@@ -66,7 +66,7 @@ export default {
     chatBoard.addEventListener('scroll', (e) => {
       if (e.target.scrollTop !== 0) return
       if (store.minIndex === 0) return
-      const req = new Req('req:message:list', { title: store.room.title, minIndex: store.minIndexMessage })
+      const req = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
       this.$request(req).then((res) => {
         const { messages, minIndex } = res.body
         store.messages = [...messages, ...store.messages]

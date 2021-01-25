@@ -48,17 +48,17 @@ export default {
         this.$refs.password.$refs.modal.show()
         return
       }
-      const req = new Req('req:room:join', { title: room.title })
+      const req = new Req('req:room:join', { id: room.id })
       this.$request(req).then((res) => {
         const { room } = res.body
         if (res.status === 200) {
           store.room = room
-          this.$router.push({ name: 'Chat', query: { title: room.title, userName: store.userName, pw: room.pw } })
+          this.$router.push({ name: 'Chat', query: { roomId: room.id, userName: store.userName, pw: room.pw } })
         }
       }).catch(console.log)
     },
-    deleteRoom (title) {
-      const req = new Req('req:room:delete', { title })
+    deleteRoom (id) {
+      const req = new Req('req:room:delete', { id })
       this.$request(req)
         .then((res) => {
           if (res.status === 200) {

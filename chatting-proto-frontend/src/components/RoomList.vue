@@ -7,7 +7,7 @@
       <b-card
         class="b-card m-2"
         v-for="(room, idx) in store.rooms"
-        v-bind:key="room.title"
+        v-bind:key="room.id"
         :img-src='`https://picsum.photos/id/${idx}/500/300`'
         img-height="200"
         img-alt="Image"
@@ -30,7 +30,7 @@
           size="sm"
           variant="danger"
           v-show="store.userName === room.createBy"
-          v-on:click.stop="() => deleteRoom(room.title)">
+          v-on:click.stop="() => deleteRoom(room.id)">
           X
         </b-btn>
         <div class="d-flex flex-column flex-fill justify-content-between">
