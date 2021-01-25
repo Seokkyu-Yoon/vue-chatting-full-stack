@@ -50,7 +50,8 @@ const SocketPlugin = {
         return
       }
       if (typeof room.id !== 'undefined') {
-        const reqUser = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
+        // const reqUser = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
+        const reqUser = new Req('req:user:list', { roomId: store.room.id })
         const reqMessages = new Req('req:message:reconnect', { roomId: store.room.id, startIndex: store.minIndexMessage + store.messages.length })
         const [
           resUser,
@@ -116,7 +117,8 @@ const SocketPlugin = {
 
       if (store.room.id === room.id) {
         store.room.joining += 1
-        const req = new Req('req:user:list', { roomId: room.id, startIndex: store.startIndexUser })
+        // const req = new Req('req:user:list', { roomId: room.id, startIndex: store.startIndexUser })
+        const req = new Req('req:user:list', { roomId: room.id })
         $request(req).then((res) => {
           const { users = [] } = res.body
           store.users = users
@@ -139,7 +141,8 @@ const SocketPlugin = {
 
       if (store.room.id === id) {
         store.room.joining -= 1
-        const req = new Req('req:user:list', { roomId: id, startIndex: store.startIndexUser })
+        // const req = new Req('req:user:list', { roomId: id, startIndex: store.startIndexUser })
+        const req = new Req('req:user:list', { roomId: id })
         $request(req).then((res) => {
           const { users = [] } = res.body
           store.users = users

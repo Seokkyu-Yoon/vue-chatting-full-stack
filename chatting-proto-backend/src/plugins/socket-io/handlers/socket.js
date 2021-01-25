@@ -70,8 +70,10 @@ SocketHandler.prototype.userIsValid = async function (req, callback) {
 
 SocketHandler.prototype.userList = async function (req, callback) {
   const res = new Res(callback)
-  const { roomId = null, startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getUsers(roomId, startIndex)
+  // const { roomId = null, startIndex = 0 } = req.body
+  // const { code, body } = await this.socketIoHandler.getUsers(roomId, startIndex)
+  const { roomId = null } = req.body
+  const { code, body } = await this.socketIoHandler.getUsers(roomId)
 
   res.status(code).send(body)
 }

@@ -74,7 +74,7 @@ export default {
     }
   },
   beforeCreate () {
-    store.startIndexUser = 0
+    // store.startIndexUser = 0
     store.minIndexMessage = -1
     const { roomId = null, userName = '', pw = '' } = this.$route.query
     if (roomId === null || !userName) {
@@ -95,7 +95,8 @@ export default {
       store.room = room
 
       const reqMessages = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
-      const reqUsers = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
+      // const reqUsers = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
+      const reqUsers = new Req('req:user:list', { roomId: store.room.id })
       return Promise.all([
         this.$request(reqMessages),
         this.$request(reqUsers)

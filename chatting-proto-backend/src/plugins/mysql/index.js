@@ -143,15 +143,22 @@ async function getUserName ({ id = '' }) {
   return { name }
 }
 
-async function getUsers ({ roomId = null, startIndex = 0 }) {
+// async function getUsers ({ roomId = null, startIndex = 0 }) {
+async function getUsers ({ roomId = null }) {
   if (roomId === null) throw new Error('roomId is empty')
-  const COUNT = 10
+  // const COUNT = 10
+  // const sql = `
+  // SELECT user.id AS id, user.name AS name
+  // FROM participant
+  // LEFT JOIN user ON id=user_id
+  // WHERE room_id=${roomId}
+  // LIMIT ${COUNT} OFFSET ${startIndex}
+  // `
   const sql = `
   SELECT user.id AS id, user.name AS name
   FROM participant
   LEFT JOIN user ON id=user_id
   WHERE room_id=${roomId}
-  LIMIT ${COUNT} OFFSET ${startIndex}
   `
   const users = await query(sql)
   return { users }
@@ -219,7 +226,7 @@ async function getRoom ({ id = null }) {
 }
 
 async function getRooms ({ startIndex = 0 }) {
-  const COUNT = 10
+  const COUNT = 30
 
   const sql = `
   SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining

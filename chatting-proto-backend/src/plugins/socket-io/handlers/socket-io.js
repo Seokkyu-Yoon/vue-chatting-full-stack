@@ -33,8 +33,10 @@ SocketIoHandler.prototype.isValidUser = async function (userName = '') {
   }
 }
 
-SocketIoHandler.prototype.getUsers = async function (roomId = null, startIndex = 0) {
-  const body = await this.db.getUsers({ roomId, startIndex })
+// SocketIoHandler.prototype.getUsers = async function (roomId = null, startIndex = 0) {
+//   const body = await this.db.getUsers({ roomId, startIndex })
+SocketIoHandler.prototype.getUsers = async function (roomId = null) {
+  const body = await this.db.getUsers({ roomId })
   return {
     code: 200,
     body
