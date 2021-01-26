@@ -66,10 +66,10 @@
   right: 0;
 }
 
-.b-card {
+/* .b-card {
   width: 32rem;
   min-width: 32rem;
-}
+} */
 @media screen and (min-width: 768px) {
   .b-card {
     width: 20rem;

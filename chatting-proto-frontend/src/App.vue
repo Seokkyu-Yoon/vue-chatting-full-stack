@@ -30,6 +30,6 @@ html, body{
   color: #2c3e50;
 }
 html, body, nav, #router-view {
-  min-width: 576px;
+  /* min-width: 500px; */
 }
 </style>
