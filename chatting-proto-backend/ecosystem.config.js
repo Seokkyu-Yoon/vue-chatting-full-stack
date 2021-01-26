@@ -10,7 +10,7 @@ module.exports = {
         REDIS_PORT: 6379,
         MYSQL_IP: '172.31.14.88',
         MYSQL_PORT: 3306,
-        MYSQL_DATABASE: 'chatting-proto'
+        MYSQL_DATABASE: 'chatting'
       }
     }
   ]

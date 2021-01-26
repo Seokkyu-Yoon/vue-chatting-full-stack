@@ -12,6 +12,9 @@ export default {
     }
   },
   methods: {
+    isShown ({ writter, recipients = [] }) {
+      return recipients.length === 0 || writter === store.userName || recipients.includes(store.userName)
+    },
     isDifferentDate (yyyyMMdd1, yyyyMMdd2) {
       const checkList = ['year', 'month', 'date']
       const isSame = checkList.every((checkKey) => yyyyMMdd1[checkKey] === yyyyMMdd2[checkKey])
@@ -63,7 +66,7 @@ export default {
     chatBoard.addEventListener('scroll', (e) => {
       if (e.target.scrollTop !== 0) return
       if (store.minIndex === 0) return
-      const req = new Req('req:message:list', { title: store.room.title, minIndex: store.minIndexMessage })
+      const req = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
       this.$request(req).then((res) => {
         const { messages, minIndex } = res.body
         store.messages = [...messages, ...store.messages]

@@ -4,6 +4,7 @@ import Home from '@/views/Home.vue'
 import Rooms from '@/views/Rooms.vue'
 import Chat from '@/views/Chat.vue'
 import Access from '@/views/Access.vue'
+import ChatRouter from '@/views/ChatRouter.vue'
 
 Vue.use(VueRouter)
 
@@ -27,6 +28,11 @@ const routes = [
     path: '/access',
     name: 'Access',
     component: Access
+  },
+  {
+    path: '/chat/:roomId/:userName/:pw',
+    name: 'ChatRouter',
+    component: ChatRouter
   }
 ]
 

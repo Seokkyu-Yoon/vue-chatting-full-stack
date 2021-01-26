@@ -31,48 +31,63 @@ function query (sql = '') {
 }
 
 const router = Router()
-router.post('/', async (req, res, next) => {
+
+router.post('/room', async (req, res, next) => {
   const {
+    roomId,
+    userName,
+    pw
+  } = req.body
+
+  res.redirect(`/chat/${roomId}/${userName}/${pw}`)
+})
+
+router.put('/room', async (req, res, next) => {
+  const {
+    id = null,
     title = '',
     createBy = '',
     pw = '',
     maxJoin = 0,
     description = ''
   } = req.body
+
+  if (id === null) return res.send('id is empty')
   const sqlCreate = `
-  INSERT INTO room (title, create_by, pw, max_join, description) VALUES
-  ('${title}', '${createBy}', '${pw}', ${maxJoin}, '${description}')
+  INSERT INTO room (id, title, create_by, pw, max_join, description) VALUES
+  (${id}, '${title}', '${createBy}', '${pw}', ${maxJoin}, '${description}')
   `
   try {
     await query(sqlCreate)
 
     const sqlSelect = `
-    SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
+    SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
     FROM room
-    LEFT JOIN participant ON title=room_title
+    LEFT JOIN participant ON id=room_id
     WHERE title='${title}'
-    GROUP BY room.title
+    GROUP BY room.id
     `
     const result = await query(sqlSelect)
     const room = result[0]
     megaphone(Interface.Broadcast.Room.CREATE).status(200).send({ room })
     return res.send('success')
   } catch (e) {
-    return res.send('fail')
+    return res.status(403).send('fail')
   }
 })
 
-router.delete('/', async (req, res, next) => {
-  const { title = '' } = req.body
+router.delete('/room', async (req, res, next) => {
+  const { id = null } = req.body
+  if (id === null) return res.send('id is empty')
   const sql = `
-  DELETE FROM room WHERE title='${title}'
+  DELETE FROM room WHERE id=${id}
   `
   try {
     await query(sql)
-    megaphone(Interface.Broadcast.Room.DELETE).status(200).send({ title })
+    megaphone(Interface.Broadcast.Room.DELETE).status(200).send({ id })
     return res.send('success')
   } catch (e) {
-    return res.send('fail')
+    return res.status(403).send('fail')
   }
 })
 export default router

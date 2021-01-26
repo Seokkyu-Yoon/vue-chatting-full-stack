@@ -5,6 +5,7 @@ const vue = new Vue({
     userName: '',
     room: {},
     users: [],
+    recipients: [],
     rooms: [],
     roomCount: 0,
     messages: [],

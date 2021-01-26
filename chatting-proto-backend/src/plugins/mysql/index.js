@@ -40,13 +40,14 @@ async function init () {
   if (!tables.includes('room')) {
     const sql = `
     CREATE TABLE room (
+      id INT NOT NULL,
       title VARCHAR(100) NOT NULL,
       create_by VARCHAR(50) NOT NULL,
       pw VARCHAR(20) NOT NULL,
       max_join INT NOT NULL DEFAULT 0,
       description TEXT NOT NULL,
       last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (title)
+      PRIMARY KEY (id)
     )`
     await query(sql)
   }
@@ -54,10 +55,10 @@ async function init () {
   if (!tables.includes('participant')) {
     const sql = `
     CREATE TABLE participant (
-      room_title VARCHAR(100) NOT NULL,
+      room_id INT NOT NULL,
       user_id VARCHAR(25) NOT NULL,
-      PRIMARY KEY (room_title, user_id),
-      FOREIGN KEY (room_title) REFERENCES room (title) ON UPDATE CASCADE ON DELETE CASCADE,
+      PRIMARY KEY (room_id, user_id),
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
     )`
     await query(sql)
@@ -82,13 +83,13 @@ async function init () {
     const sql = `
     CREATE TABLE message (
       idx INT NOT NULL AUTO_INCREMENT,
-      room_title VARCHAR(100) NOT NULL,
+      room_id INT NOT NULL,
       type_idx INT NOT NULL,
       writter VARCHAR(50) NOT NULL,
       content TEXT NOT NULL,
       datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (idx),
-      FOREIGN KEY (room_title) REFERENCES room (title) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (type_idx) REFERENCES message_type (idx) ON UPDATE CASCADE ON DELETE RESTRICT
     )`
     await query(sql)
@@ -142,15 +143,22 @@ async function getUserName ({ id = '' }) {
   return { name }
 }
 
-async function getUsers ({ title = '', startIndex = 0 }) {
-  if (!title) throw new Error('room title is empty')
-  const COUNT = 10
+// async function getUsers ({ roomId = null, startIndex = 0 }) {
+async function getUsers ({ roomId = null }) {
+  if (roomId === null) throw new Error('roomId is empty')
+  // const COUNT = 10
+  // const sql = `
+  // SELECT user.id AS id, user.name AS name
+  // FROM participant
+  // LEFT JOIN user ON id=user_id
+  // WHERE room_id=${roomId}
+  // LIMIT ${COUNT} OFFSET ${startIndex}
+  // `
   const sql = `
   SELECT user.id AS id, user.name AS name
   FROM participant
   LEFT JOIN user ON id=user_id
-  WHERE room_title='${title}'
-  LIMIT ${COUNT} OFFSET ${startIndex}
+  WHERE room_id=${roomId}
   `
   const users = await query(sql)
   return { users }
@@ -176,7 +184,7 @@ async function login ({ userId = '', userName = '' }) {
 async function logout ({ userId = '' }) {
   if (userId === '') throw new Error('socketId is empty')
   const sqlRoomsOfUser = `
-  SELECT room_title AS title
+  SELECT room_id AS roomId
   FROM participant
   WHERE user_id='${userId}'
   `
@@ -187,30 +195,30 @@ async function logout ({ userId = '' }) {
   `
   await query(sql)
 
-  const rooms = result.map(({ title }) => title)
+  const rooms = result.map(({ roomId }) => roomId)
   return { rooms }
 }
 
-async function existsRoom ({ title }) {
+async function existsRoom ({ id }) {
   const sql = `
   SELECT COUNT(*) AS length
   FROM room
-  WHERE title='${title}'
+  WHERE id=${id}
   `
   const result = await query(sql)
   const isExists = result[0].length > 0
   return { isExists }
 }
 
-async function getRoom ({ title = '' }) {
-  const { isExists } = await existsRoom({ title })
-  if (!isExists) throw new Error(`'${title}' is not exists`)
+async function getRoom ({ id = null }) {
+  const { isExists } = await existsRoom({ id })
+  if (!isExists) throw new Error(`'${id}' is not exists`)
   const sql = `
-  SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
+  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
   FROM room
-  LEFT JOIN participant ON title=room_title
-  WHERE title='${title}'
-  GROUP BY room.title
+  LEFT JOIN participant ON id=room_id
+  WHERE id=${id}
+  GROUP BY room.id
   `
   const result = await query(sql)
   const room = result[0]
@@ -218,13 +226,13 @@ async function getRoom ({ title = '' }) {
 }
 
 async function getRooms ({ startIndex = 0 }) {
-  const COUNT = 10
+  const COUNT = 30
 
   const sql = `
-  SELECT room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_title) AS joining
+  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
   FROM room
-  LEFT JOIN participant ON title=room_title
-  GROUP BY room.title
+  LEFT JOIN participant ON id=room_id
+  GROUP BY room.id
   LIMIT ${COUNT} OFFSET ${startIndex}
   `
   const rooms = await query(sql)
@@ -232,26 +240,33 @@ async function getRooms ({ startIndex = 0 }) {
 }
 
 async function createRoom ({
+  id = null,
   title = '',
   createBy = '',
   pw = '',
   maxJoin = 0,
   description = ''
 }) {
-  if (!title || !createBy) {
-    throw new Error(`[title:'${title}' createBy:'${createBy}'] Invalid to create room`)
+  if (!createBy) {
+    throw new Error('createBy is empty to create room')
+  }
+  let insertId = id
+  if (insertId === null) {
+    insertId = Math.round(Math.random() * 10000000)
   }
 
-  const { isExists } = await existsRoom({ title })
-  if (isExists) throw new Error(`room('${title}') already exists`)
+  const { isExists } = await existsRoom({ id: insertId })
+  if (isExists) throw new Error('roomId is already exists')
   const sql = `
   INSERT INTO room (
+    id,
     title,
     create_by,
     pw,
     max_join,
     description
   ) VALUES (
+    ${insertId},
     '${title}',
     '${createBy}',
     '${pw}',
@@ -260,17 +275,18 @@ async function createRoom ({
   )`
   await query(sql)
 
-  const { room } = await getRoom({ title })
+  const { room } = await getRoom({ id: insertId })
   return { room }
 }
 
 async function updateRoom ({
+  id = null,
   title = '',
   pw = '',
   maxJoin = 0,
   description = ''
 }) {
-  if (!title) throw new Error('title is empty to update room')
+  if (id === null) throw new Error('id is empty to update room')
 
   const sql = `
   UPDATE room SET
@@ -279,63 +295,64 @@ async function updateRoom ({
     max_join=${maxJoin},
     description='${description}',
     last_updated=NOW()
-  WHERE title='${title}'
+  WHERE id=${id}
   `
 
   await query(sql)
 
-  const { room } = await getRoom({ title })
+  const { room } = await getRoom({ id })
   return { room }
 }
 
-async function deleteRoom ({ title = '' }) {
-  if (!title) throw new Error('title is empty to delete room')
+async function deleteRoom ({ id = null }) {
+  if (id === null) throw new Error('title is empty to delete room')
 
   const sqlDeleteRoom = `
   DELETE FROM room
-  WHERE title='${title}'
+  WHERE id=${id}
   `
   const sqlDeleteUsersInRoom = `
   DELETE FROM participant
-  WHERE room_title='${title}'
+  WHERE room_id=${id}
   `
 
   await query(sqlDeleteRoom)
   await query(sqlDeleteUsersInRoom)
-  return { title }
+  return { id }
 }
 
-async function joinRoom ({ title = '', pw = '', userId = '' }) {
-  if (!title || !userId) throw new Error('Invalid to join room')
+async function joinRoom ({ id = null, pw = '', userId = '' }) {
+  if (id === null || !userId) throw new Error('Invalid to join room')
 
-  const { room } = await getRoom({ title })
+  const { room } = await getRoom({ id })
   if (room.pw && room.pw !== pw) throw new Error('Invalid to join room')
 
+  if (room.maxJoin !== 0 && room.joining >= room.maxJoin) throw new Error('Room is full')
   const sql = `
-  INSERT INTO participant (room_title, user_id)
-  VALUES ('${title}', '${userId}')
+  INSERT INTO participant (room_id, user_id)
+  VALUES (${id}, '${userId}')
   `
   await query(sql)
 
   return { room }
 }
 
-async function leaveRoom ({ title = '', userId = '' }) {
-  if (!title || !userId) throw new Error('Invalid to leave room')
+async function leaveRoom ({ id = null, userId = '' }) {
+  if (id === null || !userId) throw new Error('Invalid to leave room')
 
-  const { isExists } = await existsRoom({ title })
-  if (!isExists) throw new Error(`title('${title}') room is not exists`)
+  const { isExists } = await existsRoom({ id })
+  if (!isExists) throw new Error(`id(${id}) room is not exists`)
 
   const sql = `
   DELETE FROM participant
-  WHERE room_title='${title}' AND user_id='${userId}'
+  WHERE room_id=${id} AND user_id='${userId}'
   `
   await query(sql)
-  return { title }
+  return { id }
 }
 
-async function getMessages ({ title = '', minIndex = -1 }) {
-  if (!title) throw new Error('title is empty')
+async function getMessages ({ roomId = null, minIndex = -1 }) {
+  if (roomId === null) throw new Error('id is empty')
   const COUNT = 50
 
   let fixedIndex = minIndex
@@ -343,7 +360,7 @@ async function getMessages ({ title = '', minIndex = -1 }) {
     const sql = `
     SELECT COUNT(*) AS 'length'
     FROM message
-    WHERE room_title='${title}'
+    WHERE room_id=${roomId}
     `
 
     const result = await query(sql)
@@ -355,46 +372,95 @@ async function getMessages ({ title = '', minIndex = -1 }) {
     fixedLimit = COUNT + fixedIndex
     fixedIndex = 0
   }
-  const sql = `
-  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
+  const sqlGetMessages = `
+  SELECT message.idx AS idx, message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
-  WHERE room_title='${title}'
+  WHERE room_id=${roomId}
   LIMIT ${fixedLimit} OFFSET ${fixedIndex}
   `
 
-  const messages = await query(sql)
+  const results = await query(sqlGetMessages)
+  const messages = await Promise.all(results.map(async ({
+    idx,
+    roomId,
+    type,
+    writter,
+    content,
+    datetime
+  }) => {
+    const sqlGetRecipients = `
+    SELECT user_name AS userName
+    FROM recipient
+    WHERE message_idx=${idx}
+    `
+    const result = await query(sqlGetRecipients)
+    const recipients = result.map(({ userName }) => userName)
+    return {
+      roomId,
+      type,
+      writter,
+      content,
+      datetime,
+      recipients
+    }
+  }))
   return { messages, minIndex: fixedIndex }
 }
 
-async function getMessageReconnect ({ title = '', startIndex = 0 }) {
-  if (!title) throw new Error('title is empty')
-  const sql = `
+async function getMessageReconnect ({ roomId = null, startIndex = 0 }) {
+  if (roomId === null) throw new Error('roomId is empty')
+  const sqlGetMessages = `
   SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
-  WHERE room_title='${title}'
+  WHERE room_id=${roomId}
   LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ${startIndex}`
 
-  const messages = await query(sql)
+  const results = await query(sqlGetMessages)
+  const messages = await Promise.all(results.map(async ({
+    idx,
+    roomId,
+    type,
+    writter,
+    content,
+    datetime
+  }) => {
+    const sqlGetRecipients = `
+    SELECT user_name AS userName
+    FROM recipient
+    WHERE message_idx=${idx}
+    `
+    const result = await query(sqlGetRecipients)
+    const recipients = result.map(({ userName }) => userName)
+    return {
+      roomId,
+      type,
+      writter,
+      content,
+      datetime,
+      recipients
+    }
+  }))
+
   return { messages }
 }
 
 async function writeMessage ({
-  title = '',
+  roomId = null,
   type = '',
   writter = '',
   content = '',
   recipients = []
 }) {
-  if (!title || !type || !writter || !content) throw new Error('Invalid to write message')
+  if (roomId === null || !type || !writter || !content) throw new Error('Invalid to write message')
 
   const sqlWrite = `
-  INSERT INTO message (room_title, type_idx, writter, content)
-  VALUES ('${title}', (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')
+  INSERT INTO message (room_id, type_idx, writter, content)
+  VALUES (${roomId}, (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')
   `
   const sqlGet = `
-  SELECT message.room_title AS title, message_type.type AS type, message.writter AS writter, message.content, message.datetime
+  SELECT message.idx, message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
   ORDER BY message.idx DESC

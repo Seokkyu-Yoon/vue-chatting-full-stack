@@ -26,7 +26,7 @@
               send()
             }"/>
           <div class="d-flex mt-1">
-            <p>{{recipients}}에게 전송합니다</p>
+            <p>{{recipientsText}}에게 전송합니다</p>
             <div class="ml-auto">
               <file-uploader :room="store.room.title" :user="store.userName"></file-uploader>
               <button class="btn btn-info" v-on:click="send">전송</button>

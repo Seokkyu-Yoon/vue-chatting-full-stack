@@ -6,22 +6,24 @@
       </div>
     </div>
     <div v-for="(message, index) in store.messages" v-bind:key="`message-${index}`">
-      <div v-if="store.minIndexMessage > 0 && isDateChanged(index)" >
-        <div class="mt-3" v-if="index === 0"></div>
-        <div>{{getDateFormatted(message)}}</div>
-        <div class="mb-1"/>
-      </div>
-      <div class="message mb-2 p-2" v-if="message.type === 'text'">
-        <div class="d-flex justify-content-between align-items-end mb-2">
-          <div class="message-header-name">{{message.writter}}</div>
-          <div class="message-header-time d-flex justify-content-center align-items-center p-1">
-            {{getTimeFormatted(message)}}
-          </div>
+      <div v-if="isShown(message)">
+        <div v-if="store.minIndexMessage > 0 && isDateChanged(index)" >
+          <div class="mt-3" v-if="index === 0"></div>
+          <div>{{getDateFormatted(message)}}</div>
+          <div class="mb-1"/>
         </div>
-        <div class="text mt-1">{{message.content}}</div>
-      </div>
-      <div v-else>
-        <p class="h4">{{message.content}}</p>
+        <div class="message mb-2 p-2" v-if="message.type === 'text'">
+          <div class="d-flex justify-content-between align-items-end mb-2">
+            <div class="message-header-name">{{message.writter}}</div>
+            <div class="message-header-time d-flex justify-content-center align-items-center p-1">
+              {{getTimeFormatted(message)}}
+            </div>
+          </div>
+          <div class="text mt-1">{{message.content}}</div>
+        </div>
+        <div v-else>
+          <p class="h4">{{message.content}}</p>
+        </div>
       </div>
     </div>
   </div>

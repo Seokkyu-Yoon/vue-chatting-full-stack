@@ -17,7 +17,7 @@ SocketIoHandler.prototype.init = async function () {
 SocketIoHandler.prototype.disconnect = async function (userId = '') {
   const { rooms } = await this.db.logout({ userId })
   const body = await Promise.all(
-    rooms.map(async (title) => ({ title }))
+    rooms.map(async (roomId) => ({ roomId }))
   )
   return {
     code: 200,
@@ -33,19 +33,21 @@ SocketIoHandler.prototype.isValidUser = async function (userName = '') {
   }
 }
 
-SocketIoHandler.prototype.getUsers = async function (title = '', startIndex = 0) {
-  const body = await this.db.getUsers({ title, startIndex })
+// SocketIoHandler.prototype.getUsers = async function (roomId = null, startIndex = 0) {
+//   const body = await this.db.getUsers({ roomId, startIndex })
+SocketIoHandler.prototype.getUsers = async function (roomId = null) {
+  const body = await this.db.getUsers({ roomId })
   return {
     code: 200,
     body
   }
 }
 
-SocketIoHandler.prototype.loginUser = async function (userId = '', userName = '', title = '', pw = '') {
+SocketIoHandler.prototype.loginUser = async function (userId = '', userName = '', id = null, pw = '') {
   const body = await this.db.login({ userId, userName })
-  if (title) {
-    const bodyJoin = await this.db.joinRoom({ title, userId, pw })
-    this.io.of('/').adapter.remoteJoin(userId, title)
+  if (id) {
+    const bodyJoin = await this.db.joinRoom({ id, userId, pw })
+    this.io.of('/').adapter.remoteJoin(userId, String(id))
     return {
       body: {
         ...body,
@@ -68,6 +70,7 @@ SocketIoHandler.prototype.getRooms = async function (startIndex = 0) {
 }
 
 SocketIoHandler.prototype.createRoom = async function (
+  id = null,
   title = '',
   createBy = '',
   pw = '',
@@ -75,6 +78,7 @@ SocketIoHandler.prototype.createRoom = async function (
   description = ''
 ) {
   const body = await this.db.createRoom({
+    id,
     title,
     createBy,
     pw,
@@ -88,12 +92,14 @@ SocketIoHandler.prototype.createRoom = async function (
 }
 
 SocketIoHandler.prototype.updateRoom = async function (
+  id = null,
   title = '',
   pw = '',
   maxJoin = 0,
   description = ''
 ) {
   const body = await this.db.updateRoom({
+    id,
     title,
     pw,
     maxJoin,
@@ -105,8 +111,8 @@ SocketIoHandler.prototype.updateRoom = async function (
   }
 }
 
-SocketIoHandler.prototype.deleteRoom = async function (title = '') {
-  const body = await this.db.deleteRoom({ title })
+SocketIoHandler.prototype.deleteRoom = async function (id = null) {
+  const body = await this.db.deleteRoom({ id })
 
   return {
     code: 200,
@@ -114,34 +120,34 @@ SocketIoHandler.prototype.deleteRoom = async function (title = '') {
   }
 }
 
-SocketIoHandler.prototype.joinRoom = async function (title = '', userId = '', pw = '') {
-  const body = await this.db.joinRoom({ title, userId, pw })
-  this.io.of('/').adapter.remoteJoin(userId, title)
+SocketIoHandler.prototype.joinRoom = async function (id = null, userId = '', pw = '') {
+  const body = await this.db.joinRoom({ id, userId, pw })
+  this.io.of('/').adapter.remoteJoin(userId, String(id))
   return {
     code: 200,
     body
   }
 }
 
-SocketIoHandler.prototype.leaveRoom = async function (title = '', userId = '') {
-  const body = await this.db.leaveRoom({ title, userId })
-  this.io.of('/').adapter.remoteLeave(userId, title)
+SocketIoHandler.prototype.leaveRoom = async function (id = '', userId = '') {
+  const body = await this.db.leaveRoom({ id, userId })
+  this.io.of('/').adapter.remoteLeave(userId, String(id))
   return {
     code: 200,
     body
   }
 }
 
-SocketIoHandler.prototype.getMessages = async function (title = '', minIndex = -1) {
-  const body = await this.db.getMessages({ title, minIndex })
+SocketIoHandler.prototype.getMessages = async function (roomId = null, minIndex = -1) {
+  const body = await this.db.getMessages({ roomId, minIndex })
   return {
     code: 200,
     body
   }
 }
 
-SocketIoHandler.prototype.getMessageReconnect = async function (title = '', startIndex = 0) {
-  const body = await this.db.getMessageReconnect({ title, startIndex })
+SocketIoHandler.prototype.getMessageReconnect = async function (roomId = null, startIndex = 0) {
+  const body = await this.db.getMessageReconnect({ roomId, startIndex })
   return {
     code: 200,
     body
@@ -149,14 +155,14 @@ SocketIoHandler.prototype.getMessageReconnect = async function (title = '', star
 }
 
 SocketIoHandler.prototype.writeMessage = async function (
-  title = '',
+  roomId = null,
   type = '',
   writter = '',
   content = '',
   recipients = []
 ) {
   const body = await this.db.writeMessage({
-    title,
+    roomId,
     type,
     writter,
     content,
