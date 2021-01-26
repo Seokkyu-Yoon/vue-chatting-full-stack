@@ -26,7 +26,7 @@
               send()
             }"/>
           <div class="d-flex mt-1">
-            <p>{{recipients}}에게 전송합니다</p>
+            <p>{{recipientsText}}에게 전송합니다</p>
             <button class="btn btn-info ml-auto" v-on:click="send">전송</button>
           </div>
         </div>

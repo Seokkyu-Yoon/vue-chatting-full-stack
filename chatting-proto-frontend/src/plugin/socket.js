@@ -146,6 +146,10 @@ const SocketPlugin = {
         $request(req).then((res) => {
           const { users = [] } = res.body
           store.users = users
+          store.recipients = store.recipients.reduce((bucket, user) => {
+            if (users.some(({ name }) => name === user.name)) bucket.push(user)
+            return bucket
+          }, [])
         })
       }
 

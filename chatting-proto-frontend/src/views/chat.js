@@ -24,9 +24,11 @@ export default {
     }
   },
   computed: {
-    recipients () {
-      // 선택된 사용자가 있으면 '전체'가 아닌 해당 사용자 반환
-      return '전체'
+    recipientsText () {
+      if (store.recipients.length === 0) return '전체'
+      const recipientsText = store.recipients.map(({ name }) => name).join(', ')
+      if (recipientsText.length > 50) return `${recipientsText.slice(0, 47)}...`
+      return recipientsText
     }
   },
   methods: {
@@ -36,7 +38,13 @@ export default {
         return
       }
       if (this.blockSend) return
-      const req = new Req('req:message:write', { roomId: store.room.id, type: this.type, writter: store.userName, content: this.content, recipients: [] })
+      const req = new Req('req:message:write', {
+        roomId: store.room.id,
+        type: this.type,
+        writter: store.userName,
+        content: this.content,
+        recipients: store.recipients.map(({ name }) => name)
+      })
       this.$request(req).then(() => {
         this.content = ''
         this.sended = !this.sended
@@ -76,6 +84,7 @@ export default {
   beforeCreate () {
     // store.startIndexUser = 0
     store.minIndexMessage = -1
+    store.recipients = []
     const { roomId = null, userName = '', pw = '' } = this.$route.params
     if (roomId === null || !userName) {
       this.$router.go(-1)
@@ -123,5 +132,6 @@ export default {
   beforeDestroy () {
     store.room = {}
     store.messages = []
+    store.recipients = []
   }
 }

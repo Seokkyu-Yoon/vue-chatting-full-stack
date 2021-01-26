@@ -68,7 +68,6 @@ router.put('/room', async (req, res, next) => {
     GROUP BY room.id
     `
     const result = await query(sqlSelect)
-    console.log(result)
     const room = result[0]
     megaphone(Interface.Broadcast.Room.CREATE).status(200).send({ room })
     return res.send('success')

@@ -12,8 +12,8 @@ export default {
     }
   },
   methods: {
-    isShown ({ recipients = [] }) {
-      return recipients.length === 0 || recipients.includes(store.userName)
+    isShown ({ writter, recipients = [] }) {
+      return recipients.length === 0 || writter === store.userName || recipients.includes(store.userName)
     },
     isDifferentDate (yyyyMMdd1, yyyyMMdd2) {
       const checkList = ['year', 'month', 'date']

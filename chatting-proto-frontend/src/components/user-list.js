@@ -19,6 +19,14 @@ export default {
     }
   },
   methods: {
+    isDisableToAddRecipient (name) {
+      if (name === store.userName) return true
+
+      const isAlreadyExists = store.recipients.some(({ name: recipientName }) => recipientName === name)
+      if (isAlreadyExists) return true
+
+      return undefined
+    },
     setCheck (userName) {
       const userIndex = this.checked.includes(userName)
       if (userIndex > -1) {
@@ -29,6 +37,18 @@ export default {
       } else {
         this.checked.push(userName)
       }
+    },
+    addRecipient (user) {
+      store.recipients.push(user)
+    },
+    removeRecipient (index) {
+      store.recipients = [
+        ...store.recipients.slice(0, index),
+        ...store.recipients.slice(index + 1)
+      ]
+    },
+    removeAllRecipients () {
+      store.recipients = []
     }
   }
 }

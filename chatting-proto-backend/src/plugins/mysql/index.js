@@ -460,7 +460,7 @@ async function writeMessage ({
   VALUES (${roomId}, (SELECT idx FROM message_type WHERE type='${type}'), '${writter}', '${content.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')
   `
   const sqlGet = `
-  SELECT message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
+  SELECT message.idx, message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
   FROM message
   LEFT JOIN message_type ON type_idx=message_type.idx
   ORDER BY message.idx DESC
