@@ -5,6 +5,7 @@ import MessageList from '@/components/MessageList.vue'
 import UserList from '@/components/UserList.vue'
 import FileList from '@/components/FileList.vue'
 import RoomDetail from '@/components/RoomDetail.vue'
+import FileUploader from '@/components/FileUploadModal'
 
 export default {
   name: 'Chat',
@@ -13,7 +14,8 @@ export default {
     MessageList,
     UserList,
     FileList,
-    RoomDetail
+    RoomDetail,
+    FileUploader
   },
   data () {
     return {
