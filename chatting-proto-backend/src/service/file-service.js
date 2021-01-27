@@ -1,8 +1,25 @@
 const createError = require('http-errors');
 const schedule = require('node-schedule');
+const iconvLite = require('iconv-lite');
 
 const { uploadData, getList, findFile, expireFile, checkDate } = require('@/plugins/mysql/file_db/db-command');
 const createFileStream = require('./create-file-stream');
+
+function getDownloadFilename(req, filename) {
+  var header = req.headers['user-agent'];
+
+  if (header.includes("MSIE") || header.includes("Trident")) { 
+    return encodeURIComponent(filename).replace(/\\+/gi, "%20");
+  } else if (header.includes("Chrome")) {
+    return iconvLite.decode(iconvLite.encode(filename, "UTF-8"), 'ISO-8859-1');
+  } else if (header.includes("Opera")) {
+    return iconvLite.decode(iconvLite.encode(filename, "UTF-8"), 'ISO-8859-1');
+  } else if (header.includes("Firefox")) {
+    return iconvLite.decode(iconvLite.encode(filename, "UTF-8"), 'ISO-8859-1');
+  }
+
+  return filename;
+}
 
 const checkExpireDate = schedule.scheduleJob('* * 1 * *', async (tstamp) => {
   console.log(tstamp);
@@ -83,7 +100,7 @@ async function download(req, res, next) {
   try {
     const { filestream, mimetype } = createFileStream(id, filename);
 
-    res.setHeader('Content-disposition', 'attachment; filename=' + filename); // 다운받아질 파일명 설정
+    res.setHeader('Content-disposition', 'attachment; filename=' + getDownloadFilename(req, filename)); // 다운받아질 파일명 설정
     res.setHeader('Content-type', mimetype); // 파일 형식 지정
 
     filestream.pipe(res);

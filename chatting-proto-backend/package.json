@@ -22,6 +22,7 @@
     "ejs": "^3.1.5",
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
+    "iconv-lite": "^0.6.2",
     "ioredis": "^4.19.2",
     "mime": "^2.5.0",
     "module-alias": "^2.2.2",
