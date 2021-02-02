@@ -1,6 +1,8 @@
 <template>
 <span>
-  <b-button @click="modal = true" class="m-2">파일 전송</b-button>
+  <div style="text-align: right;">
+    <b-button @click="modal = true" class="mb-2">파일 공유</b-button>
+  </div>
 
   <b-modal v-model="modal" title="File Upload">
     <form class="m-2" ref="uploadForm" enctype="multipart/form-data">
@@ -9,11 +11,11 @@
     </form>
 
     <b-form class="mt-2 p-2">
-      <b-form-checkbox class="mb-3 mt-3" v-model="passwdOrNot">
+      <b-form-checkbox class="mb-3 mt-3" v-model="isProtected">
         비밀번호 설정
       </b-form-checkbox>
 
-      <div v-if="passwdOrNot">
+      <div v-if="isProtected">
       <b-form-group
         id="input-group-1"
         label="비밀번호"
@@ -58,6 +60,8 @@
       </b-button>
     </template>
   </b-modal>
+
+  <toast-alert alertId="upload-alert" message="업로드 완료"></toast-alert>
 </span>
 </template>
 

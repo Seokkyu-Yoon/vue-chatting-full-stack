@@ -1,7 +1,12 @@
+import ToastAlert from '@/components/ToastAlert'
+
 export default {
   name: 'FileUploader',
+  components: {
+    ToastAlert
+  },
   props: {
-    room: {
+    roomId: {
       type: String,
       default: ''
     },
@@ -14,7 +19,7 @@ export default {
     return {
       modal: false,
       uploadProgress: 0,
-      passwdOrNot: false,
+      isProtected: false,
       passwd: '',
       validate: '',
       expireDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
@@ -24,16 +29,17 @@ export default {
     closeModal () {
       this.passwd = this.validate = ''
       this.expireDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
-      this.passwdOrNot = false
+      this.isProtected = false
       this.modal = false
     },
     async uploadFile () {
       const { uploadForm } = this.$refs
       const form = new FormData(uploadForm)
-      form.append('room', this.room)
-      form.append('author', this.user)
+      form.append('roomId', this.roomId)
+      form.append('uploadUser', this.user)
+      form.append('isProtected', this.isProtected)
 
-      if (this.passwdOrNot) {
+      if (this.isProtected) {
         if (this.passwd === '') {
           alert('비밀번호를 입력하세요.')
           return
@@ -54,16 +60,18 @@ export default {
       }
 
       try {
-        const uploadResult = await this.$http.post('/file/upload', form, {
+        await this.$http.post('/file/upload', form, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
             this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
             console.log(this.uploadProgress)
           }
         })
-        console.log(uploadResult)
-        this.$eventBus.$emit('upload-success')
-        this.closeModal()
+        if (this.uploadProgress === 100) {
+          this.$bvToast.show('upload-alert')
+          this.$emit('upload-success')
+          this.closeModal()
+        }
       } catch (err) {
         console.error(err)
         throw err
