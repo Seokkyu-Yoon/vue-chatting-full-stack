@@ -5,13 +5,16 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 import App from './App.vue'
 import router from './router'
+import VueCookies from 'vue-cookies'
 import PluginSocket from './plugin/socket'
 
 Vue.config.productionTip = false
+Vue.use(VueCookies)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(PluginSocket)
 
+Vue.$cookies.config('30d')
 Vue.directive('visible', function (el, binding) {
   el.style.visibility = binding.value ? 'visible' : 'hidden'
 })

@@ -32,7 +32,7 @@ function query (sql = '') {
 
 const router = Router()
 
-router.post('/room', async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   const {
     roomId,
     userName,
@@ -42,7 +42,7 @@ router.post('/room', async (req, res, next) => {
   res.redirect(`/chat/${roomId}/${userName}/${pw}`)
 })
 
-router.put('/room', async (req, res, next) => {
+router.put('/', async (req, res, next) => {
   const {
     id = null,
     title = '',
@@ -76,7 +76,7 @@ router.put('/room', async (req, res, next) => {
   }
 })
 
-router.delete('/room', async (req, res, next) => {
+router.delete('/', async (req, res, next) => {
   const { id = null } = req.body
   if (id === null) return res.send('id is empty')
   const sql = `
@@ -90,4 +90,5 @@ router.delete('/room', async (req, res, next) => {
     return res.status(403).send('fail')
   }
 })
+
 export default router

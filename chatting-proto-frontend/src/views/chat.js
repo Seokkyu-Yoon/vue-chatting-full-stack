@@ -100,6 +100,11 @@ export default {
         room
       } = res.body
 
+      const userRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
+      userRooms.add(room.id)
+      console.log(userRooms)
+      this.$cookies.set(store.userName, JSON.stringify([...userRooms]))
+
       store.userName = userName
       store.room = room
 

@@ -43,6 +43,18 @@ export default {
           return
         }
       }
+      const userRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
+      if (userRooms.has(room.id)) {
+        const req = new Req('req:room:join', { id: room.id, pw: room.pw })
+        this.$request(req).then((res) => {
+          const { room } = res.body
+          if (res.status === 200) {
+            store.room = room
+            this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, pw: room.pw } })
+          }
+        }).catch(console.log)
+        return
+      }
       if (room.pw) {
         store.room = room
         this.$refs.password.$refs.modal.show()
