@@ -1,3 +1,5 @@
+import FileUploader from '@/components/FileUploader'
+import ToastAlert from '@/components/ToastAlert'
 
 function convertDate (date) {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
@@ -5,8 +7,12 @@ function convertDate (date) {
 
 export default {
   name: 'FileList',
+  components: {
+    FileUploader,
+    ToastAlert
+  },
   props: {
-    room: {
+    roomId: {
       type: String,
       default: ''
     },
@@ -17,67 +23,101 @@ export default {
   },
   data () {
     return {
-      fileList: []
+      fileList: [],
+      overlayId: '',
+      showUploadPannel: false,
+      downloadProgress: 0,
+      cancelTokens: {}
     }
   },
   async mounted () {
-    console.log(this.user)
-    this.$eventBus.$on('upload-success', async () => {
-      await this.getFileList()
-    })
     await this.getFileList()
   },
   methods: {
     async getFileList () {
-      const result = await this.$http.get(`/file/list/${this.room}`)
+      const result = await this.$http.get(`/file/list/${this.roomId}`)
       this.fileList = result.data.data
       if (this.fileList.length) {
         this.fileList.forEach(item => {
           item.register_date = convertDate(new Date(item.register_date))
           item.expire_date = convertDate(new Date(item.expire_date))
         })
+        this.fileList = this.fileList.map(itm => ({
+          ...itm,
+          overlay: false,
+          inputPasswd: '',
+          state: null
+        }))
       }
     },
-    downloadFile (itm) {
-      // const popTitle = 'popupOpener'
-
-      // window.open('', popTitle)
-
-      const frmData = document.frmData
-      // frmData.target = popTitle
-      frmData.action = `/file/download/${itm.id}`
-
-      if (itm.passwd === 'none') {
-        const hiddenField = document.createElement('input')
-        hiddenField.setAttribute('type', 'hidden')
-        hiddenField.setAttribute('name', 'passwd')
-        hiddenField.setAttribute('value', 'none')
-        frmData.appendChild(hiddenField)
+    uploadSuccess (itm) {
+      this.fileList.unshift(itm)
+      this.showUploadPannel = false
+    },
+    async downloadFile (itm) {
+      this.displayOverlay(itm, 'download')
+      const cancelTokenSource = this.$http.CancelToken.source()
+      this.cancelTokens[itm.id] = cancelTokenSource
+      try {
+        const result = await this.$http.post(`/file/download/${itm.id}`,
+          { passwd: itm.inputPasswd },
+          {
+            responseType: 'blob', // important
+            cancelToken: cancelTokenSource.token,
+            onDownloadProgress: progressEvent => {
+              const percentage = Math.round((progressEvent.loaded * 100) / itm.size)
+              this.downloadProgress = percentage
+            }
+          }
+        )
+        const url = window.URL.createObjectURL(new Blob([result.data], { type: result.headers['content-type'] }))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('id', itm.id)
+        link.setAttribute('download', itm.filename)
+        document.body.appendChild(link)
+        link.click()
+        document.getElementById(itm.id).remove()
+        itm.state = null
+        itm.overlay = false
+        this.downloadProgress = 0
+        delete this.cancelTokens[itm.id]
+        this.$bvToast.show('download-alert')
+      } catch (error) {
+        if (!error.message) {
+          itm.overlay = false
+          this.downloadProgress = 0
+          this.$bvToast.show('download-cancel-alert')
+        } else if (error.response.status === 404) {
+          itm.state = false
+          this.$bvToast.show('invalid-passwd-alert')
+          this.displayOverlay(itm, 'passwd')
+        }
       }
-
-      frmData.submit()
     },
     async deleteFile (itm) {
-      this.$bvModal.msgBoxConfirm(`${itm.filename}`, {
-        title: '삭제하시겠습니까?',
-        size: 'sm',
-        buttonSize: 'sm',
-        okVariant: 'danger',
-        okTitle: '예',
-        cancelTitle: '아니오',
-        footerClass: 'p-2',
-        hideHeaderClose: false,
-        centered: true
-      })
-        .then(async (value) => {
-          if (value) {
-            await this.$http.delete(`/file/delete/${itm.id}`)
-            await this.getFileList()
-          }
-        })
+      const idx = this.fileList.indexOf(itm)
+      this.fileList.splice(idx, 1)
+      await this.$http.delete(`/file/delete/${itm.id}`)
+      this.$bvToast.show('delete-alert')
     },
-    test () {
-      console.log('test')
+    displayOverlay (itm, overlayId) {
+      this.overlayId = overlayId
+      itm.overlay = true
+    },
+    closeDownloadOverlay (itm) {
+      itm.overlay = false
+      itm.inputPasswd = ''
+      itm.state = null
+    },
+    copyToClipboard (itm) {
+      const el = document.createElement('textarea')
+      el.value = `${process.env.VUE_APP_SERVER_IP}:8080/file/download/${itm.id}`
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      this.$bvToast.show('clipboard-alert')
+      document.body.removeChild(el)
     }
   }
 }
