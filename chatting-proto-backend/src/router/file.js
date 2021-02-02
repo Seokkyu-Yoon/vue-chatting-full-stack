@@ -23,7 +23,9 @@ router.post('/upload', upload.single('upFile'), fileService.upload);
 
 router.post('/download/:id', fileService.download);
 
-router.get('/list/:room', fileService.getFileList);
+router.get('/download/:id', fileService.download);
+
+router.get('/list/:roomId', fileService.getFileList);
 
 router.delete('/delete/:id', fileService.expire);
 

@@ -22,29 +22,36 @@ async function uploadData(uploadInfo) {
     id,
     filename,
     size,
-    author,
-    room,
+    uploadUser,
+    roomId,
     registerDate,
     expireDate,
+    isProtected,
     passwd,
   } = uploadInfo;
-  const passwdOrNot = passwd === '' ? '"none"' : `CONCAT("*",UPPER(SHA1("${passwd}")))`
-  const query = `INSERT INTO FileInfo (id, filename, size, author, room, register_date, expire_date, passwd, state) VALUES("${id}", "${filename}", "${size}", "${author}", "${room}", "${registerDate}", "${expireDate}", ${passwdOrNot}, "available")`;
+  const protectedPasswd = JSON.parse(isProtected) ? `CONCAT("*",UPPER(SHA1("${passwd}")))`: '""'
+  const query = `INSERT INTO FileInfo (id, filename, size, upload_user, room_id, register_date, expire_date, is_protected, passwd, state) VALUES("${id}", "${filename}", "${size}", "${uploadUser}", "${roomId}", "${registerDate}", "${expireDate}", ${isProtected}, ${protectedPasswd}, "available")`;
 
   const queryResult = await sendQuery(query);
   return queryResult;
 }
 
-async function getList(room) {
-  const query = `SELECT id, filename, size, register_date, expire_date, passwd FROM FileInfo WHERE room="${room}" AND state="available"`;
+async function getList(roomId, entire = true, id) {
+  const query = entire ? `SELECT id, filename, size, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available"`: `SELECT id, filename, size, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available" AND id="${id}"`;
 
   const queryResult = await sendQuery(query);
   return queryResult;
 }
 
-async function findFile(id, passwd) {
-  const passwdOrNot = passwd === 'none' ? '"none"' : `CONCAT("*",UPPER(SHA1("${passwd}")))`
-  const query = `SELECT filename, passwd FROM FileInfo WHERE id="${id}" AND passwd=${passwdOrNot}`;
+async function findFile(id) {
+  const query = `SELECT filename, is_protected FROM FileInfo WHERE id="${id}"`;
+
+  const queryResult = await sendQuery(query);
+  return queryResult;
+}
+
+async function validateFile(id, passwd) {
+  const query = `SELECT filename FROM FileInfo WHERE id="${id}" AND passwd=CONCAT("*",UPPER(SHA1("${passwd}")))`;
 
   const queryResult = await sendQuery(query);
   return queryResult;
@@ -62,5 +69,6 @@ module.exports = {
   uploadData,
   getList,
   findFile,
+  validateFile,
   expireFile
 };

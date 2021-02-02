@@ -2,7 +2,11 @@ const createError = require('http-errors');
 const schedule = require('node-schedule');
 const iconvLite = require('iconv-lite');
 
-const { uploadData, getList, findFile, expireFile, checkDate } = require('@/plugins/mysql/file_db/db-command');
+const {
+  uploadData, getList,
+  findFile, expireFile,
+  validateFile, checkDate
+} = require('@/plugins/mysql/file_db/db-command');
 const createFileStream = require('./create-file-stream');
 
 function getDownloadFilename(req, filename) {
@@ -21,7 +25,7 @@ function getDownloadFilename(req, filename) {
   return filename;
 }
 
-const checkExpireDate = schedule.scheduleJob('* * 1 * *', async (tstamp) => {
+const checkExpireDate = schedule.scheduleJob('* * * 1 *', async (tstamp) => {
   console.log(tstamp);
   // try {
   //   const today = convertDate(new Date());
@@ -38,7 +42,7 @@ function convertDate(date) {
 
 async function getFileList(req, res, next) {
   try {
-    const queryResult = await getList(req.params.room);
+    const queryResult = await getList(req.params.roomId);
 
     res.send({
       data: queryResult,
@@ -52,25 +56,27 @@ async function getFileList(req, res, next) {
 async function upload(req, res, next) {
   const { originalname, filename, size } = req.file;
   const id = filename.split('.')[0];
-  const { passwd, expireDate, room, author } = req.body;
+  const { passwd, expireDate, roomId, uploadUser, isProtected } = req.body;
   const registerDate = convertDate(new Date());
 
   const uploadInfo = {
     id,
     filename: originalname,
     size,
-    author,
-    room,
+    uploadUser,
+    roomId,
     registerDate,
     expireDate: convertDate(new Date(expireDate)),
+    isProtected,
     passwd,
   };
 
   try {
-    const queryResult = await uploadData(uploadInfo);
+    await uploadData(uploadInfo);
+    const uploadResult = await getList(roomId, false, id)
 
     res.send({
-      data: queryResult,
+      data: uploadResult[0],
       decoded: req.decoded,
     });
   } catch (err) {
@@ -80,30 +86,32 @@ async function upload(req, res, next) {
 
 async function download(req, res, next) {
   const { id } = req.params;
-  const { passwd } = req.body;
-  
-  // validate body
-  if (!req.body.passwd) {
-    res.redirect('/access' + '/?value=' + id);
-    return;
-  }
-  
-  // validate result
-  const queryResult = await findFile(id, passwd);
-  if (!queryResult.length) {
-    res.redirect(`/access/?value=${id}&validate=1`);
-    return;
-  }
 
-  // download file
-  const { filename } = queryResult[0];
   try {
+    const { filename, is_protected } = (await findFile(id))[0];
+
     const { filestream, mimetype } = createFileStream(id, filename);
+    res.setHeader('Content-disposition', 'attachment; filename=' + getDownloadFilename(req, filename));
+    res.setHeader('Content-type', mimetype);
 
-    res.setHeader('Content-disposition', 'attachment; filename=' + getDownloadFilename(req, filename)); // 다운받아질 파일명 설정
-    res.setHeader('Content-type', mimetype); // 파일 형식 지정
+    if (is_protected) {
+      // validate body
+      if (!req.body.passwd) {
+        res.redirect('/access' + '/?value=' + id);
+        return;
+      }
 
-    filestream.pipe(res);
+      // validate result
+      const queryResult = await validateFile(id, req.body.passwd);
+      if (!queryResult.length) {
+        res.redirect(`/access/?value=${id}&validate=1`);
+        return;
+      }
+
+      filestream.pipe(res);
+    } else {
+      filestream.pipe(res);
+    }
   } catch (err) {
     next(createError(500, err.message));
   }
