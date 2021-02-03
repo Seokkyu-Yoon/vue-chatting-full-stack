@@ -72,20 +72,20 @@
 } */
 @media screen and (min-width: 768px) {
   .b-card {
-    width: 20rem;
-    min-width: 20rem;
+    width: 19rem;
+    min-width: 19rem;
   }
 }
 @media screen and (min-width: 992px) {
   .b-card {
-    width: 18rem;
-    min-width: 18rem;
+    width: 17rem;
+    min-width: 17rem;
   }
 }
 @media screen and (min-width: 1200px) {
   .b-card {
-    width: 21.75rem;
-    min-width: 21.75rem;
+    width: 21rem;
+    min-width: 21rem;
   }
 }
 
