@@ -126,7 +126,7 @@ const getSelectCountRoom = ({ id }) => ({
 })
 
 const COUNT_ROOM = 30
-const getSelectRooms = ({ startIndex, userId }) => ({
+const getSelectRooms = ({ startIndex, limit, userId }) => ({
   sql: `
   SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
   FROM room
@@ -136,7 +136,7 @@ const getSelectRooms = ({ startIndex, userId }) => ({
   ORDER BY last_joined.last_joined IS NULL ASC, last_joined.last_joined DESC, room.last_updated DESC
   LIMIT ? OFFSET ?
   `,
-  params: [userId, COUNT_ROOM, startIndex]
+  params: [userId, limit || COUNT_ROOM, startIndex]
 })
 
 const getSelectRoom = ({ id }) => ({

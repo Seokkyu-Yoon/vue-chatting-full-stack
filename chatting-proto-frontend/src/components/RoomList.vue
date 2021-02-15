@@ -3,7 +3,7 @@
     <Password ref="password" v-bind:propTitle="store.room.title"/>
     <div
       class="d-flex flex-wrap jumbotron mb-4 p-2 overflow-auto"
-      v-if="store.rooms.length > 0">
+      ref="rooms">
       <b-card
         class="b-card m-2"
         v-for="(room, idx) in store.rooms"
@@ -46,9 +46,7 @@
           </div>
         </div>
       </b-card>
-    </div>
-    <div v-else>
-      <p class="h1">존재하는 방이 없습니다</p>
+      <p v-if="store.rooms.length === 0" class="h1">존재하는 방이 없습니다</p>
     </div>
   </div>
 </template>

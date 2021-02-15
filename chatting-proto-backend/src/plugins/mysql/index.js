@@ -194,8 +194,8 @@ async function getRoom ({ id = null }) {
   return { room }
 }
 
-async function getRooms ({ startIndex = 0, userId = -1 }) {
-  const selectRooms = getSelectRooms({ startIndex, userId })
+async function getRooms ({ startIndex = 0, limit = 0, userId = -1 }) {
+  const selectRooms = getSelectRooms({ startIndex, limit, userId })
   const rooms = await query(selectRooms)
   return { rooms }
 }

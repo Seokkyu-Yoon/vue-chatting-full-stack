@@ -66,20 +66,17 @@ const SocketPlugin = {
           ...store.messages,
           ...messages
         ]
-        return
       }
-      const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
-      const resRooms = await $request(reqRooms)
-      const { rooms = [] } = resRooms.body
-      store.rooms = rooms
     })
 
     socket.on('broadcast:room:create', () => {
       if (store.room.id) return
-      const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
+      const req = new Req('req:room:list', { userId: store.userId, startIndex: 0, limit: Math.ceil(store.startIndexRoom / 30) * 30 })
       $request(req).then((res) => {
         const { rooms } = res.body
+        console.log(rooms)
         store.rooms = rooms
+        store.startIndexRoom = rooms.length
       })
     })
 
@@ -93,11 +90,7 @@ const SocketPlugin = {
 
       const roomIndex = store.rooms.findIndex(({ id }) => id === room.id)
       if (roomIndex === -1) return
-      store.rooms = [
-        ...store.rooms.slice(0, roomIndex),
-        room,
-        ...store.rooms.slice(roomIndex + 1)
-      ]
+      store.rooms.splice(roomIndex, 1, room)
     })
 
     socket.on('broadcast:room:delete', (res) => {
@@ -107,10 +100,17 @@ const SocketPlugin = {
         store.room = {}
       }
 
-      const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
+      const roomIndex = store.rooms.findIndex(({ id: roomId }) => roomId === id)
+      if (roomIndex === -1) return
+      const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom, limit: 1 })
       $request(reqRooms).then((resRooms) => {
         const { rooms } = resRooms.body
-        store.rooms = rooms
+        store.rooms = [
+          ...store.rooms.slice(0, roomIndex),
+          ...store.rooms.slice(roomIndex + 1),
+          ...rooms
+        ]
+        store.startIndexRoom = store.rooms.length
       })
     })
 
@@ -131,11 +131,7 @@ const SocketPlugin = {
       if (roomIndex === -1) return
       const roomTarget = store.rooms[roomIndex]
       roomTarget.joining += 1
-      store.rooms = [
-        ...store.rooms.slice(0, roomIndex),
-        roomTarget,
-        ...store.rooms.slice(roomIndex + 1)
-      ]
+      store.rooms.splice(roomIndex, 1, roomTarget)
     })
 
     socket.on('broadcast:room:leave', (res) => {
@@ -157,13 +153,9 @@ const SocketPlugin = {
 
       const roomIndex = store.rooms.findIndex(({ id: savedId }) => savedId === id)
       if (roomIndex === -1) return
-      const updatedRoom = Object.assign({}, store.rooms[roomIndex])
-      updatedRoom.joining -= 1
-      store.rooms = [
-        ...store.rooms.slice(0, roomIndex),
-        updatedRoom,
-        ...store.rooms.slice(roomIndex + 1)
-      ]
+      const roomTarget = Object.assign({}, store.rooms[roomIndex])
+      roomTarget.joining -= 1
+      store.rooms.splice(roomIndex, 1, roomTarget)
     })
 
     socket.on('broadcast:message:write', (res) => {

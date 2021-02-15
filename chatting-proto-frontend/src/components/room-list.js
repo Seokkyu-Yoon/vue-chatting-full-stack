@@ -36,59 +36,77 @@ export default {
       }
       return classBadge.join(' ')
     },
-    setCurrRoom (room) {
-      if (room.joining === room.maxJoin) {
-        if (room.maxJoin !== 0) {
-          alert('인원이 꽉 찼습니다')
+    isFull (room) {
+      return room.maxJoin > 0 && room.joining === room.maxJoin
+    },
+    isJoinedRoom (room) {
+      const joinedRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
+      return joinedRooms.has(room.id)
+    },
+    removeRoomIdFromCookie (room) {
+      const joinedRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
+      joinedRooms.delete(room.id)
+    },
+    async join (room) {
+      const req = new Req('req:room:join', { id: room.id, pw: room.pw || '' })
+      const res = await this.$request(req)
+      const { room: resRoom } = res.body
+      if (res.status === 200) {
+        store.room = resRoom
+        this.$router.push({ name: 'Chat', params: { roomId: resRoom.id, userName: store.userName, userId: store.userId, pw: resRoom.pw } })
+      }
+    },
+    async setCurrRoom (room) {
+      if (this.isFull(room)) {
+        alert('인원이 꽉 찼습니다')
+        return
+      }
+      try {
+        if (this.isJoinedRoom(room)) {
+          await this.join(room)
           return
         }
-      }
-      const userRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
-      if (userRooms.has(room.id)) {
-        const req = new Req('req:room:join', { id: room.id, pw: room.pw })
-        this.$request(req).then((res) => {
-          const { room } = res.body
-          if (res.status === 200) {
-            store.room = room
-            this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, userId: store.userId, pw: room.pw } })
-          }
-        }).catch(console.log)
-        return
+      } catch (e) {
+        console.error(e)
+        this.removeRoomIdFromCookie(room)
       }
       if (room.pw) {
         store.room = room
         this.$refs.password.$refs.modal.show()
         return
       }
-      const req = new Req('req:room:join', { id: room.id })
-      this.$request(req).then((res) => {
-        const { room } = res.body
-        if (res.status === 200) {
-          store.room = room
-          this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, userId: store.userId, pw: room.pw } })
-        }
-      }).catch(console.log)
+      await this.join(room)
     },
-    deleteRoom (id) {
-      const req = new Req('req:room:delete', { id })
-      this.$request(req)
-        .then((res) => {
-          if (res.status === 200) {
-            store.room = {}
-            const reqRoomList = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
-            return this.$request(reqRoomList)
-          }
-        })
-        .then((res) => {
-          if (!res) return
-          const { rooms, roomCount } = res.body
-          store.rooms = rooms
-          store.roomCount = roomCount
-        })
-        .catch(console.log)
+    async deleteRoom (id) {
+      const reqDelete = new Req('req:room:delete', { id })
+      const resDelete = await this.$request(reqDelete)
+      if (resDelete.status === 200) {
+        store.room = {}
+      }
+    },
+    async getRooms () {
+      const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
+      this.$request(req).then((res) => {
+        const { rooms = [] } = res.body
+        console.log(rooms)
+        store.rooms = [
+          ...store.rooms,
+          ...rooms
+        ]
+        store.startIndexRoom += store.rooms.length
+      })
     }
   },
   beforeMount () {
     store.startIndexRoom = 0
+    store.rooms = []
+    this.getRooms()
+  },
+  mounted () {
+    const { rooms } = this.$refs
+    rooms.addEventListener('scroll', async (e) => {
+      if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return
+      this.getRooms()
+    })
   }
 }

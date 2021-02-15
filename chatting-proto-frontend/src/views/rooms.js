@@ -39,11 +39,5 @@ export default {
         }))
       })
     }
-    store.startIndexRoom = 0
-    const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
-    this.$request(req).then((res) => {
-      const { rooms = [] } = res.body
-      store.rooms = rooms
-    })
   }
 }

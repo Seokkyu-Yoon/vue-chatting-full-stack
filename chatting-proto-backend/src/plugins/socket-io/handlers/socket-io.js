@@ -59,8 +59,8 @@ SocketIoHandler.prototype.loginUser = async function (socketId = '', userName = 
   }
 }
 
-SocketIoHandler.prototype.getRooms = async function (startIndex = 0, userId = -1) {
-  const body = await this.db.getRooms({ startIndex, userId })
+SocketIoHandler.prototype.getRooms = async function (startIndex = 0, limit = 0, userId = -1) {
+  const body = await this.db.getRooms({ startIndex, userId, limit })
   return {
     code: 200,
     body

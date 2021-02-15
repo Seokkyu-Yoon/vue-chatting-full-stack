@@ -96,8 +96,8 @@ SocketHandler.prototype.userLogin = async function (req, callback) {
 
 SocketHandler.prototype.roomList = async function (req, callback) {
   const res = new Res(callback)
-  const { userId = -1, startIndex = 0 } = req.body
-  const { code, body } = await this.socketIoHandler.getRooms(startIndex, userId)
+  const { userId = -1, startIndex = 0, limit = 0 } = req.body
+  const { code, body } = await this.socketIoHandler.getRooms(startIndex, limit, userId)
   res.status(code).send(body)
 }
 
