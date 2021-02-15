@@ -4,5 +4,8 @@ export default {
   name: 'Home',
   components: {
     Login
+  },
+  beforeMount () {
+    sessionStorage.clear()
   }
 }

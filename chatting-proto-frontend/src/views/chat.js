@@ -57,7 +57,11 @@ export default {
       const req = new Req('req:room:leave', { id: store.room.id })
       this.$request(req).then(() => {
         store.room = {}
-        this.$router.go(-1)
+        sessionStorage.setItem('chatting-store', JSON.stringify({
+          userName: store.userName,
+          userId: store.userId
+        }))
+        this.$router.push('/rooms')
       })
     },
     changeShowType (type) {
@@ -83,28 +87,42 @@ export default {
   },
   beforeCreate () {
     // store.startIndexUser = 0
+    Object.assign(store, JSON.parse(sessionStorage.getItem('chatting-store')))
+    sessionStorage.setItem('chatting-store', JSON.stringify({
+      userName: store.userName,
+      userId: store.userId,
+      room: store.room
+    }))
+
     store.minIndexMessage = -1
     store.recipients = []
-    const { roomId = null, userName = '', pw = '' } = this.$route.params
-    if (roomId === null || !userName) {
-      this.$router.go(-1)
+
+    const { roomId = store.room.id, userId = store.userId, userName = store.userName, pw = store.room.pw } = this.$route.params
+    if (!userName) {
+      this.$router.push('/')
+      return
     }
-    const reqLogin = new Req('req:user:login', { userName, roomId, pw })
+    if (roomId === null || typeof roomId === 'undefined') {
+      this.$router.push('/')
+      return
+    }
+    const reqLogin = new Req('req:user:login', { userName, userId, roomId, pw })
     const promiseLogin = store.userName === userName
-      ? Promise.resolve({ body: { userName: store.userName, room: store.room } })
+      ? Promise.resolve({ body: { userName: store.userName, room: store.room, userId: store.userId } })
       : this.$request(reqLogin)
 
     promiseLogin.then((res) => {
       const {
         userName,
+        userId,
         room
       } = res.body
 
       const userRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
       userRooms.add(room.id)
-      console.log(userRooms)
       this.$cookies.set(store.userName, JSON.stringify([...userRooms]))
 
+      store.userId = userId
       store.userName = userName
       store.room = room
 

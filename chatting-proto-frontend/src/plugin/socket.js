@@ -35,14 +35,16 @@ const SocketPlugin = {
 
     socket.on('connect', async () => {
       if (store.userName === '') return
-      const reqLogin = new Req('req:user:login', { userName: store.userName, roomId: store.room.id, pw: store.room.pw })
+      const reqLogin = new Req('req:user:login', { userName: store.userName, userId: store.userId, roomId: store.room.id, pw: store.room.pw })
       const resLogin = await $request(reqLogin)
       const {
         isValid,
         userName,
+        userId,
         room
       } = resLogin.body
 
+      store.userId = userId
       store.userName = userName
       store.room = room
 
@@ -66,7 +68,7 @@ const SocketPlugin = {
         ]
         return
       }
-      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
+      const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
       const resRooms = await $request(reqRooms)
       const { rooms = [] } = resRooms.body
       store.rooms = rooms
@@ -74,7 +76,7 @@ const SocketPlugin = {
 
     socket.on('broadcast:room:create', () => {
       if (store.room.id) return
-      const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
+      const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
       $request(req).then((res) => {
         const { rooms } = res.body
         store.rooms = rooms
@@ -105,7 +107,7 @@ const SocketPlugin = {
         store.room = {}
       }
 
-      const reqRooms = new Req('req:room:list', { startIndex: store.startIndexRoom })
+      const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
       $request(reqRooms).then((resRooms) => {
         const { rooms } = resRooms.body
         store.rooms = rooms
@@ -127,11 +129,11 @@ const SocketPlugin = {
 
       const roomIndex = store.rooms.findIndex(({ id }) => id === room.id)
       if (roomIndex === -1) return
-      const updatedRoom = Object.assign({}, store.rooms[roomIndex])
-      updatedRoom.joining += 1
+      const roomTarget = store.rooms[roomIndex]
+      roomTarget.joining += 1
       store.rooms = [
         ...store.rooms.slice(0, roomIndex),
-        updatedRoom,
+        roomTarget,
         ...store.rooms.slice(roomIndex + 1)
       ]
     })

@@ -20,21 +20,27 @@ export default {
     }
   },
   beforeMount () {
+    Object.assign(store, JSON.parse(sessionStorage.getItem('chatting-store')))
+    sessionStorage.setItem('chatting-store', JSON.stringify({
+      userName: store.userName,
+      userId: store.userId
+    }))
     if (store.userName === '') {
-      this.$router.go(-1)
+      this.$router.push('/')
       return
     }
     if (typeof store.room.id !== 'undefined') {
       const req = new Req('req:room:leave', { id: store.room.id })
-      this.$request(req).then((res) => {
-        if (res.status === 200) {
-          store.room = {}
-        }
+      this.$request(req).then(() => {
+        store.room = {}
+        sessionStorage.setItem('chatting-store', JSON.stringify({
+          userName: store.userName,
+          userId: store.userId
+        }))
       })
     }
-
     store.startIndexRoom = 0
-    const req = new Req('req:room:list', { startIndex: store.startIndexRoom })
+    const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
     this.$request(req).then((res) => {
       const { rooms = [] } = res.body
       store.rooms = rooms

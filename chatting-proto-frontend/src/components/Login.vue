@@ -1,15 +1,25 @@
 <template>
   <div class="m-auto d-flex flex-column align-items-center justify-content-between jumbotron">
     <p class="h1 mb-4">별명</p>
-    <div class="form-inline mb-2">
-      <input
-        ref="nicknameField"
-        type="text"
-        class="form-control mr-1"
-        v-model="userName"
-        @input="setUserName"
-        v-on:keydown.enter="login"
-        placeholder="별명을 입력해주세요"/>
+    <div class="d-flex mb-2">
+      <div class="flex-fill mr-1">
+        <input
+          ref="idField"
+          type="text"
+          class="form-control"
+          v-model="id"
+          @input="setId"
+          v-on:keydown.enter="$refs.nicknameField.focus"
+          placeholder="아이디를 입력해주세요"/>
+        <input
+          ref="nicknameField"
+          type="text"
+          class="form-control mt-1"
+          v-model="userName"
+          @input="setUserName"
+          v-on:keydown.enter="login"
+          placeholder="별명을 입력해주세요"/>
+      </div>
       <button type="button" class="btn btn-primary" v-on:click="login">접속</button>
     </div>
     <div

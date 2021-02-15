@@ -6,11 +6,15 @@ export default {
   data () {
     return {
       store,
+      id: '',
       userName: '',
       isValid: false
     }
   },
   methods: {
+    setId (e) {
+      this.id = e.target.value.replace(' ', '').replace(/[^0-9]/g, '')
+    },
     setUserName (e) {
       this.userName = e.target.value.replace(' ', '')
       const req = new Req('req:user:isValid', { userName: this.userName })
@@ -20,12 +24,13 @@ export default {
       }).catch(console.error)
     },
     login () {
-      const req = new Req('req:user:login', { userName: this.userName })
+      const req = new Req('req:user:login', { userId: Number(this.id), userName: this.userName })
       this.$request(req)
         .then((res) => {
-          const { isValid, userName, room } = res.body
+          const { isValid, userName, userId, room } = res.body
           this.isValid = isValid
-          if (this.isValid) {
+          if (isValid) {
+            store.userId = userId
             store.userName = userName
             store.room = room
             this.$router.push('Rooms')
@@ -44,10 +49,10 @@ export default {
     }
   },
   mounted () {
-    const { alert, nicknameField } = this.$refs
+    const { alert, idField } = this.$refs
     alert.addEventListener('animationend', () => {
       alert.style.removeProperty('animation')
     })
-    nicknameField.focus()
+    idField.focus()
   }
 }

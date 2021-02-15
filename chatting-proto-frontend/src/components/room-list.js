@@ -50,7 +50,7 @@ export default {
           const { room } = res.body
           if (res.status === 200) {
             store.room = room
-            this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, pw: room.pw } })
+            this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, userId: store.userId, pw: room.pw } })
           }
         }).catch(console.log)
         return
@@ -65,7 +65,7 @@ export default {
         const { room } = res.body
         if (res.status === 200) {
           store.room = room
-          this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, pw: room.pw } })
+          this.$router.push({ name: 'Chat', params: { roomId: room.id, userName: store.userName, userId: store.userId, pw: room.pw } })
         }
       }).catch(console.log)
     },
@@ -75,7 +75,7 @@ export default {
         .then((res) => {
           if (res.status === 200) {
             store.room = {}
-            const reqRoomList = new Req('req:room:list', { startIndex: store.startIndexRoom })
+            const reqRoomList = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
             return this.$request(reqRoomList)
           }
         })

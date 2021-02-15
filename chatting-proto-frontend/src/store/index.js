@@ -2,6 +2,7 @@ import Vue from 'vue'
 
 const vue = new Vue({
   data: {
+    userId: -1,
     userName: '',
     room: {},
     users: [],

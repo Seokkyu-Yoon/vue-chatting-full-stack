@@ -27,6 +27,7 @@ export default {
             name: 'Chat',
             params: {
               roomId: store.room.id,
+              userId: store.userId,
               userName: store.userName,
               pw: this.password
             }
