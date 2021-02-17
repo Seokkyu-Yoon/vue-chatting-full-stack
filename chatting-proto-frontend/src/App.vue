@@ -1,7 +1,7 @@
 <template>
     <div id="app">
       <Nav />
-      <router-view id="router-view" class="container w-100 h-100"/>
+      <router-view id="router-view" class="overflow-hidden"/>
     </div>
 </template>
 
@@ -19,17 +19,18 @@ html, body{
   height: 100%;
 }
 #app {
+  display: flex;
+  flex-direction: column;
   position: absolute;
   top: 0;
   right: 0;
-  bottom: 55.75px;
+  bottom: 0;
   left: 0;
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* text-align: center; */
+  overflow: hidden;
   color: #2c3e50;
-}
-html, body, nav, #router-view {
-  /* min-width: 500px; */
 }
 </style>

@@ -1,7 +1,11 @@
 import store from '@/store'
+import GroupChat from '@/components/GroupChat.vue'
 
 export default {
   name: 'Users',
+  components: {
+    GroupChat
+  },
   data () {
     return {
       store,
@@ -40,15 +44,6 @@ export default {
     },
     addRecipient (user) {
       store.recipients.push(user)
-    },
-    removeRecipient (index) {
-      store.recipients = [
-        ...store.recipients.slice(0, index),
-        ...store.recipients.slice(index + 1)
-      ]
-    },
-    removeAllRecipients () {
-      store.recipients = []
     }
   }
 }

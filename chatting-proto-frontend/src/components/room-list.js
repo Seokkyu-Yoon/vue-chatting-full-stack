@@ -10,7 +10,8 @@ export default {
   data () {
     return {
       store,
-      newRoomName: ''
+      newRoomName: '',
+      cardOffsetWidth: 0
     }
   },
   methods: {
@@ -88,13 +89,16 @@ export default {
       const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
       this.$request(req).then((res) => {
         const { rooms = [] } = res.body
-        console.log(rooms)
         store.rooms = [
           ...store.rooms,
           ...rooms
         ]
         store.startIndexRoom += store.rooms.length
       })
+    },
+    handleResize () {
+      const { rooms } = this.$refs
+      this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
     }
   },
   beforeMount () {
@@ -108,5 +112,10 @@ export default {
       if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return
       this.getRooms()
     })
+    window.addEventListener('resize', this.handleResize)
+    this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.handleResize)
   }
 }

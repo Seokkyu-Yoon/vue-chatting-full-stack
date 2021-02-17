@@ -43,10 +43,31 @@ export default {
 
       return `${AMPM} ${outputHours}:${minutes}`
     },
-    isDateChanged (index) {
+    getPrevMsg (index) {
+      let msgIndex = index - 1
+      while (msgIndex > 0) {
+        const prevMsg = store.messages[msgIndex]
+        if (prevMsg.recipients.includes(store.userName) || prevMsg.recipients.length === 0) {
+          return prevMsg
+        }
+        msgIndex -= 1
+      }
+      return null
+    },
+    isRecipient (message) {
+      return (
+        message.recipients.length === 0 ||
+        message.writter === store.userName ||
+        message.recipients.includes(store.userName)
+      )
+    },
+    isDateChanged (message, index) {
+      if (!this.isRecipient(message)) return false
       if (index === 0) return true
       const currMsg = store.messages[index]
-      const prevMsg = store.messages[index - 1]
+      const prevMsg = this.getPrevMsg(index)
+
+      if (prevMsg === null) return false
       const currYearMonthDate = this.getYearMonthDate(currMsg)
       const prevYearMonthDate = this.getYearMonthDate(prevMsg)
 

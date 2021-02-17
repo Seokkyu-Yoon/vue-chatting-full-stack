@@ -74,7 +74,6 @@ const SocketPlugin = {
       const req = new Req('req:room:list', { userId: store.userId, startIndex: 0, limit: Math.ceil(store.startIndexRoom / 30) * 30 })
       $request(req).then((res) => {
         const { rooms } = res.body
-        console.log(rooms)
         store.rooms = rooms
         store.startIndexRoom = rooms.length
       })

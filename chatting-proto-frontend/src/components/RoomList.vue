@@ -1,8 +1,8 @@
 <template>
-  <div class="d-flex flex-column flex-fill overflow-hidden-y">
+  <div class="jumbotron m-0 p-2 flex-fill d-flex flex-column overflow-hidden">
     <Password ref="password" v-bind:propTitle="store.room.title"/>
     <div
-      class="d-flex flex-wrap jumbotron mb-4 p-2 overflow-auto"
+      class="d-flex flex-wrap overflow-auto"
       ref="rooms">
       <b-card
         class="b-card m-2"
@@ -11,7 +11,8 @@
         :img-src='`https://picsum.photos/id/${idx}/500/300`'
         img-height="200"
         img-alt="Image"
-        img-top>
+        img-top
+        :style="`max-width:${cardOffsetWidth}px`">
         <b-card-sub-title>
           <p class="h5 mb-1">
             <span v-bind:class="getClassBadgeSecret(room)">
@@ -64,10 +65,14 @@
   right: 0;
 }
 
+.b-card {
+  flex: 1 1 15rem;
+}
+
 /* .b-card {
   width: 32rem;
   min-width: 32rem;
-} */
+}
 @media screen and (min-width: 768px) {
   .b-card {
     width: 19rem;
@@ -85,7 +90,7 @@
     width: 21rem;
     min-width: 21rem;
   }
-}
+} */
 
 .jumbotron {
   margin-bottom: 0;

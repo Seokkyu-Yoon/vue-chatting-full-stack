@@ -332,7 +332,7 @@ const getSelectRecipient = ({ messageIdx }) => ({
 
 const getInsertRecipient = ({ messageIdx, userName }) => ({
   sql: `
-  INSERT INTO recipient (message_idx, userName) VALUES
+  INSERT INTO recipient (message_idx, user_name) VALUES
   (?, ?)
   `,
   params: [messageIdx, userName]

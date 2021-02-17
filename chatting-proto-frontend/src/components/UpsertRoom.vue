@@ -11,18 +11,18 @@
     <template>
       <div class="container">
         <div class="row">
-          <div class="col-3 col-md-2 text-right">
-            방이름
+          <div class="col-3 my-auto text-right">
+            제목
           </div>
-          <div class="col-15 col-md-10">
+          <div class="flex-fill">
             <input class="form-control" v-model="title"/>
           </div>
         </div>
         <div class="row mt-3">
-          <div class="col-3 col-md-2 text-right">
+          <div class="col-3 my-auto text-right">
             공개여부
           </div>
-          <div class="col-15 col-md-10">
+          <div class="flex-fill">
             <button
               v-bind:class="getBtnClass('public')"
               v-on:click="setPublic">
@@ -36,22 +36,22 @@
           </div>
         </div>
         <div class="row mt-3" v-if="isPrivate">
-          <div class="col-3 col-md-2 text-right">
+          <div class="col-3 my-auto text-right">
             비밀번호
           </div>
-          <div class="col-15 col-md-10">
+          <div class="flex-fill">
             <input type="password" class="form-control" v-model="pw"/>
           </div>
         </div>
         <div class="row mt-3">
-          <div class="col-3 col-md-2 text-right">
+          <div class="col-3 my-auto text-right">
             최대인원
           </div>
-          <div class="col-15 col-md-10 form-inline d-flex">
-            <input type="checkbox" v-model="isInfinity" class="form-check-input" id="infinity" checked/>
-            <label class="form-check-label" for="infinity">무제한</label>
-            <div v-visible="!isInfinity" class="ml-3">
-              <input type="number" class="form-control mr-1" min="0" v-model="maxJoin"/>명
+          <div class="flex-fill d-flex align-items-center">
+            <b-check id="infinity" v-model="isInfinity">무제한</b-check>
+            <div v-visible="!isInfinity" class="ml-3 d-flex">
+              <input type="number" class="form-control mr-1" min="0" v-model="maxJoin"/>
+              <div class="my-auto">명</div>
             </div>
           </div>
         </div>
@@ -64,10 +64,10 @@
           </div>
         </div> -->
         <div class="row mt-3">
-          <div class="col-3 col-md-2 text-right">
+          <div class="col-3 my-auto text-right">
             설명
           </div>
-          <div class="col-15 col-md-10">
+          <div class="flex-fill">
             <textarea class="form-control" v-model="description"/>
           </div>
         </div>

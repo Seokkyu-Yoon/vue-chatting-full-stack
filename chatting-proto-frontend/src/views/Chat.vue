@@ -1,6 +1,6 @@
 <template>
-  <div class="d-flex flex-fill">
-    <div class="d-flex flex-column flex-fill">
+  <div class="d-flex flex-fill p-2">
+    <div class="d-flex flex-fill flex-column">
       <UpsertRoom ref="upsertRoom" v-bind:modifing="true"/>
       <div class="d-flex mt-4 mb-2">
         <p class="h3">{{(store.room || {}).title || ''}}</p>
@@ -17,28 +17,27 @@
       </div>
       <div class='jumbotron d-flex flex-column flex-fill p-2 overflow-hidden-y'>
         <MessageList v-bind:sended="sended"/>
-        <div class="mt-1">
-          <textarea
-            class="form-control"
-            v-model="content"
-            v-on:keydown.enter.exact="(e) => {
-              e.preventDefault()
-              send()
-            }"/>
-          <div class="d-flex mt-1">
-            <p>{{recipientsText}}에게 전송합니다</p>
-            <button class="btn btn-info ml-auto" v-on:click="send">전송</button>
+        <div class="d-flex mt-1">
+          <div class="flex-fill">
+            <textarea
+              class="form-control"
+              v-model="content"
+              v-on:keydown.enter.exact="(e) => {
+                e.preventDefault()
+                send()
+              }"/>
           </div>
+          <button class="btn btn-sm btn-info ml-1" v-on:click="send">전송</button>
         </div>
       </div>
     </div>
-    <div class="d-flex col-6 col-md-4 mt-2 right-menu">
+    <div class="col-4 d-flex ml-1 mt-2 right-menu overflow-hidden">
       <div class="mt-3">
         <p v-bind:class="getClassTapItem('users')" @click="() => changeShowType('users')">참가자</p>
         <p v-bind:class="getClassTapItem('detail')" @click="() => changeShowType('detail')">방정보</p>
       </div>
-      <div class="d-flex flex-fill">
-        <UserList v-if="showType === 'users'"/>
+      <div class="d-flex flex-fill overflow-hidden">
+        <UserList v-if="showType === 'users'" v-bind:send="send"/>
         <RoomDetail v-if="showType === 'detail'"/>
       </div>
     </div>

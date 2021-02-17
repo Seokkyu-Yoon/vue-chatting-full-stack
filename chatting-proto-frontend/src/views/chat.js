@@ -23,32 +23,30 @@ export default {
       sended: false
     }
   },
-  computed: {
-    recipientsText () {
-      if (store.recipients.length === 0) return '전체'
-      const recipientsText = store.recipients.map(({ name }) => name).join(', ')
-      if (recipientsText.length > 50) return `${recipientsText.slice(0, 47)}...`
-      return recipientsText
-    }
-  },
   methods: {
-    send () {
+    async send () {
       if (this.content.trim() === '') {
         this.content = ''
         return
       }
       if (this.blockSend) return
+      this.blockSend = true
       const req = new Req('req:message:write', {
         roomId: store.room.id,
         type: this.type,
         writter: store.userName,
         content: this.content,
-        recipients: store.recipients.map(({ name }) => name)
+        recipients: []
       })
-      this.$request(req).then(() => {
+      try {
+        await this.$request(req)
         this.content = ''
         this.sended = !this.sended
-      })
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.blockSend = false
+      }
     },
     updateRoom () {
       this.$refs.upsertRoom.$refs.modal.show()

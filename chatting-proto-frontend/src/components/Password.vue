@@ -11,15 +11,17 @@
     </template>
 
     <template>
-      <div class="d-flex form-inline pt-4 pb-4">
-        <input
-          type="password"
-          ref="password"
-          class="form-control flex-fill"
-          v-model="password"
-          placeholder="비밀번호를 입력해주세요"
-          v-on:keydown.enter.exact="join"/>
-        <button class="btn btn-primary ml-1" v-on:click="join">참가</button>
+      <div class="d-flex pt-4 pb-4">
+        <div class="flex-fill">
+          <input
+            type="password"
+            ref="password"
+            class="form-control"
+            v-model="password"
+            placeholder="비밀번호를 입력해주세요"
+            v-on:keydown.enter.exact="join"/>
+          </div>
+        <div><button class="btn btn-primary ml-1" v-on:click="join">참가</button></div>
       </div>
     </template>
   </b-modal>

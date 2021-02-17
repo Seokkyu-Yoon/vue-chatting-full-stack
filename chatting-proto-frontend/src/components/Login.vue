@@ -1,7 +1,7 @@
 <template>
-  <div class="m-auto d-flex flex-column align-items-center justify-content-between jumbotron">
-    <p class="h1 mb-4">별명</p>
-    <div class="d-flex mb-2">
+  <div class="d-flex flex-column align-self-center jumbotron">
+    <p class="h1 text-center">별명</p>
+    <div class="d-flex my-2">
       <div class="flex-fill mr-1">
         <input
           ref="idField"
