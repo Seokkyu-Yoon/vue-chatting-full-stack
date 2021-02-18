@@ -84,14 +84,7 @@ export default {
     }
   },
   beforeCreate () {
-    // store.startIndexUser = 0
     Object.assign(store, JSON.parse(sessionStorage.getItem('chatting-store')))
-    sessionStorage.setItem('chatting-store', JSON.stringify({
-      userName: store.userName,
-      userId: store.userId,
-      room: store.room
-    }))
-
     store.minIndexMessage = -1
     store.recipients = []
 
@@ -104,7 +97,8 @@ export default {
       this.$router.push('/')
       return
     }
-    const reqLogin = new Req('req:user:login', { userName, userId, roomId, pw })
+    console.log(userName, roomId)
+    const reqLogin = new Req('req:user:login', { userName, userId: Number(userId), roomId: Number(roomId), pw })
     const promiseLogin = store.userName === userName
       ? Promise.resolve({ body: { userName: store.userName, room: store.room, userId: store.userId } })
       : this.$request(reqLogin)
@@ -116,16 +110,20 @@ export default {
         room
       } = res.body
 
-      const userRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
+      const userRooms = new Set(JSON.parse(this.$cookies.get(userName)) || [])
       userRooms.add(room.id)
-      this.$cookies.set(store.userName, JSON.stringify([...userRooms]))
+      this.$cookies.set(userName, JSON.stringify([...userRooms]))
 
       store.userId = userId
       store.userName = userName
       store.room = room
+      sessionStorage.setItem('chatting-store', JSON.stringify({
+        userName: store.userName,
+        userId: store.userId,
+        room: store.room
+      }))
 
       const reqMessages = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
-      // const reqUsers = new Req('req:user:list', { roomId: store.room.id, startIndex: store.startIndexUser })
       const reqUsers = new Req('req:user:list', { roomId: store.room.id })
       return Promise.all([
         this.$request(reqMessages),
@@ -142,7 +140,7 @@ export default {
           }]
       store.minIndexMessage = minIndex
       store.users = users
-    }).catch(() => {
+    }).catch((e) => {
       if (!store.userName) {
         this.$router.push('/')
         return
