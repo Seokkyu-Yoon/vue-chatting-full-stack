@@ -9,5 +9,8 @@
     "MYSQL_IP": "localhost",
     "MYSQL_PORT": "3031",
     "MYSQL_DATABASE": "chatting-proto"
+  },
+  "execMap": {
+    "js": "babel-node src/bin/www.js"
   }
 }

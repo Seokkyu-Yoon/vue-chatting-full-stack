@@ -281,15 +281,13 @@ const getDeleteUserNotIn = ({ connectingSocketIds }) => {
   const sql = connectingSocketIds.length > 0
     ? `
       ${sqlBasic}
-      WHERE socket_id NOT IN (${new Array(connectingSocketIds.length).fill('?').join(', ')})
+      WHERE socket_id NOT IN (?)
     `
     : sqlBasic
 
   return {
     sql,
-    params: [
-      ...connectingSocketIds
-    ]
+    params: [connectingSocketIds]
   }
 }
 
