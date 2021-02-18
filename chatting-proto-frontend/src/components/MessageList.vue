@@ -7,7 +7,7 @@
     </div>
     <div v-for="(message, index) in store.messages" v-bind:key="`message-${index}`">
       <div v-if="isShown(message)">
-        <div v-if="isDateChanged(message, index)" >
+        <div v-if="isDateChanged(index)" >
           <div class="mt-3" v-if="index === 0"></div>
           <div>{{getDateFormatted(message)}}</div>
           <div class="mb-1"/>

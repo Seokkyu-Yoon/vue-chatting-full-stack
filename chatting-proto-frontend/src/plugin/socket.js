@@ -71,6 +71,7 @@ const SocketPlugin = {
 
     socket.on('broadcast:room:create', () => {
       if (store.room.id) return
+      if (store.searchRoomText !== '') return
       const req = new Req('req:room:list', { userId: store.userId, startIndex: 0, limit: Math.ceil(store.startIndexRoom / 30) * 30 })
       $request(req).then((res) => {
         const { rooms } = res.body
@@ -101,6 +102,11 @@ const SocketPlugin = {
 
       const roomIndex = store.rooms.findIndex(({ id: roomId }) => roomId === id)
       if (roomIndex === -1) return
+
+      if (store.searchRoomText !== '') {
+        store.rooms.splice(roomIndex, 1)
+        return
+      }
       const reqRooms = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom, limit: 1 })
       $request(reqRooms).then((resRooms) => {
         const { rooms } = resRooms.body

@@ -139,6 +139,19 @@ const getSelectRooms = ({ startIndex, limit, userId }) => ({
   params: [userId, limit || COUNT_ROOM, startIndex]
 })
 
+const getSelectRoomsByTitle = ({ userId, title }) => ({
+  sql: `
+  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
+  FROM room
+  LEFT JOIN last_joined ON last_joined.user_id = ? AND last_joined.room_id = room.id
+  LEFT JOIN participant ON room.id=participant.room_id
+  WHERE room.title LIKE ?
+  GROUP BY room.id
+  ORDER BY last_joined.last_joined IS NULL ASC, last_joined.last_joined DESC, room.last_updated DESC
+  `,
+  params: [userId, `%${title}%`]
+})
+
 const getSelectRoom = ({ id }) => ({
   sql: `
   SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
@@ -397,6 +410,7 @@ export {
   // for room
   getSelectCountRoom,
   getSelectRooms,
+  getSelectRoomsByTitle,
   getSelectRoom,
   getSelectRoomIdBy,
   getInsertRoom,

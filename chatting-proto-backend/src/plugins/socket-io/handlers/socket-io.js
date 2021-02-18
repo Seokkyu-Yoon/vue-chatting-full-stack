@@ -136,6 +136,14 @@ SocketIoHandler.prototype.leaveRoom = async function (id = '', socketId = '') {
   }
 }
 
+SocketIoHandler.prototype.searchRooms = async function (userId = -1, title = '') {
+  const body = await this.db.searchRooms({ userId, title })
+  return {
+    code: 200,
+    body
+  }
+}
+
 SocketIoHandler.prototype.getMessages = async function (roomId = null, minIndex = -1) {
   const body = await this.db.getMessages({ roomId, minIndex })
   return {

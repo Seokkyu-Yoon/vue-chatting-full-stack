@@ -18,6 +18,22 @@ export default {
 html, body{
   height: 100%;
 }
+
+.flex-1 {
+  flex: 1
+}
+.btn {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #app {
   display: flex;
   flex-direction: column;

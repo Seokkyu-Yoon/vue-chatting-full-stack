@@ -69,29 +69,6 @@
   flex: 1 1 15rem;
 }
 
-/* .b-card {
-  width: 32rem;
-  min-width: 32rem;
-}
-@media screen and (min-width: 768px) {
-  .b-card {
-    width: 19rem;
-    min-width: 19rem;
-  }
-}
-@media screen and (min-width: 992px) {
-  .b-card {
-    width: 17rem;
-    min-width: 17rem;
-  }
-}
-@media screen and (min-width: 1200px) {
-  .b-card {
-    width: 21rem;
-    min-width: 21rem;
-  }
-} */
-
 .jumbotron {
   margin-bottom: 0;
   padding: 0;

@@ -1,11 +1,13 @@
 <template>
-<div class="d-flex flex-column h-50 mt-1 p-1 holder overflow-hidden">
-  <p class="h6 text-center">그룹메시지</p>
-  <button
-    class="btn btn-sm btn-info ml-auto"
-    v-on:click="removeAllRecipients()">
-    전체 제외
+<div class="flex-1 d-flex flex-column mt-1 p-1 holder overflow-hidden">
+  <p class="h6 text-center ellipsis">그룹메시지</p>
+  <div class="d-flex justify-content-end">
+    <button
+      class="btn btn-sm btn-info"
+      v-on:click="removeAllRecipients()">
+      전체 제외
   </button>
+  </div>
   <div class="flex-fill my-1 overflow-auto">
     <div
       class="d-flex align-items-center mb-1 user p-2"
@@ -37,7 +39,7 @@
           send()
         }"/>
     </div>
-    <button class="btn btn-sm btn-info ml-1" v-on:click="send" v-bind:disabled="store.recipients.length === 0">전송</button>
+    <button class="btn btn-sm btn-primary ml-1" v-on:click="send" v-bind:disabled="store.recipients.length === 0">그룹메시지 보내기</button>
   </div>
 </div>
 </template>

@@ -17,6 +17,7 @@ import {
   // for room
   getSelectCountRoom,
   getSelectRooms,
+  getSelectRoomsByTitle,
   getSelectRoom,
   getSelectRoomIdBy,
   getInsertRoom,
@@ -295,6 +296,14 @@ async function leaveRoom ({ id = null, socketId = '' }) {
   return { id }
 }
 
+async function searchRooms ({ userId = -1, title = '' }) {
+  if (userId === -1 || !title) throw new Error('Invalid to search rooms')
+
+  const selectRoomsByTitle = getSelectRoomsByTitle({ userId, title })
+  const rooms = await query(selectRoomsByTitle)
+  return { rooms }
+}
+
 async function getMessages ({ roomId = null, minIndex = -1 }) {
   if (roomId === null) throw new Error('id is empty')
   const COUNT = 50
@@ -416,6 +425,7 @@ export default {
   deleteRoom,
   joinRoom,
   leaveRoom,
+  searchRooms,
 
   getMessages,
   getMessageReconnect,

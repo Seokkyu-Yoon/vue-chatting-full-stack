@@ -10,7 +10,6 @@ export default {
   data () {
     return {
       store,
-      newRoomName: '',
       cardOffsetWidth: 0
     }
   },
@@ -30,7 +29,7 @@ export default {
         classBadge.push('badge-dark')
       } else if (joining === maxJoin) {
         classBadge.push('badge-danger')
-      } else if (joining >= maxJoin * 0.5) {
+      } else if (joining >= maxJoin / 2) {
         classBadge.push('badge-warning')
       } else {
         classBadge.push('badge-success')
@@ -87,14 +86,13 @@ export default {
     },
     async getRooms () {
       const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
-      this.$request(req).then((res) => {
-        const { rooms = [] } = res.body
-        store.rooms = [
-          ...store.rooms,
-          ...rooms
-        ]
-        store.startIndexRoom += store.rooms.length
-      })
+      const res = await this.$request(req)
+      const { rooms = [] } = res.body
+      store.rooms = [
+        ...store.rooms,
+        ...rooms
+      ]
+      store.startIndexRoom += store.rooms.length
     },
     handleResize () {
       const { rooms } = this.$refs

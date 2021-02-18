@@ -47,22 +47,24 @@ export default {
       let msgIndex = index - 1
       while (msgIndex > 0) {
         const prevMsg = store.messages[msgIndex]
-        if (prevMsg.recipients.includes(store.userName) || prevMsg.recipients.length === 0) {
+        if (this.isRecipient(index)) {
           return prevMsg
         }
         msgIndex -= 1
       }
       return null
     },
-    isRecipient (message) {
+    isRecipient (index) {
+      const message = store.messages[index]
+      if (message.type === 'dummy') return false
       return (
         message.recipients.length === 0 ||
         message.writter === store.userName ||
         message.recipients.includes(store.userName)
       )
     },
-    isDateChanged (message, index) {
-      if (!this.isRecipient(message)) return false
+    isDateChanged (index) {
+      if (!this.isRecipient(index)) return false
       if (index === 0) return true
       const currMsg = store.messages[index]
       const prevMsg = this.getPrevMsg(index)

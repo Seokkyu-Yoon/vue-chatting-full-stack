@@ -1,20 +1,20 @@
 <template>
-  <div id="cover-users" class="d-flex flex-fill flex-column bg-users p-2 overflow-hidden">
-    <div class="d-flex flex-column h-50 overflow-hidden holder">
-      <p class="h6 text-center mt-1">목록</p>
+  <div id="cover-users" class="d-flex flex-fill flex-column p-2 overflow-hidden bg-users">
+    <div class="flex-1 d-flex flex-column overflow-hidden holder">
+      <p class="h6 text-center mt-1 ellipsis">목록</p>
       <div class="overflow-auto flex-fill m-1">
         <div
-          class="d-flex align-items-center mb-1 user p-2"
+          class="d-flex align-items-center mb-1 p-2 overflow-hidden user"
           v-for="({id, name}, idx) in store.users"
           v-bind:key="`user-${id}`">
           <b-img
             class="tumbnail"
             :src='`https://picsum.photos/id/${idx}/100`'/>
-          <div class="d-flex flex-column ml-2 flex-fill">
-            <div class="d-flex mb-1">
+          <div class="d-flex flex-column ml-2 flex-fill overflow-hidden">
+            <div class="d-flex mb-1 overflow-hidden">
               <button
                 class="btn btn-sm btn-success ml-auto pt-1 pb-0 px-2"
-                v-text="'그룹대화 추가'"
+                v-text="'그룹메시지 추가'"
                 v-on:click="addRecipient({id, name, idx})"
                 v-bind:disabled="isDisableToAddRecipient(name)"
                 />
@@ -35,6 +35,7 @@
 #cover-users {
   border-radius: 10px;
 }
+
 .user {
   border-radius: 5px;
   padding: 5px;

@@ -1,10 +1,10 @@
 <template>
   <div class="d-flex flex-fill p-2">
-    <div class="d-flex flex-fill flex-column">
+    <div class="d-flex flex-fill flex-column overflow-hidden">
       <UpsertRoom ref="upsertRoom" v-bind:modifing="true"/>
       <div class="d-flex mt-4 mb-2">
         <p class="h3">{{(store.room || {}).title || ''}}</p>
-        <div class="ml-auto">
+        <div class="flex-fill d-flex align-items-center justify-content-end overflow-hidden">
           <button
             v-show="store.userName === store.room.createBy || ''"
             type="button"
@@ -27,7 +27,7 @@
                 send()
               }"/>
           </div>
-          <button class="btn btn-sm btn-info ml-1" v-on:click="send">전송</button>
+          <button class="btn btn-sm btn-primary ml-1" v-on:click="send">전체 보내기</button>
         </div>
       </div>
     </div>

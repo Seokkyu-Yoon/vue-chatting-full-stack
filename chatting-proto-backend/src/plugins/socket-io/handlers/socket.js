@@ -35,6 +35,7 @@ SocketHandler.prototype.init = function () {
   this.socket.on(Interface.Request.Room.DELETE, this.roomDelete.bind(this))
   this.socket.on(Interface.Request.Room.JOIN, this.roomJoin.bind(this))
   this.socket.on(Interface.Request.Room.LEAVE, this.roomLeave.bind(this))
+  this.socket.on(Interface.Request.Room.SEARCH, this.roomSearch.bind(this))
 
   this.socket.on(Interface.Request.Message.LIST, this.messageList.bind(this))
   this.socket.on(Interface.Request.Message.WRITE, this.messageWrite.bind(this))
@@ -177,6 +178,13 @@ SocketHandler.prototype.roomLeave = async function (req, callback) {
   res.status(code).send(body)
 
   megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body)
+}
+
+SocketHandler.prototype.roomSearch = async function (req, callback) {
+  const res = new Res(callback)
+  const { userId = -1, title = '' } = req.body
+  const { code, body } = await this.socketIoHandler.searchRooms(userId, title)
+  res.status(code).send(body)
 }
 
 SocketHandler.prototype.messageList = async function (req, callback) {

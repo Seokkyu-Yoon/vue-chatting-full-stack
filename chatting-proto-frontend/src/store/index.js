@@ -12,7 +12,8 @@ const vue = new Vue({
     messages: [],
     startIndexRoom: 0,
     startIndexUser: 0,
-    minIndexMessage: -1
+    minIndexMessage: -1,
+    searchRoomText: ''
   }
 })
 
