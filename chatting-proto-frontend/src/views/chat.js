@@ -97,7 +97,6 @@ export default {
       this.$router.push('/')
       return
     }
-    console.log(userName, roomId)
     const reqLogin = new Req('req:user:login', { userName, userId: Number(userId), roomId: Number(roomId), pw })
     const promiseLogin = store.userName === userName
       ? Promise.resolve({ body: { userName: store.userName, room: store.room, userId: store.userId } })
