@@ -2,7 +2,7 @@
   <b-modal
     ref="modal"
     v-model="show"
-    v-bind:title="propTitle"
+    :title="room === null ? '' : room.title"
     centered size="xl"
     hide-footer
     @shown="shown"
@@ -21,7 +21,7 @@
             placeholder="비밀번호를 입력해주세요"
             v-on:keydown.enter.exact="join"/>
           </div>
-        <div><button class="btn btn-primary ml-1" v-on:click="join">참가</button></div>
+        <div><button class="btn btn-primary ml-1" v-on:click="() => join(room, password)">참가</button></div>
       </div>
     </template>
   </b-modal>

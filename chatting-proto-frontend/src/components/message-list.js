@@ -1,4 +1,3 @@
-import Req from '@/core/request'
 import store from '@/store'
 
 export default {
@@ -13,26 +12,26 @@ export default {
   },
   methods: {
     isShown ({ writter, recipients = [] }) {
-      return recipients.length === 0 || writter === store.userName || recipients.includes(store.userName)
+      return recipients.length === 0 || writter === store.user.id || recipients.includes(store.user.id)
     },
     isDifferentDate (yyyyMMdd1, yyyyMMdd2) {
       const checkList = ['year', 'month', 'date']
       const isSame = checkList.every((checkKey) => yyyyMMdd1[checkKey] === yyyyMMdd2[checkKey])
       return !isSame
     },
-    getYearMonthDate ({ datetime = '' }) {
-      const yyyyMMdd = datetime.split(' ')[0]
+    getYearMonthDate ({ writeAt = '' }) {
+      const yyyyMMdd = writeAt.split(' ')[0]
       const [year, month, date] = yyyyMMdd.split('-')
       return {
         year, month, date
       }
     },
-    getDateFormatted ({ datetime = '' }) {
-      const { year, month, date } = this.getYearMonthDate({ datetime })
+    getDateFormatted ({ writeAt = '' }) {
+      const { year, month, date } = this.getYearMonthDate({ writeAt })
       return `${year}년 ${month}월 ${date}일`
     },
-    getTimeFormatted ({ datetime = '' }) {
-      const hhmmss = datetime.split(' ')[1]
+    getTimeFormatted ({ writeAt = '' }) {
+      const hhmmss = writeAt.split(' ')[1]
       const [hours, minutes] = hhmmss.split(':')
 
       let numHours = Number(hours)
@@ -59,8 +58,8 @@ export default {
       if (message.type === 'dummy') return false
       return (
         message.recipients.length === 0 ||
-        message.writter === store.userName ||
-        message.recipients.includes(store.userName)
+        message.writter === store.user.id ||
+        message.recipients.includes(store.user.id)
       )
     },
     isDateChanged (index) {
@@ -74,6 +73,14 @@ export default {
       const prevYearMonthDate = this.getYearMonthDate(prevMsg)
 
       return this.isDifferentDate(currYearMonthDate, prevYearMonthDate)
+    },
+    async handleScroll (e) {
+      if (e.target.scrollTop !== 0) return
+      if (store.minIndex === 0) return
+      const res = await this.$socketHandler.getMessagesInRoom({ userId: store.user.id, roomId: store.room.id, minIndex: store.minIndexMessage })
+      const { messages, minIndex } = res.body
+      store.messages = [...messages, ...store.messages]
+      store.minIndexMessage = minIndex
     }
   },
   watch: {
@@ -86,16 +93,7 @@ export default {
   },
   mounted () {
     const chatBoard = this.$refs.board
-    chatBoard.addEventListener('scroll', (e) => {
-      if (e.target.scrollTop !== 0) return
-      if (store.minIndex === 0) return
-      const req = new Req('req:message:list', { roomId: store.room.id, minIndex: store.minIndexMessage })
-      this.$request(req).then((res) => {
-        const { messages, minIndex } = res.body
-        store.messages = [...messages, ...store.messages]
-        store.minIndexMessage = minIndex
-      })
-    })
+    chatBoard.addEventListener('scroll', this.handleScroll)
     chatBoard.scrollTop = chatBoard.scrollHeight - chatBoard.clientHeight
   },
   beforeUpdate () {
@@ -112,5 +110,9 @@ export default {
       this.scrollTop = chatBoard.scrollHeight - this.scrollHeightBeforeUpdate
     }
     chatBoard.scrollTop = this.scrollTop
+  },
+  beforeDestroy () {
+    const chatBoard = this.$refs.board
+    chatBoard.removeEventListener('scroll', this.handleScroll)
   }
 }

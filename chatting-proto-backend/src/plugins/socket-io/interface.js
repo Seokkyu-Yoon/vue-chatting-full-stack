@@ -22,15 +22,22 @@ const Interface = {
   Response: {
     User: {
       LIST: 'res:user:list',
-      LOGIN: 'res:user:login',
-      IS_VALID: 'res:user:isValid'
+      ROOM: 'res:user:room',
+      SIGNIN: 'res:user:signin',
+      SIGNUP: 'res:user:signup'
     },
     Room: {
       LIST: 'res:room:list',
       CREATE: 'res:room:create',
       DELETE: 'res:room:delete',
       MESSAGES: 'res:room:messages',
-      SEARCH: 'res:room:search'
+      SEARCH: 'res:room:search',
+      JOINED: 'res:room:joined'
+    },
+    Member: {
+      Online: {
+        ROOM: 'res:member:online:room'
+      }
     },
     Message: {
       LIST: 'res:message:list',
@@ -41,8 +48,9 @@ const Interface = {
   Request: {
     User: {
       LIST: 'req:user:list',
-      LOGIN: 'req:user:login',
-      IS_VALID: 'req:user:isValid'
+      ROOM: 'req:user:room',
+      SIGNIN: 'req:user:signin',
+      SIGNUP: 'req:user:signup'
     },
     Room: {
       LIST: 'req:room:list',
@@ -51,7 +59,13 @@ const Interface = {
       UPDATE: 'req:room:update',
       LEAVE: 'req:room:leave',
       DELETE: 'req:room:delete',
-      SEARCH: 'req:room:search'
+      SEARCH: 'req:room:search',
+      JOINED: 'req:room:joined'
+    },
+    Member: {
+      Online: {
+        ROOM: 'req:member:online:room'
+      }
     },
     Message: {
       LIST: 'req:message:list',

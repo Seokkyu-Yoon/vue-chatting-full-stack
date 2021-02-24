@@ -2,16 +2,17 @@ import Vue from 'vue'
 
 const vue = new Vue({
   data: {
-    userId: -1,
-    userName: '',
-    room: {},
+    user: null,
+    room: null,
     users: [],
     recipients: [],
     rooms: [],
-    roomCount: 0,
-    messages: [],
+    roomsJoined: [],
+    roomsSearched: [],
     startIndexRoom: 0,
-    startIndexUser: 0,
+    startIndexRoomJoined: 0,
+    startIndexRoomSearched: 0,
+    messages: [],
     minIndexMessage: -1,
     searchRoomText: ''
   }

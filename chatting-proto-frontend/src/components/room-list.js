@@ -1,5 +1,4 @@
 import store from '@/store'
-import Req from '@/core/request'
 import Password from '@/components/Password.vue'
 
 export default {
@@ -7,9 +6,16 @@ export default {
   components: {
     Password
   },
+  props: {
+    rooms: Array,
+    getRooms: Function,
+    join: Function,
+    scroll: Boolean
+  },
   data () {
     return {
       store,
+      selectedRoom: null,
       cardOffsetWidth: 0
     }
   },
@@ -36,84 +42,34 @@ export default {
       }
       return classBadge.join(' ')
     },
-    isFull (room) {
-      return room.maxJoin > 0 && room.joining === room.maxJoin
-    },
-    isJoinedRoom (room) {
-      const joinedRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
-      return joinedRooms.has(room.id)
-    },
-    removeRoomIdFromCookie (room) {
-      const joinedRooms = new Set(JSON.parse(this.$cookies.get(store.userName)) || [])
-      joinedRooms.delete(room.id)
-    },
-    async join (room) {
-      const req = new Req('req:room:join', { id: room.id, pw: room.pw || '' })
-      const res = await this.$request(req)
-      const { room: resRoom } = res.body
-      if (res.status === 200) {
-        store.room = resRoom
-        this.$router.push({ name: 'Chat', params: { roomId: resRoom.id, userName: store.userName, userId: store.userId, pw: resRoom.pw } })
-      }
-    },
-    async setCurrRoom (room) {
-      if (this.isFull(room)) {
-        alert('인원이 꽉 찼습니다')
-        return
-      }
-      try {
-        if (this.isJoinedRoom(room)) {
-          await this.join(room)
-          return
-        }
-      } catch (e) {
-        console.error(e)
-        this.removeRoomIdFromCookie(room)
-      }
-      if (room.pw) {
-        store.room = room
-        this.$refs.password.$refs.modal.show()
-        return
-      }
-      await this.join(room)
-    },
     async deleteRoom (id) {
-      const reqDelete = new Req('req:room:delete', { id })
-      const resDelete = await this.$request(reqDelete)
-      if (resDelete.status === 200) {
-        store.room = {}
-      }
+      await this.$socketHandler.deleteRoom({ id })
     },
-    async getRooms () {
-      const req = new Req('req:room:list', { userId: store.userId, startIndex: store.startIndexRoom })
-      const res = await this.$request(req)
-      const { rooms = [] } = res.body
-      store.rooms = [
-        ...store.rooms,
-        ...rooms
-      ]
-      store.startIndexRoom += store.rooms.length
+    async handleScroll (e) {
+      if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return
+      this.getRooms()
     },
     handleResize () {
       const { rooms } = this.$refs
       this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
     }
   },
-  beforeMount () {
-    store.startIndexRoom = 0
-    store.rooms = []
-    this.getRooms()
+  async created () {
+    await this.getRooms()
   },
-  mounted () {
+  async mounted () {
     const { rooms } = this.$refs
-    rooms.addEventListener('scroll', async (e) => {
-      if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return
-      this.getRooms()
-    })
+    if (this.scroll) {
+      rooms.addEventListener('scroll', this.handleScroll)
+    }
     window.addEventListener('resize', this.handleResize)
     this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
   },
   beforeDestroy () {
+    const { rooms } = this.$refs
+    if (this.scroll) {
+      rooms.removeEventListener('scroll', this.handleScroll)
+    }
     window.removeEventListener('resize', this.handleResize)
   }
 }

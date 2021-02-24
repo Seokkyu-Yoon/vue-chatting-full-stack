@@ -1,318 +1,265 @@
-import mysql from 'mysql'
+import Connection from './connection'
+import logger from '@/core/logger'
 
-import { logger } from '@/core'
-import { ConfigMysql } from '@/config'
 import {
   // for init
   getSelectAllTables,
+  getCreateTableOnline,
   getCreateTableRoom,
   getCreateTableUser,
+  getCreateTableMember,
   getCreateTableMessageType,
   getInsertMessageType,
   getCreateTableMessage,
-  getCreateTableParticipant,
-  getCreateTableRecipient,
-  getCreateTableLastJoined,
-
-  // for room
-  getSelectCountRoom,
-  getSelectRooms,
-  getSelectRoomsByTitle,
-  getSelectRoom,
-  getSelectRoomIdBy,
-  getInsertRoom,
-  getUpdateRoom,
-  getDeleteRoom,
-
-  // for user
-  getSelectCountUser,
-  getSelectUserId,
-  getSelectUserName,
-  getSelectUsers,
-  getSelectUsersIn,
+  getCreateTableDirectMessage,
+  getCreateTableRoomMessage,
+  getCreateTableGroupMessage,
+  getSelectOfflineUsers,
+  getSelectUserBySocketId,
+  getSelectOnlineMembersInRoom,
+  getSelectUserById,
+  getSelectUserIsValid,
+  getInsertOnlineUser,
+  getDeleteOnlineUser,
   getInsertUser,
-  getDeleteUserBy,
-  getDeleteUserNotIn,
-
-  // for message
-  getSelectCountMessage,
-  getSelectMessage,
-  getSelectInsertedMessage,
+  getSelectCountUser,
+  getSelectRooms,
+  getSelectUserAlreadyOnline,
+  getSelectRoom,
+  getInsertMember,
+  getSelectMember,
+  getInsertRoom,
+  getSelectLastInsertId,
+  getUpdateMemberOffline,
+  getSelectRoomsJoined,
+  getDeleteRoom,
+  getSelectRoomsByTitle,
+  getSelectMessagesInRoom,
+  getSelectCountMessageInRoom,
+  getSelectMessageRecipients,
+  getUpdateMember,
+  getSelectMemberJoining,
   getInsertMessage,
-
-  // for recipient
-  getSelectRecipient,
-  getInsertRecipient,
-
-  // for participant
-  getInsertParticipant,
-  getDeleteParticipant,
-
-  // for lastJoined
-  getSelectCountLastJoined,
-  getInsertLastJoined,
-  getUpdateLastJoined
+  getSetId,
+  getInsertGroupMessages,
+  getInsertRoomMessage,
+  getSelectMessage,
+  getUpdateRoom,
+  getSelectMessagesInRoomReconnect
 } from './sql-params'
 
-function query ({ sql = '', params = [] }) {
-  if (sql === '') return
-  const connection = mysql.createConnection(ConfigMysql)
-  connection.connect()
-  return new Promise((resolve, reject) => {
-    connection.query(sql, params, function (err, results) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(results)
-      }
-      connection.end()
-    })
-  })
+const TABLE_CREATE_MAP = {
+  online: getCreateTableOnline(),
+  user: getCreateTableUser(),
+  room: getCreateTableRoom(),
+  message_type: getCreateTableMessageType(),
+  message: getCreateTableMessage(),
+  member: getCreateTableMember(),
+  direct_message: getCreateTableDirectMessage(),
+  room_message: getCreateTableRoomMessage(),
+  group_message: getCreateTableGroupMessage()
+}
+
+const MESSAGE_TYPE = [
+  { id: 1, type: 'text' }
+]
+
+async function exec (sqlParamsSet) {
+  const connection = new Connection()
+  const result = await connection.query(sqlParamsSet)
+  return result
+}
+
+async function transaction (sqlParamsSets) {
+  const connection = new Connection()
+  const results = await connection.transaction(sqlParamsSets)
+  return results
 }
 
 async function init () {
   const selectAllTables = getSelectAllTables()
-
-  const allTables = await query(selectAllTables)
-  const tables = allTables.reduce((bucket, { tableName }) => {
-    return [
-      ...bucket,
-      tableName
-    ]
-  }, [])
-
-  if (!tables.includes('room')) {
-    const createTableRoom = getCreateTableRoom()
-    await query(createTableRoom)
-  }
-
-  if (!tables.includes('user')) {
-    const createTableUser = getCreateTableUser()
-    await query(createTableUser)
-  }
-
-  if (!tables.includes('message_type')) {
-    const createTableMessageType = getCreateTableMessageType()
-
-    const messageType = {
-      text: { idx: 1, type: 'text' }
+  const mysqlTables = await exec(selectAllTables)
+  for (const tableCreateKey in TABLE_CREATE_MAP) {
+    const isExists = mysqlTables.some(({ tableName }) => tableName === tableCreateKey)
+    if (isExists) {
+      logger.info(`${tableCreateKey} already exists`)
+      continue
     }
-    const insertMessageTypeText = getInsertMessageType(messageType.text)
+    const sqlParamsSetCreateTable = TABLE_CREATE_MAP[tableCreateKey]
+    await exec(sqlParamsSetCreateTable)
+    logger.info(`${tableCreateKey} create done`)
 
-    await query(createTableMessageType)
-    await query(insertMessageTypeText)
-  }
+    if (tableCreateKey !== 'message_type') continue
 
-  if (!tables.includes('message')) {
-    const createTableMessage = getCreateTableMessage()
-    await query(createTableMessage)
-  }
-
-  if (!tables.includes('participant')) {
-    const createTableParticipant = getCreateTableParticipant()
-    await query(createTableParticipant)
-  }
-
-  if (!tables.includes('recipient')) {
-    const createTableMessage = getCreateTableRecipient()
-    await query(createTableMessage)
-  }
-
-  if (!tables.includes('last_joined')) {
-    const createTableLastJoined = getCreateTableLastJoined()
-    await query(createTableLastJoined)
+    const sqlParamsSetsMessageTypes = MESSAGE_TYPE.map((typePayload) => getInsertMessageType(typePayload))
+    await transaction(sqlParamsSetsMessageTypes)
+    logger.info('insert message types done')
   }
 }
 
-async function removeTrashUser (connectingSocketIds) {
-  logger.info('cleaning users', connectingSocketIds)
-  const deleteUserDisconnected = getDeleteUserNotIn({ connectingSocketIds })
-  await query(deleteUserDisconnected)
-  logger.info('finished cleaning')
+async function removeOfflineUser (connectingSocketIds = []) {
+  logger.info('cleaning remaining offline users in online', connectingSocketIds)
+
+  const selectOfflineUsers = getSelectOfflineUsers({ connectingSocketIds })
+  const offlineUsers = await exec(selectOfflineUsers)
+  const offlines = await Promise.all(offlineUsers.map(signOut))
+  logger.info('finished cleaning offline users in online')
+  return { offlines }
 }
 
-async function isValidUser ({ userName = '' }) {
-  if (!userName) return { isValid: false }
-  const selectCountUserName = getSelectCountUser({ userName })
-  const { length } = (await query(selectCountUserName))[0]
-  const isValid = length === 0
-  return { isValid }
+async function getUserBySocketId ({ socketId = '' }) {
+  if (!socketId) return {}
+  const selectUserBySocketId = getSelectUserBySocketId({ socketId })
+  const user = (await exec(selectUserBySocketId))[0]
+  return { user }
 }
 
-async function getUserName ({ id = '' }) {
-  if (!id) return { name: '' }
-  const selectUserNameById = getSelectUserName({ id })
-  const { name } = (await query(selectUserNameById))[0]
-  return { name }
+async function getUserById ({ id = '' }) {
+  if (!id) return {}
+  const selectUserById = getSelectUserById({ id })
+  const user = (await exec(selectUserById))[0]
+  return { user }
 }
 
-async function getUsers ({ roomId = null }) {
-  const selectUsersInRoomId = roomId === null ? getSelectUsers() : getSelectUsersIn({ roomId })
-  const users = await query(selectUsersInRoomId)
+async function signIn ({ socketId = '', id = '', pw = '' }) {
+  const selectUserIsValid = getSelectUserIsValid({ id, pw })
+  const user = (await exec(selectUserIsValid))[0] || null
+  if (user === null) throw new Error('아이디와 비밀번호를 확인해주세요')
+
+  const selectUserAlreadyOnline = getSelectUserAlreadyOnline({ socketId, userId: id })
+  const isOnline = (await exec(selectUserAlreadyOnline))[0].length > 0
+
+  if (!isOnline) {
+    const insertOnlineUser = getInsertOnlineUser({ socketId, userId: id })
+    await exec(insertOnlineUser)
+  }
+  return { user }
+}
+
+async function signUp ({ id, pw, name, email, phone }) {
+  const selectCountUser = getSelectCountUser({ id })
+  const { length } = (await exec(selectCountUser))[0]
+  if (length > 0) throw new Error('이미 존재하는 아이디입니다')
+
+  const insertUser = getInsertUser({ id, pw, name, email, phone })
+  await exec(insertUser)
+  return await getUserById({ id })
+}
+
+async function signOut ({ socketId = '' }) {
+  const selectUserBySocketId = getSelectUserBySocketId({ socketId })
+  const user = (await exec(selectUserBySocketId))[0]
+
+  const deleteOnlineUser = getDeleteOnlineUser({ socketId })
+  await exec(deleteOnlineUser)
+
+  const selectMemberJoining = getSelectMemberJoining({ userId: user.id })
+  const rooms = (await exec(selectMemberJoining)).map(({ roomId }) => roomId)
+
+  const updateMemberOffline = getUpdateMemberOffline({ userId: user.id })
+  await exec(updateMemberOffline)
+
+  return { user, rooms }
+}
+
+async function getRooms ({ startIndex = 0, limit = 0 }) {
+  const selectRooms = getSelectRooms({ startIndex, limit })
+  const rooms = await exec(selectRooms)
+  return { rooms }
+}
+
+async function getRoomsJoined ({ userId = '' }) {
+  const selectRoomsJoined = getSelectRoomsJoined({ userId })
+  const rooms = await exec(selectRoomsJoined)
+  return { rooms }
+}
+
+async function getRoomsSearched ({ title = '' }) {
+  const selectRoomsSearched = getSelectRoomsByTitle({ title })
+  const rooms = await exec(selectRoomsSearched)
+  return { rooms }
+}
+async function createRoom ({ title, createBy, pw, maxJoin, description }) {
+  const insertRoom = getInsertRoom({ createBy, title, pw, maxJoin, description })
+  const selectLastInsertId = getSelectLastInsertId()
+  const resultLastInsertId = (await transaction([insertRoom, selectLastInsertId]))[1]
+  const { id } = resultLastInsertId[0]
+
+  const selectRoom = getSelectRoom({ id })
+  const room = (await exec(selectRoom))[0] || null
+  return { room }
+}
+
+async function updateRoom ({ id, title, pw, maxJoin, description }) {
+  const updateRoom = getUpdateRoom({ id, title, pw, maxJoin, description })
+  await exec(updateRoom)
+
+  const selectRoom = getSelectRoom({ id })
+  const room = (await exec(selectRoom))[0] || null
+  return { room }
+}
+
+async function deleteRoom ({ id = -1 }) {
+  // is exists
+  const selectRoom = getSelectRoom({ id })
+  const room = (await exec(selectRoom))[0] || null
+  if (room === null) throw new Error('존재하지 않는 방입니다')
+
+  const deleteRoom = getDeleteRoom({ id })
+  await exec(deleteRoom)
+  return { id }
+}
+
+async function joinRoom ({ id = -1, pw = '', userId = '' }) {
+  // is exists
+  const selectRoom = getSelectRoom({ id })
+  const room = (await exec(selectRoom))[0] || null
+  if (room === null) throw new Error('존재하지 않는 방입니다')
+
+  // is already member
+  const selectMemebr = getSelectMember({ roomId: id })
+  const members = await exec(selectMemebr)
+  if (members.some(({ userId: memberId }) => memberId === userId)) {
+    const updateMember = getUpdateMember({ userId, roomId: id, joining: true })
+    await exec(updateMember)
+    return { room }
+  }
+
+  // password mismatch
+  if (room.pw !== pw) throw new Error('비밀번호가 틀렸습니다')
+
+  // insert member
+  const insertMember = getInsertMember({ userId, roomId: id })
+  await exec(insertMember)
+  return { room }
+}
+
+async function leaveRoom ({ id = -1, userId = '' }) {
+  // is exists
+  const selectRoom = getSelectRoom({ id })
+  const room = (await exec(selectRoom))[0] || null
+  if (room === null) throw new Error('존재하지 않는 방입니다')
+
+  const updateMember = getUpdateMember({ userId, roomId: id, joining: false })
+  await exec(updateMember)
+  return { roomId: room.id }
+}
+
+async function getOnlineMembersInRoom ({ roomId = null }) {
+  if (roomId === null) return { users: [] }
+  const selectOnlineMembersInRoom = getSelectOnlineMembersInRoom({ roomId })
+  const users = await exec(selectOnlineMembersInRoom)
   return { users }
 }
 
-async function login ({ socketId = '', userName = '', userId = Math.round(Math.random() * 9999999) }) {
-  if (!socketId || !userName) throw new Error('Fail to login')
-  const { isValid } = await isValidUser({ userName })
-
-  if (!isValid) throw new Error(`'${userName}' is already used`)
-  const insertUser = getInsertUser({ id: userId, socketId, name: userName })
-  await query(insertUser)
-
-  return {
-    isValid,
-    userName,
-    userId,
-    room: {}
-  }
-}
-
-async function logout ({ socketId = '' }) {
-  if (socketId === '') throw new Error('socketId is empty')
-  const selectRoomIdsBySocketId = getSelectRoomIdBy({ socketId })
-  const result = await query(selectRoomIdsBySocketId)
-
-  const deleteUserBySocketId = getDeleteUserBy({ socketId })
-  await query(deleteUserBySocketId)
-
-  const rooms = result.map(({ roomId }) => roomId)
-  return { rooms }
-}
-
-async function existsRoom ({ id }) {
-  const selectCountRoom = getSelectCountRoom({ id })
-  const { length } = (await query(selectCountRoom))[0]
-  const isExists = length > 0
-  return { isExists }
-}
-
-async function getRoom ({ id = null }) {
-  const { isExists } = await existsRoom({ id })
-  if (!isExists) throw new Error(`'${id}' is not exists`)
-  const selectRoom = getSelectRoom({ id })
-  const room = (await query(selectRoom))[0]
-  return { room }
-}
-
-async function getRooms ({ startIndex = 0, limit = 0, userId = -1 }) {
-  const selectRooms = getSelectRooms({ startIndex, limit, userId })
-  const rooms = await query(selectRooms)
-  return { rooms }
-}
-
-async function createRoom ({
-  id = null,
-  title = '',
-  createBy = '',
-  pw = '',
-  maxJoin = 0,
-  description = ''
-}) {
-  if (!createBy) {
-    throw new Error('createBy is empty to create room')
-  }
-  let insertId = id
-  if (insertId === null) {
-    insertId = Math.round(Math.random() * 10000000)
-  }
-
-  const { isExists } = await existsRoom({ id: insertId })
-  if (isExists) throw new Error('roomId is already exists')
-  const insertRoom = getInsertRoom({
-    id: insertId,
-    title,
-    createBy,
-    pw,
-    maxJoin,
-    description
-  })
-  await query(insertRoom)
-
-  const { room } = await getRoom({ id: insertId })
-  return { room }
-}
-
-async function updateRoom ({
-  id = null,
-  title = '',
-  pw = '',
-  maxJoin = 0,
-  description = ''
-}) {
-  if (id === null) throw new Error('id is empty to update room')
-
-  const updateRoom = getUpdateRoom({ id, title, pw, maxJoin, description })
-
-  await query(updateRoom)
-
-  const { room } = await getRoom({ id })
-  return { room }
-}
-
-async function deleteRoom ({ id = null }) {
-  if (id === null) throw new Error('title is empty to delete room')
-
-  const deleteRoom = getDeleteRoom({ id })
-  await query(deleteRoom)
-  return { id }
-}
-
-async function joinRoom ({ id = null, pw = '', socketId = '' }) {
-  if (id === null || !socketId) throw new Error('Invalid to join room')
-
-  const { room } = await getRoom({ id })
-  if (room.pw && room.pw !== pw) throw new Error('Invalid to join room')
-
-  if (room.maxJoin !== 0 && room.joining >= room.maxJoin) throw new Error('Room is full')
-  const sql = getInsertParticipant({ roomId: id, socketId })
-  await query(sql)
-
-  const selectUserId = getSelectUserId({ socketId })
-
-  const { userId } = (await query(selectUserId))[0]
-  const countLastJoined = getSelectCountLastJoined({ userId, roomId: id })
-
-  const { length } = (await query(countLastJoined))[0]
-
-  const upsertLastJoined = (
-    length > 0
-      ? getUpdateLastJoined
-      : getInsertLastJoined
-  )({ userId, roomId: id })
-  await query(upsertLastJoined)
-
-  return { room }
-}
-
-async function leaveRoom ({ id = null, socketId = '' }) {
-  if (id === null || !socketId) throw new Error('Invalid to leave room')
-
-  const { isExists } = await existsRoom({ id })
-  if (!isExists) throw new Error(`id(${id}) room is not exists`)
-
-  const deleteParticipant = getDeleteParticipant({ roomId: id, socketId })
-  await query(deleteParticipant)
-  return { id }
-}
-
-async function searchRooms ({ userId = -1, title = '' }) {
-  if (userId === -1 || !title) throw new Error('Invalid to search rooms')
-
-  const selectRoomsByTitle = getSelectRoomsByTitle({ userId, title })
-  const rooms = await query(selectRoomsByTitle)
-  return { rooms }
-}
-
-async function getMessages ({ roomId = null, minIndex = -1 }) {
+async function getMessagesInRoom ({ userId = '', roomId = null, minIndex = -1 }) {
   if (roomId === null) throw new Error('id is empty')
   const COUNT = 50
 
   let offset = minIndex
   if (minIndex === -1) {
-    const countMessage = getSelectCountMessage({ roomId })
-
-    const { length } = (await query(countMessage))[0]
+    const countMessage = getSelectCountMessageInRoom({ userId, roomId })
+    const { length } = (await exec(countMessage))[0]
     offset = length
   }
   offset -= COUNT
@@ -321,113 +268,80 @@ async function getMessages ({ roomId = null, minIndex = -1 }) {
     limit = COUNT + offset
     offset = 0
   }
-  const selectMessage = getSelectMessage({ roomId, limit, offset })
-
-  const results = await query(selectMessage)
-  const messages = await Promise.all(results.map(async ({
-    idx,
-    roomId,
-    type,
-    writter,
-    content,
-    datetime
-  }) => {
-    const selectRecipient = getSelectRecipient({ messageIdx: idx })
-    const result = await query(selectRecipient)
-    const recipients = result.map(({ userName }) => userName)
+  const selectMessagesInRoom = getSelectMessagesInRoom({ userId, roomId, offset, limit })
+  const messagesInRoom = await exec(selectMessagesInRoom)
+  const messages = await Promise.all(messagesInRoom.map(async (message) => {
+    const selectMessageRecipients = getSelectMessageRecipients({ messageId: message.id })
+    const recipients = (await exec(selectMessageRecipients)).map(({ userId }) => userId)
     return {
+      ...message,
       roomId,
-      type,
-      writter,
-      content,
-      datetime,
       recipients
     }
   }))
   return { messages, minIndex: offset }
 }
 
-async function getMessageReconnect ({ roomId = null, startIndex = 0 }) {
-  if (roomId === null) throw new Error('roomId is empty')
-  const limit = Number.MAX_SAFE_INTEGER
-  const offset = startIndex
-  const selectMessage = getSelectMessage({ roomId, limit, offset })
-
-  const results = await query(selectMessage)
-  const messages = await Promise.all(results.map(async ({
-    idx,
-    roomId,
-    type,
-    writter,
-    content,
-    datetime
-  }) => {
-    const selectRecipient = getSelectRecipient({ messageIdx: idx })
-    const result = await query(selectRecipient)
-    const recipients = result.map(({ userName }) => userName)
+async function getMessagesInRoomReconnect ({ userId = '', roomId = null, startIndex = 0 }) {
+  if (roomId === null) throw new Error('id is empty')
+  const selectMessagesInRoomReconnect = getSelectMessagesInRoomReconnect({ userId, roomId, startIndex })
+  const messagesInRoom = await exec(selectMessagesInRoomReconnect)
+  const messages = await Promise.all(messagesInRoom.map(async (message) => {
+    const selectMessageRecipients = getSelectMessageRecipients({ messageId: message.id })
+    const recipients = (await exec(selectMessageRecipients)).map(({ userId }) => userId)
     return {
+      ...message,
       roomId,
-      type,
-      writter,
-      content,
-      datetime,
       recipients
     }
   }))
-
   return { messages }
 }
 
-async function writeMessage ({
-  roomId = null,
-  type = '',
-  writter = '',
-  content = '',
-  recipients = []
-}) {
-  if (roomId === null || !type || !writter || !content) throw new Error('Invalid to write message')
+async function writeMessage ({ roomId = null, type = '', writter = '', content = '', recipients = [] }) {
+  const insertMessage = getInsertMessage({ type, writter, content })
+  const selectMessageId = getSelectLastInsertId()
+  const setId = getSetId()
+  const insertRecipients = recipients.length > 0
+    ? getInsertGroupMessages({ roomId, recipients })
+    : getInsertRoomMessage({ roomId })
 
-  const insertMessage = getInsertMessage({ roomId, type, writter, content })
-  const lastIdxMessage = getSelectInsertedMessage()
+  const resultSelectMessageId = (await transaction([insertMessage, selectMessageId, setId, insertRecipients]))[1]
+  const { id } = resultSelectMessageId[0]
 
-  const message = (await query(insertMessage).then(() => query(lastIdxMessage)))[0]
-
-  await Promise.all(recipients.map(async (userName) => {
-    const insertRecipient = getInsertRecipient({ messageIdx: message.idx, userName })
-    await query(insertRecipient)
-  }))
+  const selectMessage = getSelectMessage({ id })
+  const message = (await exec(selectMessage))[0]
 
   return {
     message: {
       ...message,
+      roomId,
       recipients
     }
   }
 }
-
 export default {
-  query,
-
   init,
-  removeTrashUser,
+  removeOfflineUser,
 
-  isValidUser,
-  getUserName,
-  getUsers,
-  login,
-  logout,
+  getUserById,
+  getUserBySocketId,
+  signIn,
+  signUp,
+  signOut,
 
-  getRoom,
   getRooms,
-  existsRoom,
+  getRoomsJoined,
+  getRoomsSearched,
   createRoom,
   updateRoom,
   deleteRoom,
   joinRoom,
   leaveRoom,
-  searchRooms,
 
-  getMessages,
-  getMessageReconnect,
+  getOnlineMembersInRoom,
+
+  getMessagesInRoom,
+  getMessagesInRoomReconnect,
   writeMessage
 }

@@ -1,446 +1,589 @@
 import { ConfigMysql } from '@/config'
+// utils
+function getSelectLastInsertId () {
+  return {
+    sql: `
+    SELECT LAST_INSERT_ID() AS id`,
+    params: []
+  }
+}
+function getSetId () {
+  return {
+    sql: `
+    SET @id = LAST_INSERT_ID()`,
+    params: []
+  }
+}
 
 // for init
-const getSelectAllTables = () => ({
-  sql: `
-  SELECT table_name as tableName
+function getSelectAllTables () {
+  return {
+    sql: `
+    SELECT table_name as tableName
     FROM information_schema.tables
-    WHERE table_schema = ?
-  `,
-  params: [ConfigMysql.database]
-})
+    WHERE table_schema = ?`,
+    params: [ConfigMysql.database]
+  }
+}
+function getCreateTableOnline () {
+  return {
+    sql: `
+    CREATE TABLE online (
+      socket_id VARCHAR(25),
+      user_id VARCHAR(20) NOT NULL,
+      PRIMARY KEY (socket_id)
+    )`,
+    params: []
+  }
+}
+function getCreateTableUser () {
+  return {
+    sql: `
+    CREATE TABLE user (
+      id VARCHAR(20),
+      pw VARCHAR(20) NOT NULL,
+      name VARCHAR(50) NOT NULL,
+      email VARCHAR(50),
+      phone VARCHAR(15),
+      PRIMARY KEY (id)
+    )`,
+    params: []
+  }
+}
+function getCreateTableRoom () {
+  return {
+    sql: `
+    CREATE TABLE room (
+      id INT AUTO_INCREMENT,
+      create_by VARCHAR(20) NOT NULL,
+      title VARCHAR(100) NOT NULL,
+      pw VARCHAR(20) NOT NULL,
+      max_join INT NOT NULL DEFAULT 0,
+      description TEXT NOT NULL,
+      create_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      update_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      FOREIGN KEY (create_by) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
+function getCreateTableMember () {
+  return {
+    sql: `
+    CREATE TABLE member (
+      user_id VARCHAR(20),
+      room_id INT,
+      joining BOOLEAN NOT NULL DEFAULT TRUE,
+      last_joined DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, room_id),
+      FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
+function getCreateTableMessageType () {
+  return {
+    sql: `
+    CREATE TABLE message_type (
+      id INT,
+      type VARCHAR(10),
+      PRIMARY KEY (id)
+    )`,
+    params: []
+  }
+}
+function getInsertMessageType ({ id, type }) {
+  return {
+    sql: `
+    INSERT INTO message_type (id, type) VALUES
+    (?, ?)`,
+    params: [id, type]
+  }
+}
+function getCreateTableMessage () {
+  return {
+    sql: `
+    CREATE TABLE message (
+      id INT AUTO_INCREMENT,
+      type_id INT NOT NULL,
+      writter VARCHAR(20) NOT NULL,
+      content TEXT NOT NULL,
+      write_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      FOREIGN KEY (type_id) REFERENCES message_type (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+      FOREIGN KEY (writter) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
+function getCreateTableDirectMessage () {
+  return {
+    sql: `
+    CREATE TABLE direct_message (
+      message_id INT,
+      user_id VARCHAR(20),
+      PRIMARY KEY (message_id, user_id),
+      FOREIGN KEY (message_id) REFERENCES message (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
+function getCreateTableRoomMessage () {
+  return {
+    sql: `
+    CREATE TABLE room_message (
+      message_id INT,
+      room_id INT,
+      PRIMARY KEY (message_id, room_id),
+      FOREIGN KEY (message_id) REFERENCES message (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
+function getCreateTableGroupMessage () {
+  return {
+    sql: `
+    CREATE TABLE group_message (
+      message_id INT,
+      room_id INT,
+      user_id VARCHAR(20),
+      PRIMARY KEY (message_id, room_id, user_id),
+      FOREIGN KEY (message_id) REFERENCES message (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE
+    )`,
+    params: []
+  }
+}
 
-const getCreateTableRoom = () => ({
-  sql: `
-  CREATE TABLE room (
-    id INT NOT NULL,
-    title VARCHAR(100) NOT NULL,
-    create_by VARCHAR(50) NOT NULL,
-    pw VARCHAR(20) NOT NULL,
-    max_join INT NOT NULL DEFAULT 0,
-    description TEXT NOT NULL,
-    last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-  )
-  `,
-  params: []
-})
-
-const getCreateTableUser = () => ({
-  sql: `
-  CREATE TABLE user (
-    id INT NOT NULL UNIQUE,
-    socket_id VARCHAR(25) NOT NULL,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    PRIMARY KEY (socket_id)
-  )
-  `,
-  params: []
-})
-
-const getCreateTableMessageType = () => ({
-  sql: `
-  CREATE TABLE message_type (
-    idx INT NOT NULL UNIQUE,
-    type TEXT NOT NULL,
-    PRIMARY KEY (idx)
-  )
-  `,
-  params: []
-})
-
-const getInsertMessageType = ({ idx, type }) => ({
-  sql: `
-  INSERT INTO message_type (idx, type) VALUES
-  (?, ?)
-  `,
-  params: [
-    idx,
-    type
-  ]
-})
-
-const getCreateTableMessage = () => ({
-  sql: `
-  CREATE TABLE message (
-    idx INT NOT NULL AUTO_INCREMENT,
-    room_id INT NOT NULL,
-    type_idx INT NOT NULL,
-    writter VARCHAR(50) NOT NULL,
-    content TEXT NOT NULL,
-    datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (idx),
-    FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (type_idx) REFERENCES message_type (idx) ON UPDATE CASCADE ON DELETE RESTRICT
-  )
-  `,
-  params: []
-})
-
-const getCreateTableParticipant = () => ({
-  sql: `
-  CREATE TABLE participant (
-    room_id INT NOT NULL,
-    socket_id VARCHAR(25) NOT NULL,
-    PRIMARY KEY (room_id, socket_id),
-    FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (socket_id) REFERENCES user (socket_id) ON UPDATE CASCADE ON DELETE CASCADE
-  )
-  `,
-  params: []
-})
-
-const getCreateTableRecipient = () => ({
-  sql: `
-  CREATE TABLE recipient (
-    message_idx INT NOT NULL,
-    user_name VARCHAR(50) NOT NULL,
-    PRIMARY KEY (message_idx, user_name),
-    FOREIGN KEY (message_idx) REFERENCES message (idx) ON UPDATE CASCADE ON DELETE CASCADE
-  )
-  `,
-  params: []
-})
-
-const getCreateTableLastJoined = () => ({
-  sql: `
-  CREATE TABLE last_joined (
-    user_id INT NOT NULL,
-    room_id INt NOT NULL,
-    last_joined DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, room_id),
-    FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE
-  )
-  `,
-  params: []
-})
-
-// for room
-const getSelectCountRoom = ({ id }) => ({
-  sql: `
-  SELECT COUNT(*) AS length
-  FROM room
-  WHERE id=?
-  `,
-  params: [id]
-})
-
-const COUNT_ROOM = 30
-const getSelectRooms = ({ startIndex, limit, userId }) => ({
-  sql: `
-  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
-  FROM room
-  LEFT JOIN last_joined ON last_joined.user_id = ? AND last_joined.room_id = room.id
-  LEFT JOIN participant ON room.id=participant.room_id
-  GROUP BY room.id
-  ORDER BY last_joined.last_joined IS NULL ASC, last_joined.last_joined DESC, room.last_updated DESC
-  LIMIT ? OFFSET ?
-  `,
-  params: [userId, limit || COUNT_ROOM, startIndex]
-})
-
-const getSelectRoomsByTitle = ({ userId, title }) => ({
-  sql: `
-  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
-  FROM room
-  LEFT JOIN last_joined ON last_joined.user_id = ? AND last_joined.room_id = room.id
-  LEFT JOIN participant ON room.id=participant.room_id
-  WHERE room.title LIKE ?
-  GROUP BY room.id
-  ORDER BY last_joined.last_joined IS NULL ASC, last_joined.last_joined DESC, room.last_updated DESC
-  `,
-  params: [userId, `%${title}%`]
-})
-
-const getSelectRoom = ({ id }) => ({
-  sql: `
-  SELECT room.id, room.title, room.create_by AS createBy, room.pw, room.max_join AS maxJoin, room.description, room.last_updated AS lastUpdated, COUNT(participant.room_id) AS joining
-  FROM room
-  LEFT JOIN participant ON id=room_id
-  WHERE id=?
-  GROUP BY room.id
-  `,
-  params: [id]
-})
-
-const getSelectRoomIdBy = ({ socketId }) => ({
-  sql: `
-  SELECT room_id AS roomId
-  FROM participant
-  WHERE socket_id=?
-  `,
-  params: [socketId]
-})
-
-const getInsertRoom = ({ id, title, createBy, pw, maxJoin, description }) => ({
-  sql: `
-  INSERT INTO room (
-    id,
-    title,
-    create_by,
-    pw,
-    max_join,
-    description
-  ) VALUES (
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-    ?
-  )
-  `,
-  params: [id, title, createBy, pw, maxJoin, description]
-})
-
-const getUpdateRoom = ({ id, title, pw, maxJoin, description }) => ({
-  sql: `
-  UPDATE room SET
-    title=?,
-    pw=?,
-    max_join=?,
-    description=?
-  WHERE id=?`,
-  params: [title, pw, maxJoin, description, id]
-})
-
-const getDeleteRoom = ({ id }) => ({
-  sql: `
-  DELETE FROM room
-  WHERE id=?
-  `,
-  params: [id]
-})
+// for online
+function getSelectOnlineUsers () {
+  return {
+    sql: `
+    SELECT user_id AS userId
+    FROM online`
+  }
+}
+function getSelectOfflineUsers ({ connectingSocketIds }) {
+  if (connectingSocketIds.length === 0) {
+    return {
+      sql: `
+      SELECT socket_id AS socketId
+      FROM online`,
+      params: []
+    }
+  }
+  return {
+    sql: `
+    SELECT socket_id AS socketId
+    FROM online
+    WHERE socket_id NOT IN (?)`,
+    params: [connectingSocketIds]
+  }
+}
+function getSelectUserAlreadyOnline ({ socketId, userId }) {
+  return {
+    sql: `
+    SELECT COUNT(*) AS length
+    FROM online
+    WHERE socket_id=? AND user_id=?`,
+    params: [socketId, userId]
+  }
+}
+function getInsertOnlineUser ({ socketId, userId }) {
+  return {
+    sql: `
+    INSERT INTO online (socket_id, user_id)
+    VALUES (?, ?)`,
+    params: [socketId, userId]
+  }
+}
+function getDeleteOnlineUser ({ socketId }) {
+  return {
+    sql: `
+    DELETE FROM online
+    WHERE socket_id=?`,
+    params: [socketId]
+  }
+}
 
 // for user
-const getSelectCountUser = ({ userName }) => ({
-  sql: `
-  SELECT COUNT(*) AS length
-  FROM user
-  WHERE name=?
-  `,
-  params: [userName]
-})
-
-const getSelectUserId = ({ socketId }) => ({
-  sql: `
-  SELECT id AS userId
-  FROM user
-  WHERE socket_id=?
-  `,
-  params: [socketId]
-})
-
-const getSelectUserName = ({ id }) => ({
-  sql: `
-  SELECT name
-  FROM user
-  WHERE id=?
-  `,
-  params: [id]
-})
-
-const getSelectUsers = () => ({
-  sql: `
-  SELECT user.id AS id, user.socket_id AS socketId, user.name AS name, participant.room_id AS roomId
-  FROM participant
-  LEFT JOIN user ON user.socket_id=participant.socket_id
-  ORDER BY participant.room_id
-  `,
-  params: []
-})
-
-const getSelectUsersIn = ({ roomId }) => ({
-  sql: `
-  SELECT user.id AS id, user.socket_id AS socketId, user.name AS name
-  FROM participant
-  LEFT JOIN user ON user.socket_id=participant.socket_id
-  WHERE room_id=?
-  `,
-  params: [roomId]
-})
-
-const getInsertUser = ({ id = Math.round(Math.random() * 9999999), socketId = '', name = '' }) => ({
-  sql: `
-  INSERT INTO user (id, socket_id, name) VALUES
-  (?, ?, ?)
-  `,
-  params: [id, socketId, name]
-})
-
-const getDeleteUserBy = ({ socketId }) => ({
-  sql: `
-  DELETE FROM user
-  WHERE socket_id=?
-  `,
-  params: [socketId]
-})
-
-const getDeleteUserNotIn = ({ connectingSocketIds }) => {
-  const sqlBasic = 'DELETE FROM user'
-  const sql = connectingSocketIds.length > 0
-    ? `
-      ${sqlBasic}
-      WHERE socket_id NOT IN (?)
-    `
-    : sqlBasic
-
+function getSelectCountUser ({ id }) {
   return {
-    sql,
-    params: [connectingSocketIds]
+    sql: `
+    SELECT COUNT(*) AS length
+    FROM user
+    WHERE id=?`,
+    params: [id]
+  }
+}
+function getSelectUserIsValid ({ id, pw }) {
+  return {
+    sql: `
+    SELECT id, pw, name, email, phone
+    FROM user
+    WHERE id=? AND pw=?`,
+    params: [id, pw]
+  }
+}
+function getSelectUserBySocketId ({ socketId }) {
+  return {
+    sql: `
+    SELECT user.id, user.name, user.email, user.phone
+    FROM user
+    LEFT JOIN online ON user.id=online.user_id
+    WHERE socket_id=?`,
+    params: [socketId]
+  }
+}
+function getSelectUserById ({ id }) {
+  return {
+    sql: `
+    SELECT id, name, email, phone
+    FROM user
+    WHERE id=?`,
+    params: [id]
+  }
+}
+
+function getInsertUser ({ id, pw, name, email, phone }) {
+  return {
+    sql: `
+    INSERT INTO user (id, pw, name, email, phone)
+    VALUES (?, ?, ?, ?, ?)`,
+    params: [id, pw, name, email, phone]
+  }
+}
+
+// for room
+const COUNT_ROOM = 30
+function getSelectRooms ({ startIndex, limit }) {
+  return {
+    sql: `
+    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    FROM room
+    LEFT JOIN member ON member.room_id=room.id
+    GROUP BY room.id
+    ORDER BY room.create_at DESC
+    LIMIT ? OFFSET ?`,
+    params: [limit || COUNT_ROOM, startIndex]
+  }
+}
+
+function getSelectRoomsJoined ({ userId }) {
+  return {
+    sql: `
+    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, room.joining
+    FROM member
+    LEFT JOIN (
+      SELECT room.id, room.pw, room.create_by, room.title, room.max_join, room.description, room.create_at, room.update_at, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+      FROM room
+      LEFT JOIN member ON member.room_id=room.id
+      GROUP BY room.id
+      ORDER BY room.create_at DESC
+    ) AS room ON room.id = member.room_id
+    WHERE member.user_id=?
+    ORDER BY member.last_joined`,
+    params: [userId]
+  }
+}
+function getSelectRoomsByTitle ({ title }) {
+  return {
+    sql: `
+    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    FROM room
+    LEFT JOIN member ON member.room_id=room.id
+    WHERE room.title LIKE ?
+    GROUP BY room.id
+    ORDER BY room.create_at DESC
+    `,
+    params: [`%${title}%`]
+  }
+}
+
+function getSelectRoom ({ id }) {
+  return {
+    sql: `
+    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(member.room_id) AS joining
+    FROM room
+    LEFT JOIN member ON member.room_id=room.id
+    WHERE room.id=?
+    GROUP BY room.id
+  `,
+    params: [id]
+  }
+}
+
+function getInsertRoom ({ createBy, title, pw, maxJoin, description }) {
+  return {
+    sql: `
+    INSERT INTO room (create_by, title, pw, max_join, description) VALUES
+    (?, ?, ?, ?, ?)`,
+    params: [createBy, title, pw, maxJoin, description]
+  }
+}
+
+function getUpdateRoom ({ id, title, pw, maxJoin, description }) {
+  return {
+    sql: `
+    UPDATE room SET
+      title=?,
+      pw=?,
+      max_join=?,
+      description=?
+    WHERE id=?`,
+    params: [title, pw, maxJoin, description, id]
+  }
+}
+
+function getDeleteRoom ({ id }) {
+  return {
+    sql: `
+    DELETE FROM room
+    WHERE id=?
+    `,
+    params: [id]
+  }
+}
+
+// for member
+function getSelectAlreadyMember ({ userId, roomId }) {
+  return {
+    sql: `
+    SELECT COUNT(*) AS length
+    FROM member
+    WHERE user_id=? AND room_id=?`,
+    params: [userId, roomId]
+  }
+}
+function getSelectMember ({ roomId }) {
+  return {
+    sql: `
+    SELECT user_id AS userId
+    FROM member
+    WHERE room_id=?`,
+    params: [roomId]
+  }
+}
+function getSelectOnlineMembersInRoom ({ roomId }) {
+  return {
+    sql: `
+    SELECT online.socket_id AS socketId, user.id, user.name, user.email, user.phone
+    FROM member
+    LEFT JOIN user ON member.user_id=user.id
+    LEFT JOIN online ON member.user_id=online.user_id
+    WHERE member.room_id=? AND member.joining IS TRUE`,
+    params: [roomId]
+  }
+}
+function getSelectMemberJoining ({ userId }) {
+  return {
+    sql: `
+    SELECT room_id AS roomId
+    FROM member
+    WHERE user_id=? AND joining IS TRUE`,
+    params: [userId]
+  }
+}
+function getInsertMember ({ userId, roomId }) {
+  return {
+    sql: `
+    INSERT INTO member (user_id, room_id)
+    VALUES (?, ?)`,
+    params: [userId, roomId]
+  }
+}
+function getUpdateMember ({ userId, roomId, joining }) {
+  return {
+    sql: `
+    UPDATE member
+    SET joining=?
+    WHERE user_id=? AND room_id=?`,
+    params: [joining, userId, roomId]
+  }
+}
+function getUpdateMemberOffline ({ userId }) {
+  return {
+    sql: `
+    UPDATE member
+    SET joining=FALSE
+    WHERE user_id=?`,
+    params: [userId]
   }
 }
 
 // for message
-const getSelectCountMessage = ({ roomId }) => ({
-  sql: `
-  SELECT COUNT(*) AS length
-  FROM message
-  WHERE room_id=?
-  `,
-  params: [roomId]
-})
+function getSelectCountMessageInRoom ({ userId, roomId }) {
+  return {
+    sql: `
+    SELECT COUNT(message_for_user.message_id) AS length
+    FROM (
+      SELECT message_id
+      FROM room_message
+      WHERE room_id=?
+      UNION
+      SELECT group_message.message_id
+      FROM group_message
+      LEFT JOIN message ON message.id=group_message.message_id
+      WHERE group_message.room_id=? AND (message.writter=? OR group_message.user_id=?)
+    ) AS message_for_user`,
+    params: [roomId, roomId, userId, userId]
+  }
+}
 
-const getSelectMessage = ({ roomId, limit, offset }) => ({
-  sql: `
-  SELECT message.idx AS idx, message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
-  FROM message
-  LEFT JOIN message_type ON type_idx=message_type.idx
-  WHERE room_id=?
-  LIMIT ? OFFSET ?
-  `,
-  params: [roomId, limit, offset]
-})
+function getSelectMessagesInRoom ({ userId, roomId, limit, offset }) {
+  return {
+    sql: `
+    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    FROM (
+      SELECT message_id
+      FROM room_message
+      WHERE room_id=?
+      UNION
+      SELECT group_message.message_id
+      FROM group_message
+      LEFT JOIN message ON message.id=group_message.message_id
+      WHERE group_message.room_id=? AND (message.writter=? OR group_message.user_id=?)
+    ) AS message_for_user
+    LEFT JOIN message ON message_for_user.message_id=message.id
+    LEFT JOIN message_type ON message.type_id=message_type.id
+    ORDER BY message.write_at
+    LIMIT ? OFFSET ?`,
+    params: [roomId, roomId, userId, userId, limit, offset]
+  }
+}
 
-const getSelectInsertedMessage = () => ({
-  sql: `
-  SELECT message.idx, message.room_id AS roomId, message_type.type AS type, message.writter AS writter, message.content, message.datetime
-  FROM message
-  LEFT JOIN message_type ON type_idx=message_type.idx
-  ORDER BY message.idx DESC
-  LIMIT 1
-  `,
-  params: []
-})
+function getSelectMessagesInRoomReconnect ({ userId, roomId, startIndex }) {
+  return {
+    sql: `
+    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    FROM (
+      SELECT message_id
+      FROM room_message
+      WHERE room_id=?
+      UNION
+      SELECT group_message.message_id
+      FROM group_message
+      LEFT JOIN message ON message.id=group_message.message_id
+      WHERE group_message.room_id=? AND (message.writter=? OR group_message.user_id=?)
+    ) AS message_for_user
+    LEFT JOIN message ON message_for_user.message_id=message.id
+    LEFT JOIN message_type ON message.type_id=message_type.id
+    ORDER BY message.write_at
+    LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ?`,
+    params: [roomId, roomId, userId, userId, startIndex]
+  }
+}
 
-const getInsertMessage = ({ roomId, type, writter, content }) => ({
-  sql: `
-  INSERT INTO message (room_id, type_idx, writter, content)
-  VALUES (?, (SELECT idx FROM message_type WHERE type=?), ?, ?)
-  `,
-  params: [roomId, type, writter, content]
-})
+function getSelectMessage ({ id }) {
+  return {
+    sql: `
+    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    FROM message
+    LEFT JOIN message_type ON message_type.id=message.type_id
+    WHERE message.id=?`,
+    params: [id]
+  }
+}
+function getSelectMessageRecipients ({ messageId }) {
+  return {
+    sql: `
+    SELECT user_id AS userId
+    FROM group_message
+    WHERE message_id=?`,
+    params: [messageId]
+  }
+}
 
-// for recipient
-const getSelectRecipient = ({ messageIdx }) => ({
-  sql: `
-  SELECT user_name AS userName
-  FROM recipient
-  WHERE message_idx=?
-  `,
-  params: [messageIdx]
-})
+function getInsertMessage ({ type, writter, content }) {
+  return {
+    sql: `
+    INSERT INTO message (type_id, writter, content)
+    VALUES ((SELECT id FROM message_type WHERE type=?), ?, ?)`,
+    params: [type, writter, content]
+  }
+}
 
-const getInsertRecipient = ({ messageIdx, userName }) => ({
-  sql: `
-  INSERT INTO recipient (message_idx, user_name) VALUES
-  (?, ?)
-  `,
-  params: [messageIdx, userName]
-})
+function getInsertRoomMessage ({ roomId }) {
+  return {
+    sql: `
+    INSERT INTO room_message (message_id, room_id)
+    VALUES (@id, ?)`,
+    params: [roomId]
+  }
+}
 
-// for participant
-const getInsertParticipant = ({ roomId, socketId }) => ({
-  sql: `
-  INSERT INTO participant (room_id, socket_id)
-  VALUES (?, ?)
-  `,
-  params: [roomId, socketId]
-})
-
-const getDeleteParticipant = ({ roomId, socketId }) => ({
-  sql: `
-  DELETE FROM participant
-  WHERE room_id=? AND socket_id=?
-  `,
-  params: [roomId, socketId]
-})
-
-// for lastJoined
-const getSelectCountLastJoined = ({ userId, roomId }) => ({
-  sql: `
-  SELECT COUNT(*) AS length
-  FROM last_joined
-  WHERE user_id=? AND room_id=?
-  `,
-  params: [userId, roomId]
-})
-
-const getInsertLastJoined = ({ userId, roomId }) => ({
-  sql: `
-  INSERT INTO last_joined (user_id, room_id) VALUES
-  (?, ?)
-  `,
-  params: [userId, roomId]
-})
-
-const getUpdateLastJoined = ({ userId, roomId }) => ({
-  sql: `
-  UPDATE last_joined SET
-    last_joined=NOW()
-  WHERE user_id=? AND room_id=?
-  `,
-  params: [userId, roomId]
-})
+function getInsertGroupMessages ({ roomId, recipients }) {
+  return {
+    sql: `
+    INSERT INTO group_message (message_id, room_id, user_id)
+    VALUES ${new Array(recipients.length).fill('(@id, ?, ?)').join(',')}`,
+    params: recipients.reduce((bucket, userId) => [...bucket, roomId, userId], [])
+  }
+}
 
 export {
+  // for utils
+  getSelectLastInsertId,
+  getSetId,
+
   // for init
   getSelectAllTables,
+  getCreateTableOnline,
   getCreateTableRoom,
   getCreateTableUser,
+  getCreateTableMember,
   getCreateTableMessageType,
   getInsertMessageType,
   getCreateTableMessage,
-  getCreateTableParticipant,
-  getCreateTableRecipient,
-  getCreateTableLastJoined,
+  getCreateTableDirectMessage,
+  getCreateTableRoomMessage,
+  getCreateTableGroupMessage,
+
+  // for online
+  getSelectOnlineUsers,
+  getSelectOfflineUsers,
+  getSelectUserAlreadyOnline,
+  getInsertOnlineUser,
+  getDeleteOnlineUser,
+
+  // for user
+  getSelectCountUser,
+  getSelectUserIsValid,
+  getSelectUserBySocketId,
+  getSelectUserById,
+  getInsertUser,
 
   // for room
-  getSelectCountRoom,
   getSelectRooms,
+  getSelectRoomsJoined,
   getSelectRoomsByTitle,
   getSelectRoom,
-  getSelectRoomIdBy,
   getInsertRoom,
   getUpdateRoom,
   getDeleteRoom,
 
-  // for user
-  getSelectCountUser,
-  getSelectUserId,
-  getSelectUserName,
-  getSelectUsers,
-  getSelectUsersIn,
-  getInsertUser,
-  getDeleteUserBy,
-  getDeleteUserNotIn,
+  // for member
+  getSelectAlreadyMember,
+  getSelectMember,
+  getSelectOnlineMembersInRoom,
+  getSelectMemberJoining,
+  getInsertMember,
+  getUpdateMember,
+  getUpdateMemberOffline,
 
   // for message
-  getSelectCountMessage,
+  getSelectCountMessageInRoom,
+  getSelectMessagesInRoom,
+  getSelectMessagesInRoomReconnect,
   getSelectMessage,
-  getSelectInsertedMessage,
+  getSelectMessageRecipients,
   getInsertMessage,
 
-  // for recipient
-  getSelectRecipient,
-  getInsertRecipient,
-
-  // for participant
-  getInsertParticipant,
-  getDeleteParticipant,
-
-  // for lastJoined
-  getSelectCountLastJoined,
-  getInsertLastJoined,
-  getUpdateLastJoined
+  getInsertRoomMessage,
+  getInsertGroupMessages
 }

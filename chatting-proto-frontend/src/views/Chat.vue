@@ -6,7 +6,7 @@
         <p class="h3">{{(store.room || {}).title || ''}}</p>
         <div class="flex-fill d-flex align-items-center justify-content-end overflow-hidden">
           <button
-            v-show="store.userName === store.room.createBy || ''"
+            v-show="store.room !== null && store.user.id === store.room.createBy || ''"
             type="button"
             class="btn btn-sm btn-secondary mr-1"
             v-on:click="updateRoom">

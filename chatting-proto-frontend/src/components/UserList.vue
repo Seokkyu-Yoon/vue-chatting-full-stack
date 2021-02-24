@@ -16,7 +16,7 @@
                 class="btn btn-sm btn-success ml-auto pt-1 pb-0 px-2"
                 v-text="'그룹메시지 추가'"
                 v-on:click="addRecipient({id, name, idx})"
-                v-bind:disabled="isDisableToAddRecipient(name)"
+                v-bind:disabled="isDisableToAddRecipient(id)"
                 />
             </div>
             <p class="h5 m-0 p-0 ml-auto user-name">{{name}}</p>

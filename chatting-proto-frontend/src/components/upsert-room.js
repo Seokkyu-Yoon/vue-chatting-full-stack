@@ -1,4 +1,3 @@
-import Req from '@/core/request'
 import store from '@/store'
 export default {
   name: 'Modal',
@@ -40,29 +39,26 @@ export default {
       }
       return ''
     },
-    createRoom () {
-      const req = new Req('req:room:create', {
+    async createRoom () {
+      await this.$socketHandler.createRoom({
         title: this.title,
         pw: this.pw,
-        createBy: store.userName,
+        createBy: store.user.id,
         maxJoin: this.maxJoin,
         description: this.description
       })
-      this.$request(req).catch(console.log)
     },
-    updateRoom () {
-      const req = new Req('req:room:update', {
+    async updateRoom () {
+      await this.$socketHandler.updateRoom({
         id: store.room.id,
         title: this.title,
         pw: this.pw,
         maxJoin: this.maxJoin,
         description: this.description
       })
-      this.$request(req)
     },
-    deleteRoom () {
-      const req = new Req('req:room:delete', { id: store.room.id })
-      this.$request(req)
+    async deleteRoom () {
+      await this.$socketHandler.deleteRoom({ id: store.room.id })
     },
     initInputs () {
       const {

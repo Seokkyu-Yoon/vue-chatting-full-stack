@@ -6,7 +6,7 @@ export default {
   },
   computed: {
     logined () {
-      return this.store.userName !== ''
+      return store.user !== null
     }
   },
   methods: {

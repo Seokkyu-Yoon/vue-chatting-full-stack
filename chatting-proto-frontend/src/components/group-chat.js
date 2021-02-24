@@ -1,4 +1,3 @@
-import Req from '@/core/request'
 import store from '@/store'
 
 export default {
@@ -37,15 +36,15 @@ export default {
       }
       if (this.blockSend) return
       this.blockSend = true
-      const req = new Req('req:message:write', {
-        roomId: store.room.id,
-        type: this.type,
-        writter: store.userName,
-        content: this.content,
-        recipients: store.recipients.map(({ name }) => name)
-      })
+
       try {
-        await this.$request(req)
+        await this.$socketHandler.writeMessage({
+          roomId: store.room.id,
+          type: this.type,
+          writter: store.user.id,
+          content: this.content,
+          recipients: store.recipients.map(({ id }) => id)
+        })
         this.content = ''
         this.sended = !this.sended
       } catch (e) {
