@@ -34,9 +34,11 @@
           v-on:click.stop="() => deleteRoom(room.id)">
           X
         </b-btn>
-        <div class="d-flex flex-column flex-fill justify-content-between">
+        <div class="d-flex flex-column mt-auto justify-content-between">
           <div class="white-space-pre-wrap scrollable mb-2">{{room.description}}</div>
-          <div class="w-100 d-flex justify-content-end">
+          <div>방장: {{room.createBy}}</div>
+          <div>생성일: {{getFormattedCreateAt(room)}}</div>
+          <div class="d-flex justify-content-end">
             <b-btn
               class='ml-auto'
               variant="primary"
@@ -47,7 +49,7 @@
           </div>
         </div>
       </b-card>
-      <p v-if="rooms.length === 0" class="h1">존재하는 방이 없습니다</p>
+      <p v-if="rooms.length === 0" class="h1">{{emptyMessage}}</p>
     </div>
   </div>
 </template>

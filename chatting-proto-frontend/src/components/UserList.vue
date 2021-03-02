@@ -36,6 +36,11 @@
   border-radius: 10px;
 }
 
+.holder {
+  background-color: white;
+  border-radius: 10px;
+}
+
 .user {
   border-radius: 5px;
   padding: 5px;
@@ -45,11 +50,6 @@
 
 .selected {
   background-color: aquamarine;
-}
-
-.holder {
-  background-color: white;
-  border-radius: 10px;
 }
 
 .user-key {

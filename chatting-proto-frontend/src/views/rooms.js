@@ -26,7 +26,7 @@ export default {
   },
   methods: {
     isFull (room) {
-      return room.maxJoin > 0 && room.joining === room.maxJoin
+      return room.maxJoin > 0 && room.joining >= room.maxJoin
     },
     createRoom () {
       this.$refs.upsertRoom.$refs.modal.show()
@@ -65,16 +65,13 @@ export default {
         store.room = resRoom
         this.$router.push({ name: 'Chat', params: { user: store.user, room: store.room } })
       } catch (e) {
-        console.log(e)
+        console.error(e)
         const { code } = e.body
         if (code === 201) {
           this.selectedRoom = room
           this.$refs.password.$refs.modal.show()
         }
       }
-    },
-    async selectRoom (room) {
-      this.selectRoom = room
     }
   },
   async created () {

@@ -10,16 +10,21 @@ export default {
     rooms: Array,
     getRooms: Function,
     join: Function,
-    scroll: Boolean
+    scroll: Boolean,
+    emptyMessage: String
   },
   data () {
     return {
       store,
-      selectedRoom: null,
       cardOffsetWidth: 0
     }
   },
   methods: {
+    getFormattedCreateAt ({ createAt }) {
+      const yyyyMMdd = createAt.split(' ')[0]
+      const [year, month, day] = yyyyMMdd.split('-')
+      return `${year}년 ${month}월 ${day}일`
+    },
     getClassBadgeSecret ({ pw }) {
       const classBadge = ['badge', 'text-center', 'align-middle']
       if (pw) {
@@ -33,7 +38,7 @@ export default {
       const classBadge = ['badge', 'text-center', 'ml-1']
       if (maxJoin === 0) {
         classBadge.push('badge-dark')
-      } else if (joining === maxJoin) {
+      } else if (joining >= maxJoin) {
         classBadge.push('badge-danger')
       } else if (joining >= maxJoin / 2) {
         classBadge.push('badge-warning')

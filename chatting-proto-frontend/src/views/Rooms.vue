@@ -9,9 +9,25 @@
         <p class="h4 m-0 p-0 d-none d-sm-flex align-items-center justify-content-center joined" v-if="!searching">최근 방문</p>
       </div>
       <div class="d-flex flex-fill overflow-hidden">
-        <RoomList class="d-flex" v-if="!searching" :rooms="store.rooms" :getRooms="getRooms" :join="join" scroll/>
-        <RoomList class="d-none d-sm-flex joined" v-if="!searching" :rooms="store.roomsJoined" :getRooms="getRoomsJoined" :join="join"/>
-        <RoomList class="d-flex" v-if="searching" :rooms="store.roomsSearched" :getRooms="getRoomsSearched" :join="join"/>
+        <RoomList class="d-flex"
+          v-if="!searching"
+          :rooms="store.rooms"
+          :getRooms="getRooms"
+          :join="join"
+          emptyMessage="생성된 방이 없습니다"
+          scroll/>
+        <RoomList class="d-none d-sm-flex joined"
+          v-if="!searching"
+          :rooms="store.roomsJoined"
+          :getRooms="getRoomsJoined"
+          :join="join"
+          emptyMessage="최근방문한 방이 없습니다"/>
+        <RoomList class="d-flex"
+          v-if="searching"
+          :rooms="store.roomsSearched"
+          :getRooms="getRoomsSearched"
+          :join="join"
+          emptyMessage="검색된 방이 없습니다"/>
       </div>
     </div>
   </div>

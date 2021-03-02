@@ -287,7 +287,7 @@ function getSelectRoomsJoined ({ userId }) {
       ORDER BY room.create_at DESC
     ) AS room ON room.id = member.room_id
     WHERE member.user_id=?
-    ORDER BY member.last_joined`,
+    ORDER BY member.last_joined DESC`,
     params: [userId]
   }
 }
@@ -308,7 +308,7 @@ function getSelectRoomsByTitle ({ title }) {
 function getSelectRoom ({ id }) {
   return {
     sql: `
-    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(member.room_id) AS joining
+    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
     FROM room
     LEFT JOIN member ON member.room_id=room.id
     WHERE room.id=?
