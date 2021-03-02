@@ -1,6 +1,7 @@
 import store from '@/store'
 import UpsertRoom from '@/components/UpsertRoom.vue'
 import MessageList from '@/components/MessageList.vue'
+import FileList from '@/components/FileList.vue'
 import UserList from '@/components/UserList.vue'
 import RoomDetail from '@/components/RoomDetail.vue'
 
@@ -10,6 +11,7 @@ export default {
     UpsertRoom,
     MessageList,
     UserList,
+    FileList,
     RoomDetail
   },
   data () {

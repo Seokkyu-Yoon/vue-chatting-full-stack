@@ -49,3 +49,8 @@ PONG # if response PONG accessable
 # mysql
 mysql -u root --host 172.31.14.88 -P 3306 -p
 ```
+
+
+# Trouble shooting 
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'qwer1234';
+flush privileges;

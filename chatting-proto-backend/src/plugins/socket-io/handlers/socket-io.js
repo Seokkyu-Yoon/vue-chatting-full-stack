@@ -98,6 +98,7 @@ SocketIoHandler.prototype.getRoomsSearched = async function (title = '') {
 }
 
 SocketIoHandler.prototype.createRoom = async function (
+  id = null,
   title = '',
   createBy = '',
   pw = '',
@@ -105,6 +106,7 @@ SocketIoHandler.prototype.createRoom = async function (
   description = ''
 ) {
   const body = await this.db.createRoom({
+    id,
     title,
     createBy,
     pw,
