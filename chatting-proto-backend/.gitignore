@@ -4,3 +4,5 @@
 /dist/
 /mysql/
 /file_storage
+
+!**/.gitkeep
