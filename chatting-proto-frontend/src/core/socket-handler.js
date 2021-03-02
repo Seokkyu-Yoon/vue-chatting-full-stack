@@ -7,16 +7,6 @@ function Handler (socket) {
   this.initSocket()
 }
 
-Handler.prototype.initSocket = function () {
-  this.socket.on('connect', this.onConnect.bind(this))
-  this.socket.on('broadcast:room:create', this.onRoomCreate.bind(this))
-  this.socket.on('broadcast:room:update', this.onRoomUpdate.bind(this))
-  this.socket.on('broadcast:room:delete', this.onRoomDelete.bind(this))
-  this.socket.on('broadcast:room:join', this.onRoomJoin.bind(this))
-  this.socket.on('broadcast:room:leave', this.onRoomLeave.bind(this))
-  this.socket.on('broadcast:message:write', this.onMessage.bind(this))
-}
-
 Handler.prototype.onConnect = async function () {
   if (store.user === null) return
   const resSignIn = await this.signIn({ id: store.user.id, pw: store.user.pw })
@@ -110,12 +100,12 @@ Handler.prototype.onRoomJoin = async function (res) {
     store.rooms.splice(roomIndex, 1, target)
   }
   if (roomIndexJoined > -1) {
-    const target = Object.assign({}, store.roomsJoined[roomIndex])
+    const target = Object.assign({}, store.roomsJoined[roomIndexJoined])
     target.joining += 1
     store.roomsJoined.splice(roomIndexJoined, 1, target)
   }
   if (roomIndexSearched > -1) {
-    const target = Object.assign({}, store.roomsSearched[roomIndex])
+    const target = Object.assign({}, store.roomsSearched[roomIndexSearched])
     target.joining += 1
     store.roomsSearched.splice(roomIndexSearched, 1, target)
   }
@@ -131,10 +121,10 @@ Handler.prototype.onRoomLeave = async function (res) {
     const { users = [] } = res.body
     store.users = users
 
-    // store.recipients = store.recipients.reduce((bucket, user) => {
-    //   if (users.some(({ name }) => name === user.name)) bucket.push(user)
-    //   return bucket
-    // }, [])
+    store.recipients = store.recipients.reduce((bucket, user) => {
+      if (users.some(({ id }) => id === user.id)) bucket.push(user)
+      return bucket
+    }, [])
     return
   }
 
@@ -148,12 +138,12 @@ Handler.prototype.onRoomLeave = async function (res) {
     store.rooms.splice(roomIndex, 1, target)
   }
   if (roomIndexJoined > -1) {
-    const target = Object.assign({}, store.roomsJoined[roomIndex])
+    const target = Object.assign({}, store.roomsJoined[roomIndexJoined])
     target.joining -= 1
     store.roomsJoined.splice(roomIndexJoined, 1, target)
   }
   if (roomIndexSearched > -1) {
-    const target = Object.assign({}, store.roomsSearched[roomIndex])
+    const target = Object.assign({}, store.roomsSearched[roomIndexSearched])
     target.joining -= 1
     store.roomsSearched.splice(roomIndexSearched, 1, target)
   }
@@ -162,8 +152,7 @@ Handler.prototype.onRoomLeave = async function (res) {
 Handler.prototype.onMessage = async function (res) {
   const { message } = res.body
   if (store.messages[0].type === 'dummy') {
-    store.messages = store.messages.splice(0, 1, message)
-    return
+    store.messages = []
   }
   store.messages.push(message)
 }
@@ -190,6 +179,16 @@ Handler.prototype.emitPost = function (event = '', body = {}) {
   })
   this.running[event] = promise
   return this.running[event]
+}
+
+Handler.prototype.initSocket = function () {
+  this.socket.on('connect', this.onConnect.bind(this))
+  this.socket.on('broadcast:room:create', this.onRoomCreate.bind(this))
+  this.socket.on('broadcast:room:update', this.onRoomUpdate.bind(this))
+  this.socket.on('broadcast:room:delete', this.onRoomDelete.bind(this))
+  this.socket.on('broadcast:room:join', this.onRoomJoin.bind(this))
+  this.socket.on('broadcast:room:leave', this.onRoomLeave.bind(this))
+  this.socket.on('broadcast:message:write', this.onMessage.bind(this))
 }
 
 Handler.prototype.signIn = function ({ id = '', pw = '' }) {
@@ -229,7 +228,7 @@ Handler.prototype.getMessagesInRoom = async function ({ userId = '', roomId = -1
   return await this.emitPost('req:message:list', { userId, roomId, minIndex })
 }
 Handler.prototype.getMessagesInRoomReconnect = async function ({ userId = '', roomId = -1, startIndex = 0 }) {
-  return await this.emitPost('req:message:reconnect')
+  return await this.emitPost('req:message:reconnect', { userId, roomId, startIndex })
 }
 Handler.prototype.getOnlineMembersInRoom = async function ({ roomId = -1 }) {
   return await this.emitPost('req:member:online:room', { roomId })

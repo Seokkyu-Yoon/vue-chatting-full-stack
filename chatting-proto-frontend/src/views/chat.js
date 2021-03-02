@@ -112,5 +112,10 @@ export default {
     const resUsers = await this.$socketHandler.getOnlineMembersInRoom({ roomId: store.room.id })
     const { users } = resUsers.body
     store.users = users
+  },
+  beforeUpdate () {
+    if (store.room === null) {
+      this.$router.push('/rooms')
+    }
   }
 }

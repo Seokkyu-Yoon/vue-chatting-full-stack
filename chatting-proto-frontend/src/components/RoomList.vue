@@ -8,7 +8,7 @@
         class="b-card m-2"
         v-for="room in rooms"
         v-bind:key="room.id"
-        :img-src='`https://picsum.photos/id/${(room.id || 0) % 1085}/500/300`'
+        :img-src='`https://picsum.photos/id/${room.id % 1085}/500/300`'
         img-height="200"
         img-alt="Image"
         img-top

@@ -51,7 +51,7 @@ export default {
       store.roomsSearched = rooms
     },
     async leaveRoom () {
-      await this.$socketHandler.leaveRoom({ id: store.room.id })
+      await this.$socketHandler.leaveRoom({ id: store.room.id, userId: store.user.id })
       store.room = null
     },
     async join (room, pw = '') {
