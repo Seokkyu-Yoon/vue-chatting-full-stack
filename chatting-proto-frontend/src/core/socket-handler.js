@@ -69,7 +69,8 @@ Handler.prototype.onRoomUpdate = async function (res) {
 Handler.prototype.onRoomDelete = async function (res) {
   const { id: roomId } = res.body
 
-  if (store.room !== null && store.room.id === roomId) {
+  if (store.room !== null) {
+    if (store.room.id !== roomId) return
     store.room = null
   }
 
@@ -79,6 +80,17 @@ Handler.prototype.onRoomDelete = async function (res) {
   if (roomIndex > -1) store.rooms.splice(roomIndex, 1)
   if (roomIndexJoined > -1) store.roomsJoined.splice(roomIndexJoined, 1)
   if (roomIndexSearched > -1) store.roomsSearched.splice(roomIndexSearched, 1)
+
+  store.startIndexRoom -= 1
+  const resRooms = await this.getRooms({ startIndex: store.startIndexRoom, limit: 1 })
+  const { rooms = [] } = resRooms.body
+  store.rooms = [
+    ...store.rooms,
+    ...rooms
+  ]
+  if (rooms.length > 0) {
+    store.startIndexRoom += 1
+  }
 }
 
 Handler.prototype.onRoomJoin = async function (res) {
