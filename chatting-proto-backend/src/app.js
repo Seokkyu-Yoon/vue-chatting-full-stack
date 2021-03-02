@@ -5,6 +5,7 @@ import logger from 'morgan'
 import cors from 'cors'
 import ejs from 'ejs'
 import { routerApi } from './router'
+import fileRouter from './router/file'
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.use(cookieParser())
 app.use(express.static(path.join(__dirname, '..', 'public')))
 
 app.use('/api', routerApi)
+app.use('/file', fileRouter)
 
 app.get('/*', (req, res, next) => {
   res.render('index.html')

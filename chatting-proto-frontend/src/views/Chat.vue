@@ -34,10 +34,15 @@
     <div class="col-4 d-flex ml-1 mt-2 right-menu overflow-hidden">
       <div class="mt-3">
         <p v-bind:class="getClassTapItem('users')" @click="() => changeShowType('users')">참가자</p>
+        <p v-bind:class="getClassTapItem('files')" @click="() => changeShowType('files')">파일</p>
         <p v-bind:class="getClassTapItem('detail')" @click="() => changeShowType('detail')">방정보</p>
       </div>
       <div class="d-flex flex-fill overflow-hidden">
         <UserList v-if="showType === 'users'" v-bind:send="send"/>
+        <FileList v-if="showType === 'files'"
+          :roomId="store.room.title"
+          :user="store.userName"
+        />
         <RoomDetail v-if="showType === 'detail'"/>
       </div>
     </div>
