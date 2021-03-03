@@ -327,6 +327,18 @@ function getInsertRoom ({ createBy, title, pw, maxJoin, description }) {
   }
 }
 
+function getSelectInsertedRoom () {
+  return {
+    sql: `
+    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    FROM room
+    LEFT JOIN member ON member.room_id=room.id
+    WHERE room.id=@id
+    GROUP BY room.id`,
+    params: []
+  }
+}
+
 function getUpdateRoom ({ id, title, pw, maxJoin, description }) {
   return {
     sql: `
@@ -508,6 +520,17 @@ function getInsertMessage ({ type, writter, content }) {
   }
 }
 
+function getSelectInsertedMessage () {
+  return {
+    sql: `
+    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    FROM message
+    LEFT JOIN message_type ON message_type.id=message.type_id
+    WHERE message.id=@id`,
+    params: []
+  }
+}
+
 function getInsertRoomMessage ({ roomId }) {
   return {
     sql: `
@@ -564,6 +587,7 @@ export {
   getSelectRoomsByTitle,
   getSelectRoom,
   getInsertRoom,
+  getSelectInsertedRoom,
   getUpdateRoom,
   getDeleteRoom,
 
@@ -583,6 +607,7 @@ export {
   getSelectMessage,
   getSelectMessageRecipients,
   getInsertMessage,
+  getSelectInsertedMessage,
 
   getInsertRoomMessage,
   getInsertGroupMessages

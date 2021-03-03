@@ -59,8 +59,8 @@ export default {
       this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
     }
   },
-  async created () {
-    await this.getRooms()
+  created () {
+    this.getRooms()
   },
   async mounted () {
     const { rooms } = this.$refs
