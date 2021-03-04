@@ -26,8 +26,9 @@
             </div>
             <div class="col-8">
               <b-link class="file-link" @click="itm.is_protected ? displayOverlay(itm, 'passwd') : downloadFile(itm)">
-                {{itm.filename}}<br/>{{itm.size}} Byte
+                {{itm.filename}}<br/>{{(itm.size / 1000000).toFixed(2)}} MB
               </b-link>
+              <br/>{{itm.upload_user}}, {{itm.register_date}}
             </div>
             <div class="col-2 operations">
               <b-icon icon="share" class="share-icon icon" @click="copyToClipboard(itm)"></b-icon>

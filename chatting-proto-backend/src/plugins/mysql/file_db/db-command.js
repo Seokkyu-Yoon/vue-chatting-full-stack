@@ -37,7 +37,7 @@ async function uploadData(uploadInfo) {
 }
 
 async function getList(roomId, entire = true, id) {
-  const query = entire ? `SELECT id, filename, size, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available"`: `SELECT id, filename, size, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available" AND id="${id}"`;
+  const query = entire ? `SELECT id, filename, size, upload_user, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available"`: `SELECT id, filename, size, upload_user, register_date, expire_date, is_protected FROM FileInfo WHERE room_id="${roomId}" AND state="available" AND id="${id}"`;
 
   const queryResult = await sendQuery(query);
   return queryResult;
