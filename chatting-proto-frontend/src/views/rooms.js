@@ -34,11 +34,11 @@ export default {
     async getRooms () {
       const res = await this.$socketHandler.getRooms({ startIndex: store.startIndexRoom })
       const { rooms = [] } = res.body
+      store.startIndexRoom += rooms.length
       store.rooms = [
         ...store.rooms,
         ...rooms
       ]
-      store.startIndexRoom = store.rooms.length
     },
     async getRoomsJoined () {
       const res = await this.$socketHandler.getRoomsJoined({ userId: store.user.id })

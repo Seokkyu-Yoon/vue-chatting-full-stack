@@ -129,7 +129,6 @@ SocketHandler.prototype.roomSearch = async function (req, callback) {
 SocketHandler.prototype.roomCreate = async function (req, callback) {
   const res = new Res(callback)
   const {
-    id = null,
     title = '',
     createBy = '',
     pw = '',
@@ -139,17 +138,18 @@ SocketHandler.prototype.roomCreate = async function (req, callback) {
 
   try {
     const { code, body } = await this.socketIoHandler.createRoom(
-      id,
       title,
       createBy,
       pw,
       maxJoin,
       description
     )
+
     res.status(code).send(body)
 
     megaphone(Interface.Broadcast.Room.CREATE).status(code).send(body)
   } catch (e) {
+    logger.error(e)
     res.status(403).send(e.message)
   }
 }

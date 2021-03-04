@@ -39,7 +39,10 @@ export default {
     ringEnd () {
       const { alert } = this.$refs
       this.showAlert = false
-      alert.$el.classList.remove('shake')
+
+      if (typeof alert !== 'undefined') {
+        alert.$el.classList.remove('shake')
+      }
     }
   },
   mounted () {

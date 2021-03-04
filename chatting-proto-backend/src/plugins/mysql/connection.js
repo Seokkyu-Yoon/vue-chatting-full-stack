@@ -17,24 +17,24 @@ function query ({ connection, sql = '', params = [] }) {
 
 function transaction ({ connection, sqlParamSets = [] }) {
   return new Promise((resolve, reject) => {
-    connection.beginTransaction(async (err) => {
-      const results = []
-      for (const { sql, params } of sqlParamSets) {
-        try {
-          const result = await query({ connection, sql, params })
-          results.push(result)
-        } catch (e) {
-          connection.rollback()
-          return reject(e)
-        }
+    connection.beginTransaction(async (errBeginTransaction) => {
+      try {
+        const results = await Promise.all(sqlParamSets.map(({ sql, params }) => query({ connection, sql, params })))
+        connection.commit((errCommit) => {
+          if (errCommit) {
+            connection.rollback()
+            return reject(errCommit)
+          }
+          return resolve(results)
+        })
+      } catch (e) {
+        connection.rollback()
+        return reject(e)
       }
 
-      if (err) {
+      if (errBeginTransaction) {
         connection.rollback()
-        return reject(err)
-      } else {
-        connection.commit()
-        return resolve(results)
+        return reject(errBeginTransaction)
       }
     })
   })

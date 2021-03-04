@@ -44,8 +44,10 @@ Handler.prototype.onConnect = async function () {
 Handler.prototype.onRoomCreate = async function () {
   if (store.room !== null) return
   if (store.searchRoomText !== '') return
-  const res = await this.getRooms({ startIndex: 0, limit: Math.ceil(store.startIndexRoom / 30) * 30 })
-  const { rooms } = res.body
+  const limit = Math.ceil(store.startIndexRoom / 30) * 30
+  const res = await this.getRooms({ startIndex: 0, limit })
+  const { rooms = [] } = res.body
+  console.log(rooms)
   store.rooms = rooms
   store.startIndexRoom = rooms.length
 }
@@ -203,16 +205,16 @@ Handler.prototype.initSocket = function () {
   this.socket.on('broadcast:message:write', this.onMessage.bind(this))
 }
 
-Handler.prototype.signIn = function ({ id = '', pw = '' }) {
+Handler.prototype.signIn = async function ({ id = '', pw = '' }) {
   if (store.user !== null) return { body: { user: store.user } }
-  return this.emitPost('req:user:signin', { id, pw })
+  return await this.emitPost('req:user:signin', { id, pw })
 }
-Handler.prototype.signUp = function ({ id = '', pw = '', name = '', email = '', phone = '' }) {
-  return this.emitPost('req:user:signup', { id, pw, name, email, phone })
+Handler.prototype.signUp = async function ({ id = '', pw = '', name = '', email = '', phone = '' }) {
+  return await this.emitPost('req:user:signup', { id, pw, name, email, phone })
 }
 
-Handler.prototype.getRooms = function ({ startIndex = 0, limit = 0 }) {
-  return this.emitPost('req:room:list', { startIndex, limit })
+Handler.prototype.getRooms = async function ({ startIndex = 0, limit = 0 }) {
+  return await this.emitPost('req:room:list', { startIndex, limit })
 }
 Handler.prototype.getRoomsJoined = async function ({ userId = '' }) {
   return await this.emitPost('req:room:joined', { userId })

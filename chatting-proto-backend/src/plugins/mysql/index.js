@@ -29,7 +29,6 @@ import {
   getInsertMember,
   getSelectMember,
   getInsertRoom,
-  getSelectLastInsertId,
   getUpdateMemberOffline,
   getSelectRoomsJoined,
   getDeleteRoom,
@@ -43,9 +42,10 @@ import {
   getSetId,
   getInsertGroupMessages,
   getInsertRoomMessage,
-  getSelectMessage,
   getUpdateRoom,
-  getSelectMessagesInRoomReconnect
+  getSelectMessagesInRoomReconnect,
+  getSelectInsertedRoom,
+  getSelectInsertedMessage
 } from './sql-params'
 
 const TABLE_CREATE_MAP = {
@@ -163,6 +163,10 @@ async function signOut ({ socketId = '' }) {
 }
 
 async function getRooms ({ startIndex = 0, limit = 0 }) {
+  // if (limit < 0) {
+  //   console.log(limit)
+  //   limit = 0
+  // }
   const selectRooms = getSelectRooms({ startIndex, limit })
   const rooms = await exec(selectRooms)
   return { rooms }
@@ -181,12 +185,16 @@ async function getRoomsSearched ({ title = '' }) {
 }
 async function createRoom ({ title, createBy, pw, maxJoin, description }) {
   const insertRoom = getInsertRoom({ createBy, title, pw, maxJoin, description })
-  const selectLastInsertId = getSelectLastInsertId()
-  const resultLastInsertId = (await transaction([insertRoom, selectLastInsertId]))[1]
-  const { id } = resultLastInsertId[0]
+  const setId = getSetId()
+  const selectInsertedRoom = getSelectInsertedRoom()
+  const resultTransaction = await transaction([insertRoom, setId, selectInsertedRoom])
 
-  const selectRoom = getSelectRoom({ id })
-  const room = (await exec(selectRoom))[0] || null
+  logger.info('***** resultTransaction *****')
+  logger.info(resultTransaction)
+  const resultRoom = resultTransaction[2]
+  logger.info('**** resultRoom *****')
+  logger.info(resultRoom)
+  const room = resultRoom[0] || null
   return { room }
 }
 
@@ -300,17 +308,15 @@ async function getMessagesInRoomReconnect ({ userId = '', roomId = null, startIn
 
 async function writeMessage ({ roomId = null, type = '', writter = '', content = '', recipients = [] }) {
   const insertMessage = getInsertMessage({ type, writter, content })
-  const selectMessageId = getSelectLastInsertId()
   const setId = getSetId()
   const insertRecipients = recipients.length > 0
     ? getInsertGroupMessages({ roomId, recipients })
     : getInsertRoomMessage({ roomId })
+  const selectInsertedMessage = getSelectInsertedMessage()
+  const resultTransaction = await transaction([insertMessage, setId, insertRecipients, selectInsertedMessage])
 
-  const resultSelectMessageId = (await transaction([insertMessage, selectMessageId, setId, insertRecipients]))[1]
-  const { id } = resultSelectMessageId[0]
-
-  const selectMessage = getSelectMessage({ id })
-  const message = (await exec(selectMessage))[0]
+  const resultMessage = resultTransaction[3]
+  const message = resultMessage[0]
 
   return {
     message: {
