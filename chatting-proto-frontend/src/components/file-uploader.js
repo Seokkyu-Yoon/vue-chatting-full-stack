@@ -27,9 +27,13 @@ export default {
   },
   methods: {
     async uploadFile () {
-      this.overlayShow = true
       const { uploadForm } = this.$refs
       const form = new FormData(uploadForm)
+      if (!uploadForm[0].value) {
+        alert('업로드 된 파일이 없습니다.')
+        return
+      }
+      this.overlayShow = true
       form.append('roomId', this.roomId)
       form.append('uploadUser', this.user)
       form.append('isProtected', this.isProtected)
