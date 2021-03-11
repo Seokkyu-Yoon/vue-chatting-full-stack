@@ -40,6 +40,11 @@ export default {
       return ''
     },
     async createRoom () {
+      if (Number(this.maxJoin) < 0) {
+        alert('인원 수는 음수일 수 없습니다')
+        this.maxJoin = '0'
+        return
+      }
       await this.$socketHandler.createRoom({
         title: this.title,
         pw: this.pw,

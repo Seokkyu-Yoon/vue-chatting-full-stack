@@ -41,7 +41,7 @@
         <UserList v-if="showType === 'users'" v-bind:send="send"/>
         <FileList v-if="showType === 'files'"
           :roomId="store.room.title"
-          :user="store.userName"
+          :user="store.user.name"
         />
         <RoomDetail v-if="showType === 'detail'"/>
       </div>

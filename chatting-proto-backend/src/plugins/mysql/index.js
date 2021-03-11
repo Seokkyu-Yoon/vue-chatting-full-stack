@@ -189,11 +189,7 @@ async function createRoom ({ title, createBy, pw, maxJoin, description }) {
   const selectInsertedRoom = getSelectInsertedRoom()
   const resultTransaction = await transaction([insertRoom, setId, selectInsertedRoom])
 
-  logger.info('***** resultTransaction *****')
-  logger.info(resultTransaction)
   const resultRoom = resultTransaction[2]
-  logger.info('**** resultRoom *****')
-  logger.info(resultRoom)
   const room = resultRoom[0] || null
   return { room }
 }

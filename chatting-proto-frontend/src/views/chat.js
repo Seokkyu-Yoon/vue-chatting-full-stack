@@ -32,18 +32,21 @@ export default {
       }
       if (this.blockSend) return
       this.blockSend = true
+      const type = this.type
+      const content = this.content
+      this.content = ''
       try {
         await this.$socketHandler.writeMessage({
           roomId: store.room.id,
-          type: this.type,
+          type: type,
           writter: store.user.id,
-          content: this.content,
+          content: content,
           recipients: []
         })
-        this.content = ''
         this.sended = !this.sended
       } catch (e) {
         console.error(e)
+        this.content = `${content}${this.content}`
       } finally {
         this.blockSend = false
       }
@@ -83,10 +86,14 @@ export default {
     store.messages = []
     store.recipients = []
 
-    const storageData = JSON.parse(sessionStorage.getItem('chatting-store'))
+    const storageData = JSON.parse(sessionStorage.getItem('chatting-store')) || {}
+    const { user: storageUser = {}, room: storageRoom = {} } = storageData
     if (store.user === null) {
       try {
-        const res = await this.$socketHandler.signIn({ id: storageData.user.id, pw: storageData.user.pw })
+        const res = await this.$socketHandler.signIn({
+          id: this.$route.params.userId || storageUser.id,
+          pw: this.$route.params.userPw || storageUser.pw || ''
+        })
         const { user } = res.body
         store.user = user
       } catch (e) {
@@ -96,7 +103,11 @@ export default {
     }
     if (store.room === null) {
       try {
-        const resJoin = await this.$socketHandler.joinRoom({ id: storageData.room.id, pw: storageData.room.pw, userId: storageData.user.id })
+        const resJoin = await this.$socketHandler.joinRoom({
+          id: this.$route.params.roomId || storageRoom.id,
+          pw: this.$route.params.roomPw || storageRoom.pw || '',
+          userId: this.$route.params.userId || storageUser.id
+        })
         const { room } = resJoin.body
         store.room = room
       } catch (e) {

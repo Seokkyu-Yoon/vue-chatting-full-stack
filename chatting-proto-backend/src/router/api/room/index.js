@@ -18,13 +18,20 @@ const router = Router()
 
 router.post('/', async (req, res, next) => {
   const {
-    roomId,
-    userName,
-    userId,
-    pw
+    userId = '',
+    userPw = '',
+    roomId = null,
+    roomPw = ''
   } = req.body
 
-  res.redirect(`/chat/${roomId}/${userName}/${userId}/${pw}`)
+  const { user } = await mysql.getUserById({ id: userId })
+  if (!user) {
+    await mysql.signUp({ id: userId, pw: userPw, name: userId })
+  } else {
+    console.log(user)
+    if (userPw !== user.pw) return res.send('Invalid pw')
+  }
+  res.redirect(`/chat/${userId}/${userPw}/${roomId}/${roomPw}`)
 })
 
 router.put('/', async (req, res, next) => {

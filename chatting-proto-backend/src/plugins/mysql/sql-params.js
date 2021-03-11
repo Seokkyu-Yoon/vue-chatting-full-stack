@@ -243,7 +243,7 @@ function getSelectUserBySocketId ({ socketId }) {
 function getSelectUserById ({ id }) {
   return {
     sql: `
-    SELECT id, name, email, phone
+    SELECT id, pw, name, email, phone
     FROM user
     WHERE id=?`,
     params: [id]
@@ -384,10 +384,9 @@ function getSelectMember ({ roomId }) {
 function getSelectOnlineMembersInRoom ({ roomId }) {
   return {
     sql: `
-    SELECT online.socket_id AS socketId, user.id, user.name, user.email, user.phone
+    SELECT user.id, user.name, user.email, user.phone
     FROM member
     LEFT JOIN user ON member.user_id=user.id
-    LEFT JOIN online ON member.user_id=online.user_id
     WHERE member.room_id=? AND member.joining IS TRUE`,
     params: [roomId]
   }
