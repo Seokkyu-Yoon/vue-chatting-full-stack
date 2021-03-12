@@ -1,29 +1,19 @@
 <template>
   <div id="cover-users" class="d-flex flex-fill flex-column bg-detail p-2">
+    <h5 class="text-center">{{store.room.title}}</h5>
     <div class="flex-1 p-2 d-flex flex-column overflow-auto holder">
-      <div class="">
-        <p class="h4 text-center">{{store.room.title}}</p>
-      </div>
+      <h5>
+        <b-badge :variant="store.room.pw ? 'dark' : 'info'">{{store.room.pw ? '비밀' : '공개'}}</b-badge> &nbsp;
+        <b-badge variant="dark">{{`${store.room.joining} / ${store.room.maxJoin || '∞'}`}}</b-badge>
+      </h5>
       <div class="d-flex">
-        <div class="col-3">방장</div>
-        <div class="flex-fill">{{store.room.createBy}}</div>
+        {{store.room.description}}
       </div>
-      <div class="d-flex">
-        <div class="col-3">비밀번호</div>
-        <div class="flex-fill">{{store.room.pw}}</div>
-      </div>
-      <div class="d-flex">
-        <div class="col-3">인원현황</div>
-        <div class="flex-fill">{{`${store.room.joining} / ${store.room.maxJoin}`}}</div>
-      </div>
-      <div class="d-flex">
-        <div class="col-3">생성일</div>
-        <div class="flex-fill">{{store.room.createAt}}</div>
-      </div>
-      <div class="d-flex">
-        <div class="col-3">설명</div>
-        <div class="white-space-pre-wrap flex-fill">{{store.room.description}}</div>
-      </div>
+    <p class="">
+      <small class="text-muted">
+        {{store.room.createAt}} 생성됨
+      </small>
+    </p>
     </div>
   </div>
 </template>

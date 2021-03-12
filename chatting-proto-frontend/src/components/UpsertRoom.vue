@@ -81,8 +81,9 @@
         v-on:click="() => {
           if (modifing) {
             // 수정
-            updateRoom()
-            ok()
+            if(updateRoom()) {
+              ok()
+            }
             return
           }
           createRoom()

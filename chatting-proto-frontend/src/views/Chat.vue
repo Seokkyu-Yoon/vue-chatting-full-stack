@@ -1,25 +1,28 @@
 <template>
   <div class="d-flex flex-fill p-2">
+    <UpsertRoom ref="upsertRoom" v-bind:modifing="true"/>
     <div class="d-flex flex-fill flex-column overflow-hidden">
-      <UpsertRoom ref="upsertRoom" v-bind:modifing="true"/>
-      <div class="d-flex mt-4 mb-2">
-        <p class="h3">{{(store.room || {}).title || ''}}</p>
-        <div class="flex-fill d-flex align-items-center justify-content-end overflow-hidden">
-          <button
-            v-show="store.room !== null && store.user.id === store.room.createBy || ''"
-            type="button"
-            class="btn btn-sm btn-secondary mr-1"
-            v-on:click="updateRoom">
-            설정
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" v-on:click="leaveRoom">나가기</button>
-        </div>
-      </div>
+
       <div class='jumbotron d-flex flex-column flex-fill p-2 overflow-hidden-y'>
+        <div class="d-flex m-2">
+          <h4>{{(store.room || {}).title || ''}}</h4>
+          <div class="flex-fill d-flex align-items-center justify-content-end overflow-hidden">
+            <button
+              v-show="store.room !== null && store.user.id === store.room.createBy || ''"
+              type="button"
+              class="btn btn-sm btn-secondary mr-1"
+              v-on:click="updateRoom">
+              <b-icon icon="gear"></b-icon>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" v-on:click="leaveRoom">나가기
+            </button>
+          </div>
+        </div>
         <MessageList v-bind:sended="sended"/>
         <div class="d-flex mt-1">
           <div class="flex-fill">
             <textarea
+              ref="text"
               class="form-control"
               v-model="content"
               v-on:keydown.enter.exact="(e) => {
@@ -27,7 +30,14 @@
                 send()
               }"/>
           </div>
-          <button class="btn btn-sm btn-primary ml-1" v-on:click="send">전체 보내기</button>
+          <button class="btn btn-sm btn-primary ml-1" v-on:click="send">보내기</button>
+        </div>
+        <div class="pt-2">
+          <h3>
+          <a href="#" v-for="imoji of imojis" :key="imoji" @click="enterImoji(imoji)">
+            <span>{{ imoji }}</span>
+          </a>
+          </h3>
         </div>
       </div>
     </div>

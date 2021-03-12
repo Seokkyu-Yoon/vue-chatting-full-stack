@@ -21,10 +21,20 @@ export default {
       type: 'text',
       showType: 'users',
       blockSend: false,
-      sended: false
+      sended: false,
+      imojis: ['😀', '😍', '😛', '🥵', '🙄']
     }
   },
   methods: {
+    typeInTextarea (newText) {
+      const el = this.$refs.text
+      const [start, end] = [el.selectionStart, el.selectionEnd]
+      el.setRangeText(newText, start, end, 'select')
+      this.content = el.value // edge case sorry
+    },
+    enterImoji (value) {
+      this.typeInTextarea(value)
+    },
     async send () {
       if (this.content.trim() === '') {
         this.content = ''

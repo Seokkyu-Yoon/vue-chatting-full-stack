@@ -1,36 +1,49 @@
 <template>
-  <div class="d-flex flex-column align-items-center">
-    <b-alert ref="alert" class="alert mt-2" v-visible="showAlert" variant="danger" show>{{alertMessage}}</b-alert>
-    <div class="d-flex flex-column align-self-center jumbotron">
-      <p class="h1 text-center">Chatting</p>
-      <div class="d-flex my-2">
+<div>
+  <b-card bg-variant="secondary" text-variant="light" border-variant="secondary" no-body class="login p-1">
+    <div class="pl-2 pr-2 d-flex align-items-center justify-content-between text-center">User Login
+      <b-button size="sm" variant="info" v-on:click="moveToSignUp">가입
+      </b-button>
+    </div>
+  </b-card>
+  <b-card bg-variant="light" text-variant="dark" border-variant="secondary" class="login">
+    <b-form>
+      <div class="d-flex my-1">
         <div class="flex-fill mr-1">
-          <input
+          <b-form-input
             ref="idField"
             type="text"
             class="form-control"
             v-model="id"
             v-on:keydown.enter="$refs.pwField.focus"
-            placeholder="아이디를 입력해주세요"/>
-          <input
+            placeholder="아이디를 입력해주세요"
+            autofocus
+            required
+            />
+          <b-form-input
             ref="pwField"
             type="password"
             class="form-control mt-1"
             v-model="pw"
             v-on:keydown.enter="signIn"
-            placeholder="비밀번호를 입력해주세요"/>
+            placeholder="비밀번호를 입력해주세요"
+          />
         </div>
         <button type="button" class="btn btn-primary" v-on:click="signIn">접속</button>
-        <button type="button" class="btn btn-success ml-1" v-on:click="moveToSignUp">가입</button>
+
       </div>
-    </div>
-  </div>
+      <b-alert ref="alert" v-if="showAlert" variant="danger" show>
+        {{alertMessage}}
+      </b-alert>
+    </b-form>
+  </b-card>
+</div>
 </template>
 
 <script src="./sign-in.js"></script>
 
 <style scoped>
-.alert {
-  position: absolute
-}
+  .login {
+    border-radius: 0;
+  }
 </style>

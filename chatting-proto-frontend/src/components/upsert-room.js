@@ -14,6 +14,8 @@ export default {
       description: ''
     }
   },
+  mounted () {
+  },
   methods: {
     setPublic () {
       this.isPrivate = false
@@ -40,6 +42,9 @@ export default {
       return ''
     },
     async createRoom () {
+      if (!this.title) {
+        return
+      }
       if (Number(this.maxJoin) < 0) {
         window.alert('인원 수 이상해요.😓')
         this.maxJoin = '0'
@@ -84,7 +89,8 @@ export default {
         description
       }
 
-      this.title = this.defaultSetting.title
+      // this.title = this.defaultSetting.title
+      this.title = 'MyRoom' + Math.floor(Math.random() * 1000)
       this.isPrivate = this.defaultSetting.isPrivate
       this.pw = this.defaultSetting.pw
       this.isInfinity = this.defaultSetting.isInfinity

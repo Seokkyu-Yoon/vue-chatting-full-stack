@@ -4,9 +4,15 @@
     <UpsertRoom ref="upsertRoom" />
     <div class="flex-fill d-flex mb-2 flex-column">
       <div class="d-flex mb-2">
-        <div class="mr-1"><b-btn type="button" variant="success" v-on:click="createRoom">+</b-btn></div>
+        <div class="mr-1">
+          <b-btn type="button" variant="primary" v-on:click="createRoom">방 만들기
+          <b-icon icon="plus"></b-icon>
+          </b-btn>
+        </div>
         <div class="flex-fill"><input type="text" v-model="store.searchRoomText" @input="getRoomsSearched" class="form-control" placeholder="검색"/></div>
-        <p class="h4 m-0 p-0 d-none d-sm-flex align-items-center justify-content-center joined" v-if="!searching">최근 방문</p>
+        <p class="h4 m-0 p-0 d-none d-sm-flex align-items-center justify-content-center joined" v-if="!searching">
+          최근 방문
+        </p>
       </div>
       <div class="d-flex flex-fill overflow-hidden">
         <RoomList class="d-flex"

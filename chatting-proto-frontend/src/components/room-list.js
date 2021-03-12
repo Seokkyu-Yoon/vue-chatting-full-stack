@@ -1,7 +1,7 @@
 import store from '@/store'
 import Password from '@/components/Password.vue'
 
-const confirm = window.confirm
+// const confirm = window.confirm
 
 export default {
   name: 'RoomList',
@@ -14,11 +14,13 @@ export default {
     join: Function,
     scroll: Boolean,
     emptyMessage: String
+
   },
   data () {
     return {
       store,
-      cardOffsetWidth: 0
+      cardOffsetWidth: 0,
+      roomOveray: []
     }
   },
   methods: {
@@ -50,9 +52,12 @@ export default {
       return classBadge.join(' ')
     },
     async deleteRoom (id) {
-      if (confirm(`${id} 방을 진짜 지우시겠습니까? `)) {
+      if (window.confirm(`${id} 방을 진짜 지우시겠습니까? `)) {
         await this.$socketHandler.deleteRoom({ id })
       }
+    },
+    async doDelete () {
+
     },
     async handleScroll (e) {
       if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return

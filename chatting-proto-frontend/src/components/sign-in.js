@@ -17,6 +17,11 @@ export default {
   },
   methods: {
     async signIn () {
+      if (!this.id || !this.pw) {
+        this.alertMessage = 'ID와 비밀번호를 반드시 입력하세요'
+        this.showAlert = true
+        return
+      }
       try {
         const res = await this.$socketHandler.signIn({ id: this.id, pw: this.pw })
         const { user } = res.body
