@@ -21,19 +21,24 @@
           :getRooms="getRooms"
           :join="join"
           emptyMessage="생성된 방이 없습니다"
-          scroll/>
+          scroll
+        />
         <RoomList class="d-none d-sm-flex joined"
           v-if="!searching"
           :rooms="store.roomsJoined"
           :getRooms="getRoomsJoined"
           :join="join"
-          emptyMessage="최근방문한 방이 없습니다"/>
-        <RoomList class="d-flex"
+          mini
+          emptyMessage="최근방문한 방이 없습니다"
+        />
+        <RoomList
+          class="d-flex"
           v-if="searching"
           :rooms="store.roomsSearched"
           :getRooms="getRoomsSearched"
           :join="join"
-          emptyMessage="검색된 방이 없습니다"/>
+          emptyMessage="검색된 방이 없습니다"
+        />
       </div>
     </div>
   </div>

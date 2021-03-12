@@ -13,8 +13,8 @@ export default {
     getRooms: Function,
     join: Function,
     scroll: Boolean,
-    emptyMessage: String
-
+    emptyMessage: String,
+    mini: Boolean
   },
   data () {
     return {
@@ -65,7 +65,9 @@ export default {
     },
     handleResize () {
       const { rooms } = this.$refs
-      this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
+      if (rooms) {
+        this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
+      }
     }
   },
   created () {
@@ -77,7 +79,9 @@ export default {
       rooms.addEventListener('scroll', this.handleScroll)
     }
     window.addEventListener('resize', this.handleResize)
-    this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
+    if (rooms) {
+      this.cardOffsetWidth = rooms.offsetWidth / Math.floor(rooms.offsetWidth / 256) - 16
+    }
   },
   beforeDestroy () {
     const { rooms } = this.$refs

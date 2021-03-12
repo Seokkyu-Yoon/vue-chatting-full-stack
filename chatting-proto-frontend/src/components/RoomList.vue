@@ -1,9 +1,30 @@
 <template>
   <div class="jumbotron m-0 p-2 flex-fill flex-column overflow-hidden">
     <slot />
+    <div v-if="mini">
+      <b-list-group class="m-2">
+        <b-list-group-item
+          href="#"
+          class="flex-column align-items-start"
+          v-for="room in rooms"
+          v-bind:key="room.id"
+        >
+          <div class="d-flex w-100 justify-content-between">
+            <strong>{{room.title}} ({{ room.joining }})</strong>
+            <a href="#"
+              v-on:click.stop="(e) => join(room)">
+              <b-icon icon="arrow-right-square-fill"></b-icon>
+            </a>
+          </div>
+
+        </b-list-group-item>
+      </b-list-group>
+    </div>
     <div
       class="d-flex flex-wrap overflow-auto"
-      ref="rooms">
+      ref="rooms"
+      v-else
+      >
       <b-card
         class="b-card m-2"
         v-for="room in rooms"
@@ -11,7 +32,8 @@
         img-height="200"
         img-alt="Image"
         img-top
-        :style="`max-width:${cardOffsetWidth}px`">
+        :style="`max-width:${cardOffsetWidth}px`"
+      >
         <b-card-title class="mt-0">
           {{room.title}}
         </b-card-title>
