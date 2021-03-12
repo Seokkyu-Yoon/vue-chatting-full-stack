@@ -1,3 +1,4 @@
+
 import store from '@/store'
 import RoomList from '@/components/RoomList.vue'
 import Password from '@/components/Password.vue'

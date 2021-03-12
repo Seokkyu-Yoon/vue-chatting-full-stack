@@ -22,7 +22,8 @@
           <div class="text mt-1">{{message.content}}</div>
         </div>
         <div v-else>
-          <p class="h4">{{message.content}}</p>
+          <h5>{{message.content}}</h5>
+          <small>{{ new Date() }} </small>
         </div>
       </div>
     </div>
