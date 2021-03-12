@@ -14,13 +14,15 @@
             placeholder="아이디를 입력해주세요"/>
         </div>
         <div>
-          <input
+          <b-form-input
             ref="pwField"
             type="password"
             class="form-control mt-1"
             v-model="pw"
             v-on:keydown.enter="$refs.nameField.focus"
-            placeholder="비밀번호를 입력해주세요"/>
+            placeholder="비밀번호를 입력해주세요"
+            required
+            />
         </div>
         <div>
           <input

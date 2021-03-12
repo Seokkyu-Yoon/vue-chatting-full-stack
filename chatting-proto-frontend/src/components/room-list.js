@@ -1,6 +1,8 @@
 import store from '@/store'
 import Password from '@/components/Password.vue'
 
+const confirm = window.confirm
+
 export default {
   name: 'RoomList',
   components: {
@@ -48,7 +50,9 @@ export default {
       return classBadge.join(' ')
     },
     async deleteRoom (id) {
-      await this.$socketHandler.deleteRoom({ id })
+      if (confirm(`${id} 방을 진짜 지우시겠습니까? `)) {
+        await this.$socketHandler.deleteRoom({ id })
+      }
     },
     async handleScroll (e) {
       if (e.target.scrollTop !== e.target.scrollHeight - e.target.clientHeight) return

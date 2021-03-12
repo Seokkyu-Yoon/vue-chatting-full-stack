@@ -41,7 +41,7 @@ export default {
     },
     async createRoom () {
       if (Number(this.maxJoin) < 0) {
-        alert('인원 수는 음수일 수 없습니다')
+        window.alert('인원 수 이상해요.😓')
         this.maxJoin = '0'
         return
       }
@@ -63,7 +63,9 @@ export default {
       })
     },
     async deleteRoom () {
-      await this.$socketHandler.deleteRoom({ id: store.room.id })
+      if (window.confirm(`${store.room.id} 방을 진짜 지우시겠습니까? 😱`)) {
+        await this.$socketHandler.deleteRoom({ id: store.room.id })
+      }
     },
     initInputs () {
       const {
