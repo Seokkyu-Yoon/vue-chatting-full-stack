@@ -32,7 +32,11 @@
             </div>
             <div class="col-2 operations">
               <b-icon icon="share" class="share-icon icon" @click="copyToClipboard(itm)"></b-icon>
-              <b-icon icon="trash" class="delete-icon icon" @click="displayOverlay(itm, 'delete')"></b-icon><br/>
+              <b-icon icon="trash"
+                class="delete-icon icon"
+                @click="displayOverlay(itm, 'delete')"
+                v-if="itm.upload_user === user"
+              ></b-icon><br/>
             </div>
           </div>
         </b-list-group-item>
