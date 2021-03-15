@@ -2,7 +2,7 @@
   <div class="jumbotron m-0 p-2 flex-fill flex-column overflow-hidden">
     <slot />
     <div v-if="mini">
-      <b-list-group class="m-2">
+      <b-list-group class="m-1">
         <b-list-group-item
           href="#"
           class="flex-column align-items-start"
@@ -10,7 +10,9 @@
           v-bind:key="room.id"
         >
           <div class="d-flex w-100 justify-content-between">
-            <strong>{{room.title}} ({{ room.joining }})</strong>
+            <strong>
+              <span>{{room.title.slice(0, 15)}}</span> ({{ room.joining }})
+            </strong>
             <a href="#"
               v-on:click.stop="(e) => join(room)">
               <b-icon icon="arrow-right-square-fill"></b-icon>
@@ -26,20 +28,21 @@
       v-else
       >
       <b-card
-        class="b-card m-2"
+        class="b-card m-1"
+        border-variant="light"
         v-for="room in rooms"
         v-bind:key="room.id"
-        img-height="200"
-        img-alt="Image"
-        img-top
         :style="`max-width:${cardOffsetWidth}px`"
       >
         <b-card-title class="mt-0">
-          {{room.title}}
+          <b-badge href="#"  variant="light" @click.stop="(e) => join(room)">
+            {{room.title.slice(0, 13)}}
+            <b-icon icon="arrow-right-square-fill"></b-icon>
+          </b-badge>
         </b-card-title>
-        <b-card-sub-title class="text-right">
+        <b-card-sub-title class="text-left">
           <h5>
-            <b-badge :variant="room.pw ? 'dark' : 'info'">{{room.pw ? '비밀' : '공개'}}</b-badge> &nbsp;
+            <b-badge :variant="room.pw ? 'dark' : 'primary'">{{room.pw ? '비밀' : '공개'}}</b-badge> &nbsp;
             <b-badge variant="dark">{{`${room.joining} / ${room.maxJoin || '∞'}`}}</b-badge>
           </h5>
         </b-card-sub-title>
@@ -53,23 +56,16 @@
             icon="x">
           </b-icon>
         </a>
-        <div class="white-space-pre-wrap scrollable mb-2">{{room.description || ' '}}</div>
-        <b-card-text class="mb-0">
-          👑 {{room.createBy}}
-          <p class="">
-              <small class="text-muted">
-              {{getFormattedCreateAt(room)}} 생성됨
-            </small>
-          </p>
-        </b-card-text>
-        <b-card-text class="mb-0">
-          <b-btn
-            variant="primary"
-            size="sm"
-            v-on:click.stop="(e) => join(room)">
-            들어가기
-          </b-btn>
-        </b-card-text>
+        <div class="white-space-pre-wrap scrollable">
+          {{ room.description.slice(0,12) || ' ' }}
+        </div>
+        <div>
+          <b-badge variant="secondary" class="mr-1">{{room.createBy}}</b-badge>
+          <br>
+          <small class="text-muted">
+            {{getFormattedCreateAt(room)}} 생성됨
+          </small>
+        </div>
       </b-card>
     </div>
     <div v-if="rooms.length === 0" class="d-flex justify-content-center">
