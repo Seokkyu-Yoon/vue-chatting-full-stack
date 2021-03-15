@@ -112,7 +112,7 @@ export default {
     },
     copyToClipboard (itm) {
       const el = document.createElement('textarea')
-      el.value = `${process.env.VUE_APP_SERVER_IP}:${process.env.VUE_APP_SERVER_PORT}/file/download/${itm.id}`
+      el.value = `${process.env.VUE_APP_DOWNLOAD_SERVER_IP}:${process.env.VUE_APP_DOWNLOAD_SERVER_PORT}/file/download/${itm.id}`
       document.body.appendChild(el)
       el.select()
       document.execCommand('copy')
