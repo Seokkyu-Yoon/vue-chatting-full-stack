@@ -30,6 +30,10 @@ export default {
   100% { transform: translate(0px, 0px); }
 }
 
+.shake-enter-active {
+  animation: shake .5s;
+}
+
 html, body{
   height: 100%;
 }

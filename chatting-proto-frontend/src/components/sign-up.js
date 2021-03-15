@@ -21,13 +21,8 @@ export default {
   methods: {
     alert (msg) {
       this.alertMessage = msg
-      const { alert } = this.$refs
-      clearTimeout(this.timeout)
-      alert.$el.classList.remove('shake')
-
       this.showAlert = true
-      alert.$el.classList.add('shake')
-
+      clearTimeout(this.timeout)
       this.timeout = setTimeout(() => this.ringEnd(), 1000)
     },
     async signUp () {
@@ -50,9 +45,7 @@ export default {
       }
     },
     ringEnd () {
-      const { alert } = this.$refs
       this.showAlert = false
-      alert.$el.classList.remove('shake')
     }
   },
   mounted () {

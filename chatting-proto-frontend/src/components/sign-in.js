@@ -35,13 +35,8 @@ export default {
         this.alertMessage = err.body
         this.$refs.idField.focus()
 
-        const { alert } = this.$refs
         clearTimeout(this.timeout)
-        alert.$el.classList.remove('shake')
-
         this.showAlert = true
-        alert.$el.classList.add('shake')
-
         this.timeout = setTimeout(() => this.ringEnd(), 1000)
       }
     },

@@ -1,9 +1,8 @@
 <template>
   <div class="d-flex flex-column align-items-center overflow-hidden">
-    <b-alert ref="alert" class="alert mt-2" v-visible="showAlert" variant="danger" show>{{alertMessage}}</b-alert>
     <div class="d-flex flex-column align-self-center jumbotron m-0 p-3 overflow-hidden">
       <p class="h1 text-center">회원가입</p>
-      <div class="d-flex flex-fill flex-column p-5 overflow-auto">
+      <div class="d-flex flex-fill flex-column p-3 overflow-auto">
         <div>
           <input
             ref="idField"
@@ -52,7 +51,12 @@
             placeholder="핸드폰 번호를 입력해주세요"/>
         </div>
       </div>
-      <div class="d-flex mt-3 justify-content-center">
+      <transition name="shake">
+        <b-alert v-if="showAlert" variant="danger" show>
+          {{alertMessage}}
+        </b-alert>
+      </transition>
+      <div class="d-flex mt-1 mb-1 justify-content-center">
         <button type="button" class="btn btn-success" v-on:click="signUp">가입</button>
         <button type="button" class="btn btn-danger ml-1" v-on:click="moveToSignIn">취소</button>
       </div>
@@ -63,7 +67,5 @@
 <script src="./sign-up"></script>
 
 <style scoped>
-.alert {
-  position: absolute
-}
+
 </style>

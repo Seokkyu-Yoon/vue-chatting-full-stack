@@ -38,11 +38,6 @@ const routes = [
     path: '/chat/:userId/:userPw/:roomId',
     name: 'ChatRouter',
     component: ChatRouter
-  },
-  {
-    path: '/chat/:userId/:userPw/:roomId/:roomPw',
-    name: 'ChatRouter',
-    component: ChatRouter
   }
 ]
 
