@@ -147,11 +147,25 @@ SocketIoHandler.prototype.deleteRoom = async function (id = null) {
 }
 
 SocketIoHandler.prototype.joinRoom = async function (userId = '', socketId = '', id = null, pw = '') {
-  const body = await this.db.joinRoom({ id, pw, userId })
+  const body = await this.db.joinRoom({ id, pw, userId, socketId })
   this.io.of('/').adapter.remoteJoin(socketId, String(id))
   return {
     code: 200,
     body
+  }
+}
+
+SocketIoHandler.prototype.joinRoomForce = async function (userId = '', socketId = '', id = null, pw = '') {
+  const { socketId: prevSocketId } = await this.db.getSocketIdOnlineInRoom({ userId, roomId: id })
+  const { body: leave } = await this.leaveRoom(userId, prevSocketId, id)
+  const { body: join } = await this.joinRoom(userId, socketId, id, pw)
+  return {
+    code: 200,
+    body: {
+      leave,
+      join,
+      prevSocketId
+    }
   }
 }
 

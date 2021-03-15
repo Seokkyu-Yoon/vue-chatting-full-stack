@@ -32,7 +32,8 @@ const Interface = {
       DELETE: 'res:room:delete',
       MESSAGES: 'res:room:messages',
       SEARCH: 'res:room:search',
-      JOINED: 'res:room:joined'
+      JOINED: 'res:room:joined',
+      JOIN_FORCE: 'res:room:join:force'
     },
     Member: {
       Online: {
@@ -55,6 +56,7 @@ const Interface = {
     Room: {
       LIST: 'req:room:list',
       JOIN: 'req:room:join',
+      JOIN_FORCE: 'req:room:join:force',
       CREATE: 'req:room:create',
       UPDATE: 'req:room:update',
       LEAVE: 'req:room:leave',

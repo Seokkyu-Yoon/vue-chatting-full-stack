@@ -30,11 +30,12 @@
           />
         </div>
         <button type="button" class="btn btn-primary" v-on:click="signIn">접속</button>
-
       </div>
-      <b-alert ref="alert" v-if="showAlert" variant="danger" show>
-        {{alertMessage}}
-      </b-alert>
+      <transition name="shake">
+        <b-alert ref="alert" v-if="showAlert" variant="danger" show>
+          {{alertMessage}}
+        </b-alert>
+      </transition>
     </b-form>
   </b-card>
 </div>
@@ -43,7 +44,24 @@
 <script src="./sign-in.js"></script>
 
 <style scoped>
-  .login {
-    border-radius: 0;
-  }
+@keyframes shake {
+  0% { transform: translate(5px, 0px); }
+  10% { transform: translate(-5px, 0px); }
+  20% { transform: translate(4px, 0px); }
+  30% { transform: translate(-4px, 0px); }
+  40% { transform: translate(3px, 0px); }
+  50% { transform: translate(-3px, 0px); }
+  60% { transform: translate(-2px, 0px); }
+  70% { transform: translate(2px, 0px); }
+  80% { transform: translate(-1px, 0px); }
+  90% { transform: translate(1px, 0px); }
+  100% { transform: translate(0px, 0px); }
+}
+
+.shake-enter, .shake-active {
+  animation: shake 1s infinite;
+}
+.login {
+  border-radius: 0;
+}
 </style>

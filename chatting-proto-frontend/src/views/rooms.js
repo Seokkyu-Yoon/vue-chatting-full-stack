@@ -65,11 +65,19 @@ export default {
         store.room = resRoom
         this.$router.push({ name: 'Chat', params: { user: store.user, room: store.room } })
       } catch (e) {
-        console.error(e)
+        // console.error(e)
         const { code } = e.body
         if (code === 201) {
           this.selectedRoom = room
           this.$refs.password.$refs.modal.show()
+        }
+        if (code === 202) {
+          if (window.confirm('이미 방에 참여했습니다\n기존 접속을 끊고 접속하시겠습니까?')) {
+            const res = await this.$socketHandler.joinRoomForce({ id: room.id, userId: store.user.id, pw })
+            const { room: resRoom = null } = res.body
+            store.room = resRoom
+            this.$router.push({ name: 'Chat', params: { user: store.user, room: store.room } })
+          }
         }
       }
     }

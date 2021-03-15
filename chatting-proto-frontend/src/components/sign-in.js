@@ -19,7 +19,11 @@ export default {
     async signIn () {
       if (!this.id || !this.pw) {
         this.alertMessage = 'ID와 비밀번호를 반드시 입력하세요'
+
+        clearTimeout(this.timeout)
         this.showAlert = true
+
+        this.timeout = setTimeout(() => this.ringEnd(), 1000)
         return
       }
       try {
@@ -42,12 +46,7 @@ export default {
       }
     },
     ringEnd () {
-      const { alert } = this.$refs
       this.showAlert = false
-
-      if (typeof alert !== 'undefined') {
-        alert.$el.classList.remove('shake')
-      }
     }
   },
   mounted () {

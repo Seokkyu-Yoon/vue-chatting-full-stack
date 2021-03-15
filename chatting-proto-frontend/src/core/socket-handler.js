@@ -203,10 +203,12 @@ Handler.prototype.initSocket = function () {
   this.socket.on('broadcast:room:join', this.onRoomJoin.bind(this))
   this.socket.on('broadcast:room:leave', this.onRoomLeave.bind(this))
   this.socket.on('broadcast:message:write', this.onMessage.bind(this))
+  this.socket.on('res:room:join:force', () => {
+    store.room = null
+  })
 }
 
 Handler.prototype.signIn = async function ({ id = '', pw = '' }) {
-  if (store.user !== null) return { body: { user: store.user } }
   return await this.emitPost('req:user:signin', { id, pw })
 }
 Handler.prototype.signUp = async function ({ id = '', pw = '', name = '', email = '', phone = '' }) {
@@ -234,10 +236,12 @@ Handler.prototype.deleteRoom = async function ({ id = -1 }) {
 Handler.prototype.joinRoom = async function ({ id = -1, pw = '', userId = '' }) {
   return await this.emitPost('req:room:join', { id, pw, userId })
 }
+Handler.prototype.joinRoomForce = async function ({ id = -1, pw = '', userId = '' }) {
+  return await this.emitPost('req:room:join:force', { id, pw, userId })
+}
 Handler.prototype.leaveRoom = async function ({ id = -1, userId = '' }) {
   return await this.emitPost('req:room:leave', { id, userId })
 }
-
 Handler.prototype.getMessagesInRoom = async function ({ userId = '', roomId = -1, minIndex = -1 }) {
   return await this.emitPost('req:message:list', { userId, roomId, minIndex })
 }

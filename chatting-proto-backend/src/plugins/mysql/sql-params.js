@@ -74,11 +74,12 @@ function getCreateTableMember () {
     CREATE TABLE member (
       user_id VARCHAR(20),
       room_id INT,
-      joining BOOLEAN NOT NULL DEFAULT TRUE,
+      socket_id VARCHAR(25),
       last_joined DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (user_id, room_id),
       FOREIGN KEY (user_id) REFERENCES user (id) ON UPDATE CASCADE ON DELETE CASCADE,
-      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE
+      FOREIGN KEY (room_id) REFERENCES room (id) ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (socket_id) REFERENCES online (socket_id) ON DELETE SET NULL
     )`,
     params: []
   }
@@ -264,7 +265,7 @@ const COUNT_ROOM = 30
 function getSelectRooms ({ startIndex, limit }) {
   return {
     sql: `
-    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.socket_id IS NOT NULL THEN 1 END) AS joining
     FROM room
     LEFT JOIN member ON member.room_id=room.id
     GROUP BY room.id
@@ -280,7 +281,7 @@ function getSelectRoomsJoined ({ userId }) {
     SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, room.joining
     FROM member
     LEFT JOIN (
-      SELECT room.id, room.pw, room.create_by, room.title, room.max_join, room.description, room.create_at, room.update_at, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+      SELECT room.id, room.pw, room.create_by, room.title, room.max_join, room.description, room.create_at, room.update_at, COUNT(CASE WHEN member.socket_id IS NOT NULL THEN 1 END) AS joining
       FROM room
       LEFT JOIN member ON member.room_id=room.id
       GROUP BY room.id
@@ -294,7 +295,7 @@ function getSelectRoomsJoined ({ userId }) {
 function getSelectRoomsByTitle ({ title }) {
   return {
     sql: `
-    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    SELECT room.id, room.pw, room.create_by AS createBy, room.title, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.socket_id IS NOT NULL THEN 1 END) AS joining
     FROM room
     LEFT JOIN member ON member.room_id=room.id
     WHERE room.title LIKE ?
@@ -308,7 +309,7 @@ function getSelectRoomsByTitle ({ title }) {
 function getSelectRoom ({ id }) {
   return {
     sql: `
-    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.socket_id IS NOT NULL THEN 1 END) AS joining
     FROM room
     LEFT JOIN member ON member.room_id=room.id
     WHERE room.id=?
@@ -330,7 +331,7 @@ function getInsertRoom ({ createBy, title, pw, maxJoin, description }) {
 function getSelectInsertedRoom () {
   return {
     sql: `
-    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.joining IS TRUE THEN 1 END) AS joining
+    SELECT room.id, room.create_by AS createBy, room.title, room.pw, room.max_join AS maxJoin, room.description, room.create_at AS createAt, room.update_at AS updateAt, COUNT(CASE WHEN member.socket_id IS NOT NULL THEN 1 END) AS joining
     FROM room
     LEFT JOIN member ON member.room_id=room.id
     WHERE room.id=@id
@@ -372,13 +373,13 @@ function getSelectAlreadyMember ({ userId, roomId }) {
     params: [userId, roomId]
   }
 }
-function getSelectMember ({ roomId }) {
+function getSelectMember ({ userId, roomId }) {
   return {
     sql: `
-    SELECT user_id AS userId
+    SELECT socket_id AS socketId
     FROM member
-    WHERE room_id=?`,
-    params: [roomId]
+    WHERE user_id=? AND room_id=?`,
+    params: [userId, roomId]
   }
 }
 function getSelectOnlineMembersInRoom ({ roomId }) {
@@ -387,43 +388,43 @@ function getSelectOnlineMembersInRoom ({ roomId }) {
     SELECT user.id, user.name, user.email, user.phone
     FROM member
     LEFT JOIN user ON member.user_id=user.id
-    WHERE member.room_id=? AND member.joining IS TRUE`,
+    WHERE member.room_id=? AND member.socket_id IS NOT NULL`,
     params: [roomId]
   }
 }
-function getSelectMemberJoining ({ userId }) {
+function getSelectMemberJoining ({ socketId }) {
   return {
     sql: `
     SELECT room_id AS roomId
     FROM member
-    WHERE user_id=? AND joining IS TRUE`,
-    params: [userId]
+    WHERE socket_id=?`,
+    params: [socketId]
   }
 }
-function getInsertMember ({ userId, roomId }) {
+function getInsertMember ({ userId, roomId, socketId }) {
   return {
     sql: `
-    INSERT INTO member (user_id, room_id)
-    VALUES (?, ?)`,
-    params: [userId, roomId]
+    INSERT INTO member (user_id, room_id, socket_id)
+    VALUES (?, ?, ?)`,
+    params: [userId, roomId, socketId]
   }
 }
-function getUpdateMember ({ userId, roomId, joining }) {
+function getUpdateMember ({ userId, roomId, socketId }) {
   return {
     sql: `
     UPDATE member
-    SET joining=?
+    SET socket_id=?
     WHERE user_id=? AND room_id=?`,
-    params: [joining, userId, roomId]
+    params: [socketId, userId, roomId]
   }
 }
-function getUpdateMemberOffline ({ userId }) {
+function getUpdateMemberOffline ({ socketId }) {
   return {
     sql: `
     UPDATE member
-    SET joining=FALSE
-    WHERE user_id=?`,
-    params: [userId]
+    SET socket_id=NULL
+    WHERE socket_id=?`,
+    params: [socketId]
   }
 }
 

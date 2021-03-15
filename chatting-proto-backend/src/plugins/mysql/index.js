@@ -150,14 +150,11 @@ async function signOut ({ socketId = '' }) {
   const selectUserBySocketId = getSelectUserBySocketId({ socketId })
   const user = (await exec(selectUserBySocketId))[0]
 
-  const deleteOnlineUser = getDeleteOnlineUser({ socketId })
-  await exec(deleteOnlineUser)
-
-  const selectMemberJoining = getSelectMemberJoining({ userId: user.id })
+  const selectMemberJoining = getSelectMemberJoining({ socketId })
   const rooms = (await exec(selectMemberJoining)).map(({ roomId }) => roomId)
 
-  const updateMemberOffline = getUpdateMemberOffline({ userId: user.id })
-  await exec(updateMemberOffline)
+  const deleteOnlineUser = getDeleteOnlineUser({ socketId })
+  await exec(deleteOnlineUser)
 
   return { user, rooms }
 }
@@ -170,6 +167,18 @@ async function getRooms ({ startIndex = 0, limit = 0 }) {
   const selectRooms = getSelectRooms({ startIndex, limit })
   const rooms = await exec(selectRooms)
   return { rooms }
+}
+
+async function getSocketIdOnlineInRoom ({ userId, roomId }) {
+  // is exists
+  const selectRoom = getSelectRoom({ id: roomId })
+  const room = (await exec(selectRoom))[0] || null
+  if (room === null) throw new Error('존재하지 않는 방입니다')
+
+  // is already member
+  const selectMember = getSelectMember({ userId, roomId })
+  const { socketId = null } = (await exec(selectMember))[0]
+  return { socketId }
 }
 
 async function getRoomsJoined ({ userId = '' }) {
@@ -214,17 +223,18 @@ async function deleteRoom ({ id = -1 }) {
   return { id }
 }
 
-async function joinRoom ({ id = -1, pw = '', userId = '' }) {
+async function joinRoom ({ id = -1, pw = '', userId = '', socketId }) {
   // is exists
   const selectRoom = getSelectRoom({ id })
   const room = (await exec(selectRoom))[0] || null
   if (room === null) throw new Error('존재하지 않는 방입니다')
 
   // is already member
-  const selectMemebr = getSelectMember({ roomId: id })
-  const members = await exec(selectMemebr)
-  if (members.some(({ userId: memberId }) => memberId === userId)) {
-    const updateMember = getUpdateMember({ userId, roomId: id, joining: true })
+  const selectMemebr = getSelectMember({ userId, roomId: id })
+  const member = (await exec(selectMemebr))[0]
+  if (typeof member !== 'undefined') {
+    if (member.socketId !== null && member.socketId !== socketId) throw new Error('이미 방에 참여했습니다')
+    const updateMember = getUpdateMember({ userId, roomId: id, socketId })
     await exec(updateMember)
     return { room }
   }
@@ -233,7 +243,7 @@ async function joinRoom ({ id = -1, pw = '', userId = '' }) {
   if (room.pw !== pw) throw new Error('비밀번호가 틀렸습니다')
 
   // insert member
-  const insertMember = getInsertMember({ userId, roomId: id })
+  const insertMember = getInsertMember({ userId, roomId: id, socketId })
   await exec(insertMember)
   return { room }
 }
@@ -244,7 +254,7 @@ async function leaveRoom ({ id = -1, userId = '' }) {
   const room = (await exec(selectRoom))[0] || null
   if (room === null) throw new Error('존재하지 않는 방입니다')
 
-  const updateMember = getUpdateMember({ userId, roomId: id, joining: false })
+  const updateMember = getUpdateMember({ userId, roomId: id, socketId: null })
   await exec(updateMember)
   return { roomId: room.id }
 }
@@ -339,6 +349,7 @@ export default {
   updateRoom,
   deleteRoom,
   joinRoom,
+  getSocketIdOnlineInRoom,
   leaveRoom,
 
   getOnlineMembersInRoom,

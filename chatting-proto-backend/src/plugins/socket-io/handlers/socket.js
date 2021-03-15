@@ -34,6 +34,7 @@ SocketHandler.prototype.init = function () {
   this.socket.on(Interface.Request.Room.UPDATE, this.roomUpdate.bind(this))
   this.socket.on(Interface.Request.Room.DELETE, this.roomDelete.bind(this))
   this.socket.on(Interface.Request.Room.JOIN, this.roomJoin.bind(this))
+  this.socket.on(Interface.Request.Room.JOIN_FORCE, this.roomJoinForce.bind(this))
   this.socket.on(Interface.Request.Room.LEAVE, this.roomLeave.bind(this))
   this.socket.on(Interface.Request.Room.SEARCH, this.roomSearch.bind(this))
   this.socket.on(Interface.Request.Room.JOINED, this.roomJoined.bind(this))
@@ -197,9 +198,34 @@ SocketHandler.prototype.roomJoin = async function (req, callback) {
     if (e.message === '비밀번호가 틀렸습니다') {
       return res.status(304).send({ code: 201, message: e.message })
     }
+    if (e.message === '이미 방에 참여했습니다') {
+      return res.status(401).send({ code: 202, message: e.message })
+    }
+    throw new Error(e)
   }
 }
 
+SocketHandler.prototype.roomJoinForce = async function (req, callback) {
+  const res = new Res(callback)
+  const { id = null, pw = '', userId = '' } = req.body
+  const { id: socketId = '' } = this.socket
+  try {
+    const { code, body } = await this.socketIoHandler.joinRoomForce(userId, socketId, id, pw)
+    res.status(code).send(body.join)
+    megaphone(Interface.Broadcast.Room.JOIN).status(code).send(body.join)
+
+    megaphone(Interface.Response.Room.JOIN_FORCE).to(body.prevSocketId).send()
+    megaphone(Interface.Broadcast.Room.LEAVE).status(code).send(body.leave)
+  } catch (e) {
+    if (e.message === '비밀번호가 틀렸습니다') {
+      return res.status(304).send({ code: 201, message: e.message })
+    }
+    if (e.message === '이미 방에 참여했습니다') {
+      return res.status(401).send({ code: 202, message: e.message })
+    }
+    throw new Error(e)
+  }
+}
 SocketHandler.prototype.roomLeave = async function (req, callback) {
   const res = new Res(callback)
   const { id = null, userId = '' } = req.body
