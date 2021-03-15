@@ -470,7 +470,7 @@ function getSelectCountMessageInRoom ({ userId, roomId }) {
 function getSelectMessagesInRoom ({ userId, roomId, limit, offset }) {
   return {
     sql: `
-    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    SELECT message.id, message_type.type, user.name AS writter, message.content, message.write_at AS writeAt
     FROM (
       SELECT message_id
       FROM room_message
@@ -483,6 +483,7 @@ function getSelectMessagesInRoom ({ userId, roomId, limit, offset }) {
     ) AS message_for_user
     LEFT JOIN message ON message_for_user.message_id=message.id
     LEFT JOIN message_type ON message.type_id=message_type.id
+    LEFT JOIN user ON message.writter=user.id
     ORDER BY message.write_at
     LIMIT ? OFFSET ?`,
     params: [roomId, roomId, userId, userId, limit, offset]
@@ -492,7 +493,7 @@ function getSelectMessagesInRoom ({ userId, roomId, limit, offset }) {
 function getSelectMessagesInRoomReconnect ({ userId, roomId, startIndex }) {
   return {
     sql: `
-    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    SELECT message.id, message_type.type, user.name AS writter, message.content, message.write_at AS writeAt
     FROM (
       SELECT message_id
       FROM room_message
@@ -505,6 +506,7 @@ function getSelectMessagesInRoomReconnect ({ userId, roomId, startIndex }) {
     ) AS message_for_user
     LEFT JOIN message ON message_for_user.message_id=message.id
     LEFT JOIN message_type ON message.type_id=message_type.id
+    LEFT JOIN user ON message.writter=user.id
     ORDER BY message.write_at
     LIMIT ${Number.MAX_SAFE_INTEGER} OFFSET ?`,
     params: [roomId, roomId, userId, userId, startIndex]
@@ -514,9 +516,10 @@ function getSelectMessagesInRoomReconnect ({ userId, roomId, startIndex }) {
 function getSelectMessage ({ id }) {
   return {
     sql: `
-    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    SELECT message.id, message_type.type, user.name AS writter, message.content, message.write_at AS writeAt
     FROM message
     LEFT JOIN message_type ON message_type.id=message.type_id
+    LEFT JOIN user ON message.writter=user.id
     WHERE message.id=?`,
     params: [id]
   }
@@ -543,9 +546,10 @@ function getInsertMessage ({ type, writter, content }) {
 function getSelectInsertedMessage () {
   return {
     sql: `
-    SELECT message.id, message_type.type, message.writter, message.content, message.write_at AS writeAt
+    SELECT message.id, message_type.type, user.name AS writter, message.content, message.write_at AS writeAt
     FROM message
     LEFT JOIN message_type ON message_type.id=message.type_id
+    LEFT JOIN user ON message.writter=user.id
     WHERE message.id=@id`,
     params: []
   }
