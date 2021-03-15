@@ -26,24 +26,13 @@ const ConfigMysql = {
   charset: 'utf8mb4'
 }
 
-const filedbAccessInfo = {
-  host: '192.168.1.221',
-  port: 3306,
-  database: 'MMS',
-  user: 'modutech',
-  password: 'qwer1234',
-  connectionLimit: 20
-}
-
 export {
   ConfigPino,
   ConfigSocketIo,
-  ConfigMysql,
-  filedbAccessInfo
+  ConfigMysql
 }
 export default {
   ConfigPino,
   ConfigSocketIo,
-  ConfigMysql,
-  filedbAccessInfo
+  ConfigMysql
 }

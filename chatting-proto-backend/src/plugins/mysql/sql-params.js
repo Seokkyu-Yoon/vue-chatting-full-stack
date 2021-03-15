@@ -161,6 +161,26 @@ function getCreateTableGroupMessage () {
   }
 }
 
+function getCreateTableFileInfo () {
+  return {
+    sql: `
+    CREATE TABLE file_info (
+      id varchar(100) COLLATE utf8_bin NOT NULL,
+      filename varchar(45) COLLATE utf8_bin NOT NULL,
+      size double NOT NULL,
+      upload_user varchar(45) COLLATE utf8_bin NOT NULL,
+      room_id varchar(45) COLLATE utf8_bin NOT NULL,
+      register_date date NOT NULL,
+      expire_date date NOT NULL,
+      is_protected tinyint(4) NOT NULL,
+      passwd varchar(45) COLLATE utf8_bin NOT NULL,
+      state varchar(20) COLLATE utf8_bin NOT NULL,
+      PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='업로드 파일 정보 DB'`,
+    params: []
+  }
+}
+
 // for online
 function getSelectOnlineUsers () {
   return {
@@ -566,6 +586,7 @@ export {
   getCreateTableDirectMessage,
   getCreateTableRoomMessage,
   getCreateTableGroupMessage,
+  getCreateTableFileInfo,
 
   // for online
   getSelectOnlineUsers,

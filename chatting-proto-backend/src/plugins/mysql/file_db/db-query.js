@@ -1,8 +1,8 @@
 const mysql = require('mysql')
-const { filedbAccessInfo } = require('@/config')
+const { ConfigMysql } = require('@/config')
 const { log } = console
 
-const pool = mysql.createPool(filedbAccessInfo)
+const pool = mysql.createPool(ConfigMysql)
 
 function dbQuery (query) {
   return new Promise((resolve, reject) => {

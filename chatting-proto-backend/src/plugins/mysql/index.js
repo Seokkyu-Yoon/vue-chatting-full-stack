@@ -45,7 +45,8 @@ import {
   getUpdateRoom,
   getSelectMessagesInRoomReconnect,
   getSelectInsertedRoom,
-  getSelectInsertedMessage
+  getSelectInsertedMessage,
+  getCreateTableFileInfo
 } from './sql-params'
 
 const TABLE_CREATE_MAP = {
@@ -57,7 +58,8 @@ const TABLE_CREATE_MAP = {
   member: getCreateTableMember(),
   direct_message: getCreateTableDirectMessage(),
   room_message: getCreateTableRoomMessage(),
-  group_message: getCreateTableGroupMessage()
+  group_message: getCreateTableGroupMessage(),
+  file_info: getCreateTableFileInfo()
 }
 
 const MESSAGE_TYPE = [
