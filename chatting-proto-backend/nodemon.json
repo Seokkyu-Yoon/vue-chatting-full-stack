@@ -8,7 +8,7 @@
     "REDIS_PORT": "3032",
     "MYSQL_IP": "localhost",
     "MYSQL_PORT": "3031",
-    "MYSQL_DATABASE": "test",
+    "MYSQL_DATABASE": "chatting-dev",
     "MYSQL_USER": "root",
     "MYSQL_PASSWORD": "qwer1234",
     "MYSQL_TIMEZONE": "Asia/Seoul",
