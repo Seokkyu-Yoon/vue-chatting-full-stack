@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "pm2 start",
-    "restart": "pm2 restart server",
-    "stop": "pm2 stop server",
-    "del": "pm2 del server",
+    "restart": "pm2 restart chat-server",
+    "stop": "pm2 stop chat-server",
+    "del": "pm2 del chat-server",
     "monit": "pm2 monit",
     "build": "rm -rf dist && babel src --out-dir dist",
     "docker-up": "docker-compose up -d",
