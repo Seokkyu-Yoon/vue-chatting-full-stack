@@ -10,7 +10,8 @@
     "del": "pm2 del server",
     "monit": "pm2 monit",
     "build": "rm -rf dist && babel src --out-dir dist",
-    "predev": "docker-compose up -d",
+    "docker-up": "docker-compose up -d",
+    "docker-down": "docker-compose down",
     "dev": "nodemon --config nodemon.json",
     "test": "tape -r @babel/register src/**/*.test.js | faucet"
   },

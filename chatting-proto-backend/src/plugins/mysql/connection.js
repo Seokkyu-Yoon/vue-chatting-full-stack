@@ -2,12 +2,23 @@ import mysql from 'mysql'
 
 import { ConfigMysql } from '@/config'
 
-function Connection () {
-  this.connection = mysql.createConnection(ConfigMysql)
-  this.connection.connect()
+function rollback (connection) {
+  return new Promise((resolve, reject) => {
+    connection.rollback((err) => {
+      return err ? reject(err) : resolve()
+    })
+  })
 }
 
-function query ({ connection, sql = '', params = [] }) {
+function commit (connection) {
+  return new Promise((resolve, reject) => {
+    connection.commit((err) => {
+      return err ? reject(err) : resolve()
+    })
+  })
+}
+
+function query (connection, sql = '', params = []) {
   return new Promise((resolve, reject) => {
     connection.query(sql, params, (err, result) => {
       return err ? reject(err) : resolve(result)
@@ -15,47 +26,39 @@ function query ({ connection, sql = '', params = [] }) {
   })
 }
 
-function transaction ({ connection, sqlParamSets = [] }) {
+function transaction (connection, sqlParamSets = []) {
   return new Promise((resolve, reject) => {
-    connection.beginTransaction(async (errBeginTransaction) => {
-      try {
-        const results = await Promise.all(sqlParamSets.map(({ sql, params }) => query({ connection, sql, params })))
-        connection.commit((errCommit) => {
-          if (errCommit) {
-            connection.rollback()
-            return reject(errCommit)
-          }
-          return resolve(results)
-        })
-      } catch (e) {
-        connection.rollback()
-        return reject(e)
-      }
+    connection.beginTransaction(async (err) => {
+      if (err) return reject(err)
 
-      if (errBeginTransaction) {
-        connection.rollback()
-        return reject(errBeginTransaction)
+      try {
+        const results = []
+        for (const { sql, params } of sqlParamSets) {
+          const result = await query(connection, sql, params)
+          results.push(result)
+        }
+        await commit(connection)
+        resolve(results)
+      } catch (e) {
+        await rollback(connection)
+        return reject(e)
       }
     })
   })
 }
-Connection.prototype.query = async function ({ sql = '', params = [] }) {
-  const result = await query({
-    connection: this.connection,
-    sql,
-    params
-  })
-  this.connection.end()
-  return result
-}
+class Connection {
+  constructor () {
+    this.connection = mysql.createConnection(ConfigMysql)
+    this.connection.connect()
+  }
 
-Connection.prototype.transaction = async function (sqlParamSets) {
-  const results = await transaction({
-    connection: this.connection,
-    sqlParamSets
-  })
-  this.connection.end()
-  return results
+  query ({ sql, params = [] }) {
+    return query(this.connection, sql, params).finally(() => this.connection.end())
+  }
+
+  transaction ({ sqlParamSets = [] }) {
+    return transaction(this.connection, sqlParamSets).finally(() => this.connection.end())
+  }
 }
 
 export default Connection

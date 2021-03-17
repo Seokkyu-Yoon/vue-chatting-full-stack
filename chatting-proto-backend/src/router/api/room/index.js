@@ -43,7 +43,7 @@ router.put('/', async (req, res, next) => {
 
   if (id === null) return res.send('id is empty')
   try {
-    await mysql.createRoom({ id, title, createBy, pw, maxJoin, description })
+    await mysql.createRoom({ id: Number(id), title, createBy, pw, maxJoin, description })
     const room = (await mysql.getRoom({ id }))[0]
 
     megaphone(Interface.Broadcast.Room.CREATE).status(200).send({ room })

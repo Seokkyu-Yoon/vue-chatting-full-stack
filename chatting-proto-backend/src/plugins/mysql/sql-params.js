@@ -339,12 +339,12 @@ function getSelectRoom ({ id }) {
   }
 }
 
-function getInsertRoom ({ createBy, title, pw, maxJoin, description }) {
+function getInsertRoom ({ id, createBy, title, pw, maxJoin, description }) {
   return {
     sql: `
-    INSERT INTO room (create_by, title, pw, max_join, description) VALUES
-    (?, ?, ?, ?, ?)`,
-    params: [createBy, title, pw, maxJoin, description]
+    INSERT INTO room (id, create_by, title, pw, max_join, description) VALUES
+    (?, ?, ?, ?, ?, ?)`,
+    params: [id, createBy, title, pw, maxJoin, description]
   }
 }
 

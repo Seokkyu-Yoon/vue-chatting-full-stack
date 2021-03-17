@@ -30,12 +30,12 @@ const routes = [
     component: Access
   },
   {
-    path: '/chat/:userId/:roomId',
-    name: 'ChatRouter',
+    path: '/chat/:userId/:userPw/:roomId',
+    name: 'ChatRouterNoRoomPw',
     component: ChatRouter
   },
   {
-    path: '/chat/:userId/:userPw/:roomId',
+    path: '/chat/:userId/:userPw/:roomId/:roomPw',
     name: 'ChatRouter',
     component: ChatRouter
   }

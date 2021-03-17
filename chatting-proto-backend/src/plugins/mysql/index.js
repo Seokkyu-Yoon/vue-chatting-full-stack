@@ -161,6 +161,12 @@ async function signOut ({ socketId = '' }) {
   return { user, rooms }
 }
 
+async function getRoom ({ id }) {
+  const selectRoom = getSelectRoom({ id })
+  const room = await exec(selectRoom)
+  return room
+}
+
 async function getRooms ({ startIndex = 0, limit = 0 }) {
   // if (limit < 0) {
   //   console.log(limit)
@@ -194,12 +200,11 @@ async function getRoomsSearched ({ title = '' }) {
   const rooms = await exec(selectRoomsSearched)
   return { rooms }
 }
-async function createRoom ({ title, createBy, pw, maxJoin, description }) {
-  const insertRoom = getInsertRoom({ createBy, title, pw, maxJoin, description })
+async function createRoom ({ id, title, createBy, pw, maxJoin, description }) {
+  const insertRoom = getInsertRoom({ id, createBy, title, pw, maxJoin, description })
   const setId = getSetId()
   const selectInsertedRoom = getSelectInsertedRoom()
   const resultTransaction = await transaction([insertRoom, setId, selectInsertedRoom])
-
   const resultRoom = resultTransaction[2]
   const room = resultRoom[0] || null
   return { room }
@@ -344,6 +349,7 @@ export default {
   signUp,
   signOut,
 
+  getRoom,
   getRooms,
   getRoomsJoined,
   getRoomsSearched,
