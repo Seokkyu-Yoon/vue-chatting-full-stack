@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'server',
+      name: 'chat-server',
       script: './dist/bin/www.js',
       instances: 0,
       exec_mode: 'cluster',

@@ -6,7 +6,7 @@ services:
     image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=qwer1234
-      - MYSQL_DATABASE=chatting-proto
+      - MYSQL_DATABASE=chatting-dev
       - TZ=Asia/Seoul
     ports:
       - 3031:3306

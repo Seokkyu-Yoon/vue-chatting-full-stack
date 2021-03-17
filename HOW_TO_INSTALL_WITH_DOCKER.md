@@ -13,6 +13,7 @@
 # 디렉토리 구조
 ```
 ├─chatting-proto-backend
+│  ├─docker-compose.yml
 │  ├─ecosystem.config.js
 │  └─nodemon.json
 ├─chatting-proto-frontend
@@ -26,7 +27,22 @@
 # 사전 준비
 - server engine
   - node 12.X.X
-- mysql 8.0.13, redis 6.0.10 
+- docker
+  - `chatting-proto-backend 디렉토리`에서
+    - `npm run docker-up` 명령어로 mysql과 redis 가 올라간다
+    - `npm run docker-down` 명령어로 mysql과 redis 가 내려간다
+  - `chatting-proto-backend/docker-compose.yml` 파일에서 docker관련 설정을 변경할 수 있다  
+
+## mysql을 띄운 docker에 bash로 접근하기
+- 해당 명령어로 chatting-proto-db, chatting-proto-redis가 올라온것을 확인한다
+```
+$ docker container ls
+```
+- 해당 명령어로 chatting-proto-db에 접근한다
+```
+$ docker exec -it chatting-proto-db bash
+```
+- 디폴트는 현재 root / qwer1234 (유저 명 / 유저 비밀번호)로되어있으며, docker-compose.yml에서 수정할 수 있다
 
 ## ※ 주의사항
 - mysql 유저의 권한이 허용되어 있는지 꼭 확인해야한다  
