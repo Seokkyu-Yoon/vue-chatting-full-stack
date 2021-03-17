@@ -52,12 +52,26 @@ class Connection {
     this.connection.connect()
   }
 
-  query ({ sql, params = [] }) {
-    return query(this.connection, sql, params).finally(() => this.connection.end())
+  async query ({ sql, params = [] }) {
+    try {
+      const result = await query(this.connection, sql, params)
+      this.connection.end()
+      return result
+    } catch (e) {
+      this.connection.end()
+      throw new Error(e)
+    }
   }
 
-  transaction (sqlParamSets = []) {
-    return transaction(this.connection, sqlParamSets).finally(() => this.connection.end())
+  async transaction (sqlParamSets = []) {
+    try {
+      const results = await transaction(this.connection, sqlParamSets)
+      this.connection.end()
+      return results
+    } catch (e) {
+      this.connection.end()
+      throw new Error(e)
+    }
   }
 }
 
