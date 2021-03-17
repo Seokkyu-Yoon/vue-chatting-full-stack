@@ -8,7 +8,11 @@
     "REDIS_PORT": "3032",
     "MYSQL_IP": "localhost",
     "MYSQL_PORT": "3031",
-    "MYSQL_DATABASE": "chatting-proto"
+    "MYSQL_DATABASE": "test",
+    "MYSQL_USER": "root",
+    "MYSQL_PASSWORD": "qwer1234",
+    "MYSQL_TIMEZONE": "Asia/Seoul",
+    "MYSQL_CHARSET": "utf8mb4"
   },
   "execMap": {
     "js": "babel-node src/bin/www.js"

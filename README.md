@@ -52,7 +52,7 @@ mysql -u root --host 172.31.14.88 -P 3306 -p
 
 
 # Trouble shooting 
-ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'qwer1234';
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'qwer1234';  
 flush privileges;
 
 # When first time install this app (pm2)

@@ -1,6 +1,6 @@
 import Connection from './connection'
 import logger from '@/core/logger'
-
+import initDatabase from './init-database'
 import {
   // for init
   getSelectAllTables,
@@ -29,7 +29,6 @@ import {
   getInsertMember,
   getSelectMember,
   getInsertRoom,
-  getUpdateMemberOffline,
   getSelectRoomsJoined,
   getDeleteRoom,
   getSelectRoomsByTitle,
@@ -79,6 +78,8 @@ async function transaction (sqlParamsSets) {
 }
 
 async function init () {
+  await initDatabase()
+  logger.info('init database done')
   const selectAllTables = getSelectAllTables()
   const mysqlTables = await exec(selectAllTables)
   for (const tableCreateKey in TABLE_CREATE_MAP) {
@@ -200,7 +201,7 @@ async function getRoomsSearched ({ title = '' }) {
   const rooms = await exec(selectRoomsSearched)
   return { rooms }
 }
-async function createRoom ({ id, title, createBy, pw, maxJoin, description }) {
+async function createRoom ({ id = null, title, createBy, pw, maxJoin, description }) {
   const insertRoom = getInsertRoom({ id, createBy, title, pw, maxJoin, description })
   const setId = getSetId()
   const selectInsertedRoom = getSelectInsertedRoom()

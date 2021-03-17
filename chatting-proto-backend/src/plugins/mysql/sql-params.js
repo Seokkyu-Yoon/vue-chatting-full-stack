@@ -339,7 +339,7 @@ function getSelectRoom ({ id }) {
   }
 }
 
-function getInsertRoom ({ id, createBy, title, pw, maxJoin, description }) {
+function getInsertRoom ({ id = null, createBy, title, pw, maxJoin, description }) {
   return {
     sql: `
     INSERT INTO room (id, create_by, title, pw, max_join, description) VALUES

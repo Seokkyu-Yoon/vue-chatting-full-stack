@@ -47,8 +47,8 @@ function transaction (connection, sqlParamSets = []) {
   })
 }
 class Connection {
-  constructor () {
-    this.connection = mysql.createConnection(ConfigMysql)
+  constructor (config = ConfigMysql) {
+    this.connection = mysql.createConnection(config)
     this.connection.connect()
   }
 
@@ -56,7 +56,7 @@ class Connection {
     return query(this.connection, sql, params).finally(() => this.connection.end())
   }
 
-  transaction ({ sqlParamSets = [] }) {
+  transaction (sqlParamSets = []) {
     return transaction(this.connection, sqlParamSets).finally(() => this.connection.end())
   }
 }
